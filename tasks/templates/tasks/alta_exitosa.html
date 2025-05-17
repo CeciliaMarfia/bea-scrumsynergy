@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Alta Exitosa</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #e6ffee;
+            padding: 30px;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 25px;
+            border-radius: 8px;
+            max-width: 500px;
+            margin: auto;
+            text-align: center;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #28a745;
+        }
+        a {
+            display: inline-block;
+            margin-top: 20px;
+            text-decoration: none;
+            background-color: #007bff;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+        }
+        a:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>¡Máquina dada de alta con éxito!</h2>
+        <a href="{% url 'alta_maquinaria' %}">Cargar otra máquina</a>
+    </div>
+</body>
+</html>

@@ -1,6 +1,10 @@
 from django.shortcuts import render
 from django.shortcuts import redirect
 from django.contrib.auth.forms import UserCreationForm
+import json
+import os
+from django.conf import settings
+from .maquinarias.forms import AltaMaquinariaForm
 
 # Create your views here.
 def home(request):
@@ -20,3 +24,33 @@ def signup(request):
     else:
         form = UserCreationForm()
     return render(request, 'signup.html', {'form': form})
+
+# -- Codigo de solci para HU "Alta Maquinaria" --
+
+DATA_PATH = os.path.join(settings.BASE_DIR, 'tasks', 'maquinarias', 'maquinas.json')
+
+def alta_maquinaria(request):
+    if request.method == 'POST':
+        form = AltaMaquinariaForm(request.POST, request.FILES)
+        if form.is_valid():
+            with open(DATA_PATH, 'r') as f:
+                maquinas = json.load(f)
+
+            if any(m['id'] == form.cleaned_data['id'] for m in maquinas):
+                form.add_error('id', 'Ya existe una máquina con este ID')
+            else:
+                nueva_maquina = form.cleaned_data.copy()  # copiar para no alterar el original
+                nueva_maquina['precio_por_dia'] = float(nueva_maquina['precio_por_dia'])  # <-- conversión
+                nueva_maquina['imagen'] = request.FILES['imagen'].name
+                maquinas.append(nueva_maquina)
+
+                with open(DATA_PATH, 'w') as f:
+                    json.dump(maquinas, f, indent=4)
+
+                return render(request, 'tasks/alta_exitosa.html')
+    else:
+        form = AltaMaquinariaForm()
+
+    return render(request, 'tasks/alta_maquinaria.html', {'form': form})
+
+# -- fin codigo --

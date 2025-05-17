@@ -1,0 +1,15 @@
+[ 
+    {
+        "id": 99,
+        "nombre": "Martillo Demoledor",
+        "marca": "Dewalt",
+        "modelo": "XZ100",
+        "anio": 2018,
+        "ubicacion": "Los Hornos",
+        "politica_cancelacion": 70.0,
+        "tipo": "construccion",
+        "precio_por_dia": 10000.0,
+        "permisos_requeridos": "sin permisos",
+        "imagen": "16989265916270ea2c1d849bcc6095a9321fa34167.jpg"
+    }
+]
