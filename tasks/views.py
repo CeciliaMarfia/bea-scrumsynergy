@@ -1,5 +1,7 @@
 from django.shortcuts import render
 from django.shortcuts import redirect
+from django.contrib.auth import authenticate, login
+from django.contrib import messages
 from django.contrib.auth.forms import UserCreationForm
 import json
 import os
@@ -11,7 +13,25 @@ def home(request):
     return render(request, 'home.html')
 
 def login(request):
-    return render(request, 'login.html');
+    if request.method == 'POST':
+        # Obtener los datos del formulario
+        # Revisa los campos nombre de usuario y contraseña para ver que existan
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        
+        # Django verifica las credenciales contra la base de datos
+        user = authenticate(request, username=username, password=password)
+        
+        if user is not None:
+            # Iniciar sesión
+            login(request, user)
+            return redirect('home')
+        else:
+            # No coinciden con algun usuario registrado
+            messages.error(request, 'Usuario o contraseña incorrectos')
+    
+    # Si es GET o si falla la autenticación, mostrar el formulario
+    return render(request, 'login.html')
 
 from django.contrib import messages
 
