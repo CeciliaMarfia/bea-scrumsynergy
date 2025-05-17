@@ -1,44 +1,70 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>Alta Exitosa</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #e6ffee;
-            padding: 30px;
-        }
-        .container {
-            background-color: #ffffff;
-            padding: 25px;
-            border-radius: 8px;
-            max-width: 500px;
-            margin: auto;
-            text-align: center;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-        h2 {
-            color: #28a745;
-        }
-        a {
-            display: inline-block;
-            margin-top: 20px;
-            text-decoration: none;
-            background-color: #007bff;
-            color: white;
-            padding: 10px 15px;
-            border-radius: 5px;
-        }
-        a:hover {
-            background-color: #0056b3;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Alta Exitosa</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet"/>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #546469, #0c0f10);
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .success-card {
+      background-color: #fff;
+      padding: 2.5rem 2rem;
+      border-radius: 1.5rem;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 500px;
+      text-align: center;
+    }
+
+    .success-card h2 {
+      color: #28a745;
+      margin-bottom: 1rem;
+    }
+
+    .success-card p {
+      font-size: 1.1rem;
+      color: #546469;
+      margin-bottom: 2rem;
+    }
+
+    .btn-volver {
+      background-color: #d16c44;
+      color: white;
+      padding: 0.9rem 1.5rem;
+      border: none;
+      border-radius: 0.6rem;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background-color 0.3s ease;
+    }
+
+    .btn-volver:hover {
+      background-color: #b95a33;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h2>¡Máquina dada de alta con éxito!</h2>
-        <a href="{% url 'alta_maquinaria' %}">Cargar otra máquina</a>
-    </div>
+  <div class="success-card">
+    <h2>¡Maquinaria registrada con éxito!</h2>
+    <p>La máquina fue dada de alta correctamente en el sistema.</p>
+    <a href="{% url 'alta_maquinaria' %}" class="btn-volver">Registrar otra</a>
+  </div>
 </body>
 </html>

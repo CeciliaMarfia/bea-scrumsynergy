@@ -1,67 +1,116 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>Alta de Maquinaria</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            padding: 30px;
-        }
-        .container {
-            background-color: #fff;
-            padding: 25px;
-            border-radius: 8px;
-            max-width: 600px;
-            margin: auto;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-        h2 {
-            text-align: center;
-        }
-        form label {
-            display: block;
-            margin-top: 15px;
-        }
-        form input, form select {
-            width: 100%;
-            padding: 8px;
-            margin-top: 5px;
-        }
-        .submit-btn {
-            margin-top: 20px;
-            background-color: #28a745;
-            color: white;
-            padding: 10px;
-            width: 100%;
-            border: none;
-            cursor: pointer;
-        }
-        .submit-btn:hover {
-            background-color: #218838;
-        }
-        .errorlist {
-            color: red;
-            list-style: none;
-            padding-left: 0;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Alta de Maquinaria</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet"/>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #546469, #0c0f10);
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .form-card {
+      background-color: #fff;
+      padding: 2.5rem 2rem;
+      border-radius: 1.5rem;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 600px;
+      transition: 0.3s ease-in-out;
+    }
+
+    .form-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+    }
+
+    .form-card h2 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      color: #546469;
+    }
+
+    form label {
+      display: block;
+      margin-top: 1rem;
+      color: #546469;
+      font-weight: 600;
+    }
+
+    form input,
+    form select {
+      width: 100%;
+      padding: 0.8rem;
+      border: 1px solid #ccc;
+      border-radius: 0.6rem;
+      font-size: 1rem;
+      margin-top: 0.3rem;
+      transition: border-color 0.3s;
+    }
+
+    form input:focus,
+    form select:focus {
+      border-color: #d16c44;
+      outline: none;
+    }
+
+    .submit-btn {
+      margin-top: 1.5rem;
+      background-color: #d16c44;
+      color: white;
+      padding: 0.9rem;
+      width: 100%;
+      border: none;
+      border-radius: 0.6rem;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .submit-btn:hover {
+      background-color: #b95a33;
+    }
+
+    .errorlist {
+      color: red;
+      margin: 0.5rem 0 0.2rem 0;
+      list-style: none;
+      font-size: 0.9rem;
+    }
+
+    .success {
+      color: #28a745;
+      text-align: center;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h2>Alta de Maquinaria</h2>
+  <div class="form-card">
+    <h2>Alta de Maquinaria</h2>
 
-        {% if form.errors %}
-            <p style="color: red;">Por favor corregí los errores debajo:</p>
-        {% endif %}
+    {% if form.errors %}
+      <p style="color: red; text-align: center;">Por favor corregí los errores debajo:</p>
+    {% endif %}
 
-        <form method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-            {{ form.as_p }}
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      {{ form.as_p }}
 
-            <button type="submit" class="submit-btn">Dar de Alta</button>
-        </form>
-    </div>
+      <button type="submit" class="submit-btn">Dar de Alta</button>
+    </form>
+  </div>
 </body>
-</html>
+</html> 

@@ -11,5 +11,18 @@
         "precio_por_dia": 10000.0,
         "permisos_requeridos": "sin permisos",
         "imagen": "16989265916270ea2c1d849bcc6095a9321fa34167.jpg"
+    },
+    {
+        "id": 98,
+        "nombre": "Pala Excavadora",
+        "marca": "Jhon Deere",
+        "modelo": "AA99",
+        "anio": 2015,
+        "ubicacion": "La Plata",
+        "politica_cancelacion": 60.0,
+        "tipo": "construccion",
+        "precio_por_dia": 10000.0,
+        "permisos_requeridos": "Permiso especial",
+        "imagen": "189258-16952667.jpg"
     }
 ]
