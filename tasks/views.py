@@ -47,7 +47,7 @@ def signup(request):
 
 # -- Codigo de solci para HU "Alta Maquinaria" --
 
-DATA_PATH = os.path.join(settings.BASE_DIR, 'tasks', 'maquinarias', 'maquinas.json')
+DATA_PATH = os.path.join(settings.BASE_DIR, 'tasks', 'maquinarias')
 
 def alta_maquinaria(request):
     if request.method == 'POST':

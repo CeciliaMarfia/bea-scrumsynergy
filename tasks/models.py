@@ -24,6 +24,7 @@ def guardar_perfil_usuario(sender, instance, **kwargs):
     instance.perfil.save()
 
 class Maquina(models.Model):
+    codigo = models.CharField(max_length=100, unique=True)  # ⬅️ AGREGADO
     nombre = models.CharField(max_length=100)
     marca = models.CharField(max_length=100)
     modelo = models.CharField(max_length=100)

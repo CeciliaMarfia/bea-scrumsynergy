@@ -1,20 +1,19 @@
 from django import forms
+from tasks.models import Maquina
 
-class AltaMaquinariaForm(forms.Form):
-    id = forms.IntegerField(label="ID")
-    nombre = forms.CharField(max_length=100)
-    marca = forms.CharField(max_length=100)
-    modelo = forms.CharField(max_length=100)
-    anio = forms.IntegerField(label="Año")
-    ubicacion = forms.CharField(max_length=200)
-    politica_cancelacion = forms.FloatField(label="Política de cancelación (%)")
-    tipo = forms.ChoiceField(choices=[
-        ('agricola', 'Agrícola'),
-        ('construccion', 'Construcción'),
-        ('mineria', 'Minería'),
-        ('jardineria', 'Jardinería'),
-        ('otros', 'Otros'),
-    ])
-    precio_por_dia = forms.DecimalField(label="Precio por día ($)", max_digits=15, decimal_places=4)
-    permisos_requeridos = forms.CharField(widget=forms.Textarea)
-    imagen = forms.ImageField()
+class AltaMaquinariaForm(forms.ModelForm):
+    class Meta:
+        model = Maquina
+        fields = '__all__'  
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['politica_cancelacion'].label = "Política de cancelación (%)"
+        self.fields['precio_por_dia'].label = "Precio por día ($)"
+        self.fields['año'].label = "Año"
+
+    def clean_codigo(self):
+        codigo = self.cleaned_data.get('codigo')
+        if Maquina.objects.filter(codigo=codigo).exists():
+            raise forms.ValidationError("Ya existe una máquina con este código.")
+        return codigo
