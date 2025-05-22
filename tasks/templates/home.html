@@ -1,18 +1,61 @@
-<a href="{% url 'login' %}" class="btn-login-home">Iniciar sesión</a>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Inicio - Bob el Alquilador</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet"/>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-<style>
-  .btn-login-home {
-    display: inline-block;
-    background-color: #d16c44;
-    color: white;
-    padding: 0.8rem 1.2rem;
-    border-radius: 0.6rem;
-    text-decoration: none;
-    font-weight: bold;
-    transition: background-color 0.3s ease;
-  }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #546469, #0c0f10);
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
 
-  .btn-login-home:hover {
-    background-color: #b95a33;
-  }
-</style>
+    .home-container {
+      text-align: center;
+      color: white;
+    }
+
+    .brand-title {
+      font-size: 2.5rem;
+      margin-bottom: 2rem;
+      font-weight: 600;
+      color: #ffffff;
+      text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5);
+    }
+
+    .btn-home {
+      display: inline-block;
+      background-color: #d16c44;
+      color: white;
+      padding: 0.8rem 1.2rem;
+      border-radius: 0.6rem;
+      text-decoration: none;
+      font-weight: bold;
+      transition: background-color 0.3s ease;
+      margin: 0 0.5rem;
+    }
+
+    .btn-home:hover {
+      background-color: #b95a33;
+    }
+  </style>
+</head>
+<body>
+  <div class="home-container">
+    <h1 class="brand-title">Bob el Alquilador</h1>
+    <a href="{% url 'login' %}" class="btn-home">Iniciar sesión</a>
+    <a href="{% url 'alta_maquinaria' %}" class="btn-home">Alta de maquinaria</a>
+  </div>
+</body>
+</html>
