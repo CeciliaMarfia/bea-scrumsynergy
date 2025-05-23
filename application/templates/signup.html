@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Iniciar sesión</title>
+  <title>Registrarse - Bob el Alquilador</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet"/>
     <style>
       * {
@@ -15,28 +15,24 @@
       body {
         font-family: 'Inter', sans-serif;
         background: linear-gradient(135deg, #546469, #0c0f10);
-        height: 100vh;
+      min-height: 100vh;
+      padding: 2rem 1rem;
         display: flex;
         justify-content: center;
-        align-items: center;
+      align-items: start;
       }
   
-      .login-card {
+    .signup-card {
         background-color: #fff;
-        padding: 3rem 2rem;
+      padding: 2.5rem 2rem;
         border-radius: 1.5rem;
         box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
         width: 100%;
-        max-width: 400px;
-        transition: 0.3s ease-in-out;
+      max-width: 600px;
+      margin: 2rem auto;
       }
   
-      .login-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
-      }
-  
-      .login-card h2 {
+    .signup-card h2 {
         text-align: center;
         margin-bottom: 1.5rem;
         color: #546469;
@@ -54,7 +50,9 @@
       }
   
       input[type="text"],
-      input[type="password"] {
+    input[type="email"],
+    input[type="password"],
+    input[type="date"] {
         width: 100%;
         padding: 0.8rem;
         border: 1px solid #ccc;
@@ -64,12 +62,14 @@
       }
   
       input[type="text"]:focus,
-      input[type="password"]:focus {
+    input[type="email"]:focus,
+    input[type="password"]:focus,
+    input[type="date"]:focus {
         border-color: #d16c44;
         outline: none;
       }
   
-      .btn-login {
+    .btn-signup {
         background-color: #d16c44;
         color: white;
         padding: 0.9rem;
@@ -80,9 +80,10 @@
         font-size: 1rem;
         cursor: pointer;
         transition: background-color 0.3s ease;
+      margin-top: 1rem;
       }
   
-      .btn-login:hover {
+    .btn-signup:hover {
         background-color: #b95a33;
       }
   
@@ -102,27 +103,98 @@
       .extra a:hover {
         text-decoration: underline;
       }
+
+    .help-text {
+      display: block;
+      margin-top: 0.3rem;
+      font-size: 0.85rem;
+      color: #546469;
+      line-height: 1.4;
+      white-space: pre-line;
+      background-color: rgba(255, 255, 255, 0.1);
+      padding: 0.5rem;
+      border-radius: 0.4rem;
+      border: 1px solid rgba(84, 100, 105, 0.2);
+    }
+
+    .help-text ul {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .errorlist {
+      color: #d16c44;
+      list-style: none;
+      padding: 0.5rem;
+      margin: 0.3rem 0;
+      font-size: 0.9rem;
+      background-color: rgba(209, 108, 68, 0.1);
+      border: 1px solid rgba(209, 108, 68, 0.2);
+      border-radius: 0.4rem;
+    }
+
+    .messages {
+      list-style: none;
+      padding: 0;
+      margin-bottom: 1rem;
+    }
+
+    .messages .success {
+      color: #28a745;
+      padding: 0.5rem;
+      border-radius: 0.3rem;
+      background-color: #d4edda;
+      border: 1px solid #c3e6cb;
+    }
+
+    .messages .error {
+      color: #dc3545;
+      padding: 0.5rem;
+      border-radius: 0.3rem;
+      background-color: #f8d7da;
+      border: 1px solid #f5c6cb;
+    }
     </style>
   </head>
   <body>
-    <div class="login-card">
+  <div class="signup-card">
         <h2>Registrarse</h2>
-        <form method="POST">
+
+    {% if messages %}
+    <ul class="messages">
+      {% for message in messages %}
+      <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+
+    <form method="POST" enctype="multipart/form-data">
           {% csrf_token %}
+      
+      {% for field in form %}
+      {% if not field.is_hidden %}
           <div class="form-group">
-            <label for="username">Nombre de usuario</label>
-            <input type="text" id="username" name="username" required/>
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.help_text %}
+        <small class="help-text">{{ field.help_text }}</small>
+        {% endif %}
+        {% if field.errors %}
+        <ul class="errorlist">
+          {% for error in field.errors %}
+          <li>{{ error }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
           </div>
-          <div class="form-group">
-            <label for="username">Email</label>
-            <input type="text" id="Email" name="Email" required/>
-          </div>
-          <div class="form-group">
-            <label for="password">Contraseña</label>
-            <input type="password" id="password" name="password" required/>
-          </div>
-          <button type="submit" class="btn-login">Crear cuenta</button>
+      {% else %}
+      {{ field }}
+      {% endif %}
+      {% endfor %}
+
+      <button type="submit" class="btn-signup">Registrarme</button>
         </form>
+
         <div class="extra">
           ¿Ya tenés cuenta? <a href="{% url 'login' %}">Iniciar sesión</a>
         </div>        
