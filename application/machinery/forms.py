@@ -1,23 +1,17 @@
 from django import forms
-from django.forms.widgets import Input
+from django.forms.widgets import ClearableFileInput
 from application.models import Maquina, ImagenMaquina
 
-class MultiImageFileInput(Input):
-    input_type = 'file'
-    needs_multipart_form = True
+class MultiImageFileInput(ClearableFileInput):
+    allow_multiple_selected = True
     
-    def __init__(self, attrs=None):
-        if attrs is None:
-            attrs = {}
-        attrs['multiple'] = 'multiple'
-        attrs['accept'] = 'image/*'
-        super().__init__(attrs)
-
     def value_from_datadict(self, data, files, name):
         if hasattr(files, 'getlist'):
             return files.getlist(name)
-        else:
-            return files.get(name)
+        return files.get(name)
+
+    def value_omitted_from_data(self, data, files, name):
+        return False
 
 class ImagenMaquinariaForm(forms.ModelForm):
     es_principal = forms.BooleanField(required=False, label='Imagen principal')
