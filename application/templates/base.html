@@ -1,0 +1,53 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block title %}Bob el Alquilador{% endblock %}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet"/>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #546469, #0c0f10);
+      min-height: 100vh;
+      padding: 2rem 1rem;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    .content {
+      flex: 1;
+    }
+
+    .footer {
+      text-align: center;
+      color: rgba(255, 255, 255, 0.7);
+      margin-top: 2rem;
+      padding: 1rem;
+      font-size: 0.9rem;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+    }
+  </style>
+  <style>
+    {% block styles %}{% endblock %}
+  </style>
+</head>
+<body>
+  <div class="content">
+    {% block content %}{% endblock %}
+  </div>
+  
+  <div class="footer">
+    Desarrollado por ScrumSynergy
+  </div>
+</body>
+</html> 

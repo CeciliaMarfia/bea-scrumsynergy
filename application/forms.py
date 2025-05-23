@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from datetime import date
-from .models import Perfil
+from .models import Perfil, PermisoEspecial
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
@@ -106,4 +106,82 @@ class RegistroUsuarioForm(UserCreationForm):
             perfil.documento_foto = self.cleaned_data['documento_foto']
             perfil.save()
 
+        return user
+
+
+class PermisoEspecialForm(forms.ModelForm):
+    class Meta:
+        model = PermisoEspecial
+        fields = ['nombre', 'descripcion', 'archivo']
+        labels = {
+            'nombre': 'Nombre del permiso',
+            'descripcion': 'Descripción',
+            'archivo': 'Archivo del permiso'
+        }
+        help_texts = {
+            'archivo': 'Sube el archivo del permiso en formato PDF o imagen'
+        }
+
+    def clean_archivo(self):
+        archivo = self.cleaned_data.get('archivo')
+        if archivo:
+            # Obtener la extensión del archivo
+            ext = archivo.name.split('.')[-1].lower()
+            # Verificar que sea un tipo de archivo permitido
+            if ext not in ['pdf', 'jpg', 'jpeg', 'png']:
+                raise forms.ValidationError(
+                    'El archivo debe ser PDF o imagen (jpg, jpeg, png)')
+        return archivo
+
+
+class EditarPerfilForm(forms.ModelForm):
+    first_name = forms.CharField(required=True, label='Nombre')
+    last_name = forms.CharField(required=True, label='Apellido')
+    email = forms.EmailField(required=True, label='Correo electrónico')
+    dni = forms.CharField(required=True, label='DNI')
+    fecha_nacimiento = forms.DateField(
+        required=True,
+        label='Fecha de nacimiento',
+        widget=forms.DateInput(attrs={'type': 'date'})
+    )
+    direccion = forms.CharField(required=True, label='Dirección')
+    documento_foto = forms.ImageField(
+        required=False,
+        label='Foto del documento',
+        help_text='Deja en blanco para mantener la foto actual'
+    )
+
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'email']
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        if user:
+            self.fields['first_name'].initial = user.first_name
+            self.fields['last_name'].initial = user.last_name
+            self.fields['email'].initial = user.email
+            self.fields['dni'].initial = user.perfil.dni
+            self.fields['fecha_nacimiento'].initial = user.perfil.fecha_nacimiento
+            self.fields['direccion'].initial = user.perfil.direccion
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if User.objects.exclude(id=self.instance.id).filter(email=email).exists():
+            raise forms.ValidationError(
+                'Este correo electrónico ya está registrado.')
+        return email
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        if commit:
+            user.save()
+            perfil = user.perfil
+            perfil.dni = self.cleaned_data['dni']
+            perfil.fecha_nacimiento = self.cleaned_data['fecha_nacimiento']
+            perfil.direccion = self.cleaned_data['direccion']
+            if self.cleaned_data.get('documento_foto'):
+                perfil.documento_foto = self.cleaned_data['documento_foto']
+            perfil.save()
         return user

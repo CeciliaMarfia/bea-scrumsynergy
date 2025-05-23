@@ -1,0 +1,165 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Lista de Permisos Especiales - Bob el Alquilador</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet"/>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #546469, #0c0f10);
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+
+    h1 {
+      color: white;
+      font-size: 2rem;
+      margin: 0;
+    }
+
+    .btn-add {
+      background-color: #d16c44;
+      color: white;
+      padding: 0.8rem 1.2rem;
+      border-radius: 0.6rem;
+      text-decoration: none;
+      font-weight: 600;
+      transition: background-color 0.3s;
+    }
+
+    .btn-add:hover {
+      background-color: #b95a33;
+    }
+
+    .permisos-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .permiso-card {
+      background: white;
+      border-radius: 1rem;
+      padding: 1.5rem;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .permiso-card h3 {
+      color: #546469;
+      margin-bottom: 0.5rem;
+      font-size: 1.2rem;
+    }
+
+    .permiso-card p {
+      color: #666;
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+    }
+
+    .permiso-card .fecha {
+      color: #888;
+      font-size: 0.8rem;
+      margin-bottom: 1rem;
+    }
+
+    .btn-download {
+      display: inline-block;
+      background-color: #546469;
+      color: white;
+      padding: 0.6rem 1rem;
+      border-radius: 0.5rem;
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: background-color 0.3s;
+    }
+
+    .btn-download:hover {
+      background-color: #3d484c;
+    }
+
+    .messages {
+      list-style: none;
+      padding: 0;
+      margin-bottom: 2rem;
+    }
+
+    .messages li {
+      padding: 1rem;
+      margin-bottom: 0.5rem;
+      border-radius: 0.6rem;
+      text-align: center;
+      color: white;
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .messages .success {
+      background-color: rgba(209, 108, 68, 0.2);
+      border: 1px solid #d16c44;
+    }
+
+    @media (max-width: 768px) {
+      .header {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+      }
+
+      h1 {
+        font-size: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    {% if messages %}
+    <ul class="messages">
+      {% for message in messages %}
+      <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+
+    <div class="header">
+      <h1>Permisos Especiales</h1>
+      <a href="{% url 'agregar_permiso' %}" class="btn-add">Agregar Permiso</a>
+    </div>
+
+    <div class="permisos-grid">
+      {% for permiso in permisos %}
+      <div class="permiso-card">
+        <h3>{{ permiso.nombre }}</h3>
+        <p>{{ permiso.descripcion }}</p>
+        <div class="fecha">Agregado el {{ permiso.fecha_creacion|date:"d/m/Y H:i" }}</div>
+        <a href="{{ permiso.archivo.url }}" class="btn-download" target="_blank">Descargar archivo</a>
+      </div>
+      {% empty %}
+      <div class="permiso-card" style="grid-column: 1 / -1; text-align: center;">
+        <p>No hay permisos especiales registrados.</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</body>
+</html> 

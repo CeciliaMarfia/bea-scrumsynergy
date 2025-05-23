@@ -1,16 +1,15 @@
-from django.shortcuts import render
-from django.shortcuts import redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
 from django.contrib import messages
 from django.contrib.auth.forms import UserCreationForm
 import os
 from django.conf import settings
 from .machinery.forms import AltaMaquinariaForm
-from .models import Maquina, HomeVideo
+from .models import Maquina, HomeVideo, PermisoEspecial
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
-from .forms import RegistroUsuarioForm
+from .forms import RegistroUsuarioForm, PermisoEspecialForm, EditarPerfilForm
 from django.contrib.auth.decorators import login_required
 
 # Create your views here.
@@ -138,3 +137,54 @@ def logout(request):
     auth_logout(request)
     messages.success(request, '¡Has cerrado sesión exitosamente!')
     return redirect('home')
+
+
+@login_required
+def agregar_permiso(request):
+    if request.method == 'POST':
+        form = PermisoEspecialForm(request.POST, request.FILES)
+        if form.is_valid():
+            permiso = form.save()
+            messages.success(request, 'Permiso agregado exitosamente.')
+            return redirect('perfil')
+    else:
+        form = PermisoEspecialForm()
+    return render(request, 'permisos/agregar_permiso.html', {'form': form})
+
+
+@login_required
+def lista_permisos(request):
+    permisos = PermisoEspecial.objects.all().order_by('-fecha_creacion')
+    return render(request, 'permisos/lista_permisos.html', {'permisos': permisos})
+
+
+@login_required
+def perfil(request):
+    permisos = PermisoEspecial.objects.all().order_by('-fecha_creacion')
+    return render(request, 'perfil.html', {
+        'permisos': permisos
+    })
+
+
+@login_required
+def editar_perfil(request):
+    if request.method == 'POST':
+        form = EditarPerfilForm(
+            request.POST, request.FILES, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Perfil actualizado exitosamente.')
+            return redirect('perfil')
+    else:
+        form = EditarPerfilForm(instance=request.user, user=request.user)
+    return render(request, 'editar_perfil.html', {'form': form})
+
+
+@login_required
+def eliminar_permiso(request, permiso_id):
+    permiso = get_object_or_404(PermisoEspecial, id=permiso_id)
+    nombre_permiso = permiso.nombre
+    permiso.delete()
+    messages.success(
+        request, f'El permiso "{nombre_permiso}" ha sido eliminado.')
+    return redirect('perfil')

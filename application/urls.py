@@ -4,6 +4,13 @@ from application.views import machinery_registration
 
 # -- codigo para el alta de maquinaria --
 urlpatterns = [
-    path('machinery_registration/', views.machinery_registration, name='machinery_registration'),
+    path('machinery_registration/', views.machinery_registration,
+         name='machinery_registration'),
+    path('permisos/', views.lista_permisos, name='lista_permisos'),
+    path('permisos/agregar/', views.agregar_permiso, name='agregar_permiso'),
+    path('permisos/<int:permiso_id>/eliminar/',
+         views.eliminar_permiso, name='eliminar_permiso'),
+    path('perfil/', views.perfil, name='perfil'),
+    path('perfil/editar/', views.editar_perfil, name='editar_perfil'),
 ]
 # ---

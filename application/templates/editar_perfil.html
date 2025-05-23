@@ -1,0 +1,203 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Editar Perfil - Bob el Alquilador</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet"/>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #546469, #0c0f10);
+      min-height: 100vh;
+      padding: 2rem 1rem;
+      display: flex;
+      justify-content: center;
+      align-items: start;
+    }
+
+    .form-card {
+      background-color: #fff;
+      padding: 2.5rem 2rem;
+      border-radius: 1.5rem;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 600px;
+    }
+
+    .form-card h2 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      color: #546469;
+    }
+
+    .form-group {
+      margin-bottom: 1.2rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.4rem;
+      color: #546469;
+      font-weight: 600;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="date"],
+    textarea {
+      width: 100%;
+      padding: 0.8rem;
+      border: 1px solid #ccc;
+      border-radius: 0.6rem;
+      font-size: 1rem;
+      transition: border-color 0.3s;
+    }
+
+    input[type="text"]:focus,
+    input[type="email"]:focus,
+    input[type="date"]:focus,
+    textarea:focus {
+      border-color: #d16c44;
+      outline: none;
+    }
+
+    .help-text {
+      font-size: 0.85rem;
+      color: #666;
+      margin-top: 0.2rem;
+    }
+
+    .errorlist {
+      color: #dc3545;
+      margin-top: 0.2rem;
+      list-style: none;
+      font-size: 0.85rem;
+    }
+
+    .btn-submit {
+      background-color: #d16c44;
+      color: white;
+      padding: 0.9rem;
+      border: none;
+      border-radius: 0.6rem;
+      width: 100%;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      margin-top: 1rem;
+    }
+
+    .btn-submit:hover {
+      background-color: #b95a33;
+    }
+
+    .btn-cancel {
+      display: inline-block;
+      background-color: #546469;
+      color: white;
+      padding: 0.9rem;
+      border: none;
+      border-radius: 0.6rem;
+      width: 100%;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      text-decoration: none;
+      text-align: center;
+      transition: background-color 0.3s ease;
+      margin-top: 1rem;
+    }
+
+    .btn-cancel:hover {
+      background-color: #3d484c;
+    }
+
+    .current-document {
+      margin-top: 0.5rem;
+    }
+
+    .current-document img {
+      max-width: 200px;
+      border-radius: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .messages {
+      list-style: none;
+      padding: 0;
+      margin-bottom: 1rem;
+    }
+
+    .messages li {
+      padding: 0.8rem;
+      margin-bottom: 0.5rem;
+      border-radius: 0.6rem;
+      text-align: center;
+    }
+
+    .messages .success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .messages .error {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+  </style>
+</head>
+<body>
+  <div class="form-card">
+    <h2>Editar Perfil</h2>
+
+    {% if messages %}
+    <ul class="messages">
+      {% for message in messages %}
+      <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+
+    <form method="POST" enctype="multipart/form-data">
+      {% csrf_token %}
+      
+      {% for field in form %}
+      <div class="form-group">
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.help_text %}
+        <small class="help-text">{{ field.help_text }}</small>
+        {% endif %}
+        {% if field.name == 'documento_foto' and user.perfil.documento_foto %}
+        <div class="current-document">
+          <small>Documento actual:</small><br>
+          <img src="{{ user.perfil.documento_foto.url }}" alt="Documento actual">
+        </div>
+        {% endif %}
+        {% if field.errors %}
+        <ul class="errorlist">
+          {% for error in field.errors %}
+          <li>{{ error }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+      {% endfor %}
+
+      <button type="submit" class="btn-submit">Guardar Cambios</button>
+      <a href="{% url 'perfil' %}" class="btn-cancel">Cancelar</a>
+    </form>
+  </div>
+</body>
+</html> 
