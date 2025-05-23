@@ -24,14 +24,22 @@ def guardar_perfil_usuario(sender, instance, **kwargs):
     instance.perfil.save()
 
 class Maquina(models.Model):
+    # opciones para el desplegable
+    TIPO_CHOICES = [
+        ('agricola', 'Agrícola'),
+        ('construccion', 'Construcción'),
+        ('mineria', 'Minería'),
+        ('jardineria', 'Jardinería'),
+        ('otros', 'Otros'),
+    ]
     codigo = models.CharField(max_length=100, unique=True)  # ⬅️ AGREGADO
     nombre = models.CharField(max_length=100)
     marca = models.CharField(max_length=100)
     modelo = models.CharField(max_length=100)
-    año = models.PositiveIntegerField()
+    anio = models.PositiveIntegerField()
     ubicacion = models.CharField(max_length=255)
-    politica_cancelacion = models.DecimalField(max_digits=5, decimal_places=2, help_text='Porcentaje (%) de penalización')
-    tipo = models.CharField(max_length=100)
+    politica_cancelacion = models.DecimalField(max_digits=5, decimal_places=2, help_text='Porcentaje (%) de cancelacion')
+    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES)  # ✅ desplegable
     precio_por_dia = models.DecimalField(max_digits=10, decimal_places=2)
     permisos_requeridos = models.TextField()
     imagen = models.ImageField(upload_to='imagenes_maquinas/', blank=True, null=True)

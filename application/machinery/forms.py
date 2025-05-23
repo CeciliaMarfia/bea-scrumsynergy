@@ -1,16 +1,16 @@
 from django import forms
-from tasks.models import Maquina
+from application.models import Maquina
 
 class AltaMaquinariaForm(forms.ModelForm):
     class Meta:
-        model = Maquina
+        model = Maquina # esto sale de models.py
         fields = '__all__'  
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['politica_cancelacion'].label = "Política de cancelación (%)"
         self.fields['precio_por_dia'].label = "Precio por día ($)"
-        self.fields['año'].label = "Año"
+        self.fields['anio'].label = "Año"
 
     def clean_codigo(self):
         codigo = self.cleaned_data.get('codigo')
