@@ -20,15 +20,31 @@ from application import views
 from django.conf import settings
 from django.conf.urls.static import static
 
-urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('', views.home, name='home'),
+# Definir las URLs de autenticación personalizadas
+auth_urls = [
     path('login/', views.login, name='login'),
     path('logout/', views.logout, name='logout'),
     path('signup/', views.signup, name='signup'),
+    path('verificar-email/<str:token>/', views.verificar_email, name='verificar_email'),
+    path('reenviar-verificacion/', views.reenviar_verificacion, name='reenviar_verificacion'),
+    path('password_reset/', views.CustomPasswordResetView.as_view(), name='password_reset'),
+    path('password_reset/done/', views.CustomPasswordResetDoneView.as_view(), name='password_reset_done'),
+]
+
+urlpatterns = [
+    # URLs de autenticación personalizadas
+    *auth_urls,
+    
+    # URLs de la aplicación
+    path('', views.home, name='home'),
     path('', include('application.urls')),
 ]
 
+# Solo incluir el admin si está habilitado
+if getattr(settings, 'ADMIN_ENABLED', False):
+    urlpatterns += [path('admin/', admin.site.urls)]
+
+# Servir archivos estáticos y media en desarrollo
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL,
                           document_root=settings.STATICFILES_DIRS[0])

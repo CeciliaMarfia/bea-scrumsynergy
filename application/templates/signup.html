@@ -18,9 +18,34 @@
       min-height: 100vh;
       padding: 2rem 1rem;
         display: flex;
-        justify-content: center;
-      align-items: start;
+        flex-direction: column;
+        align-items: center;
       }
+  
+    .nav-buttons {
+      width: 100%;
+      max-width: 600px;
+      margin-bottom: 1rem;
+      display: flex;
+      gap: 1rem;
+    }
+  
+    .btn-nav {
+      display: inline-block;
+      background-color: #546469;
+      color: white;
+      padding: 0.7rem 1.2rem;
+      border-radius: 0.6rem;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 1rem;
+      transition: background-color 0.3s ease;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+  
+    .btn-nav:hover {
+      background-color: #3d484c;
+    }
   
     .signup-card {
         background-color: #fff;
@@ -29,7 +54,7 @@
         box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
         width: 100%;
       max-width: 600px;
-      margin: 2rem auto;
+      margin: 0 auto;
       }
   
     .signup-card h2 {
@@ -157,7 +182,11 @@
     </style>
   </head>
   <body>
-  <div class="signup-card">
+    <div class="nav-buttons">
+      <a href="{% url 'home' %}" class="btn-nav">← Volver al inicio</a>
+      <a href="{% url 'login' %}" class="btn-nav">← Volver al login</a>
+    </div>
+    <div class="signup-card">
         <h2>Registrarse</h2>
 
     {% if messages %}

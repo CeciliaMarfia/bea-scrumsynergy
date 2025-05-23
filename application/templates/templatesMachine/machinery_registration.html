@@ -17,9 +17,30 @@
       background: linear-gradient(135deg, #546469, #0c0f10);
       min-height: 100vh;
       padding: 2rem 1rem;
-      display: flex;
-      justify-content: center;
-      align-items: start;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    .back-btn {
+      display: inline-block;
+      background-color: #546469;
+      color: white;
+      padding: 0.7rem 1.2rem;
+      border-radius: 0.6rem;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 1rem;
+      transition: background-color 0.3s ease;
+      margin-bottom: 1rem;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .back-btn:hover {
+      background-color: #3d484c;
     }
 
     .form-card {
@@ -28,7 +49,6 @@
       border-radius: 1.5rem;
       box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
       width: 100%;
-      max-width: 600px;
       transition: 0.3s ease-in-out;
     }
 
@@ -39,8 +59,8 @@
 
     .form-card h2 {
       text-align: center;
-      margin-bottom: 1.5rem;
       color: #546469;
+      margin-bottom: 1.5rem;
     }
 
     form label {
@@ -96,22 +116,51 @@
       color: #28a745;
       text-align: center;
     }
+
+    .hidden {
+      display: none;
+    }
   </style>
 </head>
 <body>
-  <div class="form-card">
-    <h2>Alta de Maquinaria</h2>
+  <div class="container">
+    <a href="{% url 'home' %}" class="back-btn">← Volver</a>
+    <div class="form-card">
+      <h2>Alta de Maquinaria</h2>
 
-    {% if form.errors %}
-      <p style="color: red; text-align: center;">Por favor corregí los errores debajo:</p>
-    {% endif %}
+      {% if form.errors %}
+        <p style="color: red; text-align: center;">Por favor corregí los errores debajo:</p>
+      {% endif %}
 
-    <form method="post" enctype="multipart/form-data">
-      {% csrf_token %}
-      {{ form.as_p }}
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
 
-      <button type="submit" class="submit-btn">Dar de Alta</button>
-    </form>
+        <button type="submit" class="submit-btn">Dar de Alta</button>
+      </form>
+    </div>
   </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const tipoCancelacionSelect = document.querySelector('#id_tipo_cancelacion');
+      const politicaCancelacionField = document.querySelector('#id_politica_cancelacion').parentNode;
+
+      function updatePoliticaCancelacionVisibility() {
+        const selectedValue = tipoCancelacionSelect.value;
+        if (selectedValue === 'parcial') {
+          politicaCancelacionField.classList.remove('hidden');
+        } else {
+          politicaCancelacionField.classList.add('hidden');
+        }
+      }
+
+      // Initial state
+      updatePoliticaCancelacionVisibility();
+
+      // Add event listener for changes
+      tipoCancelacionSelect.addEventListener('change', updatePoliticaCancelacionVisibility);
+    });
+  </script>
 </body>
 </html> 
