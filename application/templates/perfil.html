@@ -93,7 +93,8 @@
   text-decoration: none;
   font-weight: 600;
   transition: background-color 0.3s;
-  margin-top: 1rem;
+  width: 200px;
+  text-align: center;
 }
 
 .btn-edit:hover {
@@ -109,7 +110,8 @@
   text-decoration: none;
   font-weight: 600;
   transition: background-color 0.3s;
-  margin-left: 1rem;
+  width: 200px;
+  text-align: center;
 }
 
 .btn-add-permiso:hover {
@@ -118,8 +120,9 @@
 
 .actions {
   display: flex;
-  gap: 1rem;
+  gap: 1.5rem;
   margin-top: 2rem;
+  justify-content: center;
 }
 
 .btn-download {
@@ -209,7 +212,12 @@
       </div>
     </div>
     <div class="actions">
-      <a href="{% url 'editar_perfil' %}" class="btn-edit">Editar Perfil</a>
+      <a href="{% url 'editar_perfil' %}" class="btn-edit">
+        <i class="fas fa-user-edit"></i> Editar Perfil
+      </a>
+      <a href="{% url 'mis_reservas' %}" class="btn-add-permiso">
+        <i class="fas fa-calendar-check"></i> Mis Reservas
+      </a>
     </div>
   </div>
 

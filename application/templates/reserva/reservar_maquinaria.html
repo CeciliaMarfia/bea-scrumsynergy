@@ -1,0 +1,254 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block styles %}
+.reserva-container {
+    background-color: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 1rem;
+    padding: 2rem;
+    margin-top: 2rem;
+    color: white;
+}
+
+.maquina-info {
+    background-color: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 0.8rem;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.maquina-info h4 {
+    color: #d16c44;
+    margin-bottom: 1.5rem;
+}
+
+.maquina-info p {
+    margin-bottom: 0.8rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.maquina-info p:last-child {
+    border-bottom: none;
+}
+
+.maquina-imagen {
+    width: 100%;
+    height: 250px;
+    object-fit: cover;
+    border-radius: 0.5rem;
+}
+
+.form-group {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.form-field {
+    flex: 1;
+}
+
+.form-label {
+    color: white;
+    font-weight: bold;
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+    display: block;
+}
+
+.form-control {
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    width: 100%;
+}
+
+.form-control:focus {
+    background-color: rgba(255, 255, 255, 0.15);
+    border-color: #d16c44;
+    color: white;
+    box-shadow: 0 0 0 0.2rem rgba(209, 108, 68, 0.25);
+}
+
+.button-container {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+    margin-top: 2rem;
+}
+
+.btn-reservar {
+    background-color: #d16c44;
+    color: white;
+    border: none;
+    padding: 0.8rem 1.2rem;
+    border-radius: 0.6rem;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.btn-reservar:hover {
+    background-color: #b95a33;
+    transform: translateY(-2px);
+}
+
+.btn-cancelar {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 0.8rem 1.2rem;
+    border-radius: 0.6rem;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.btn-cancelar:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.d-grid {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 2rem;
+}
+
+.page-title {
+    color: white;
+    text-align: center;
+    font-size: 2.5rem;
+    margin-bottom: 2rem;
+    font-weight: bold;
+}
+
+.alert-danger {
+    background-color: rgba(220, 53, 69, 0.2);
+    border: 1px solid rgba(220, 53, 69, 0.3);
+    color: #fff;
+}
+
+.invalid-feedback {
+    color: #ff8d85;
+}
+
+.date-container {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.date-field {
+    flex: 1;
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 0.6rem;
+    padding: 1.5rem;
+}
+
+.date-field label {
+    color: white;
+    font-weight: bold;
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+    display: block;
+}
+
+.date-field .form-control {
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    width: 100%;
+}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="page-title">Reservar Maquinaria</h1>
+
+    <div class="reserva-container">
+        {% if not maquina.esta_disponible %}
+        <div class="alert alert-danger text-center mb-4">
+            <i class="fas fa-exclamation-circle"></i> No hay stock disponible para esta máquina.
+        </div>
+        <div class="d-grid">
+            <a href="{% url 'lista_maquinaria' %}" class="btn-cancelar">
+                <i class="fas fa-arrow-left"></i> Volver a la lista
+            </a>
+        </div>
+        {% else %}
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="maquina-info">
+                    <h4>{{ maquina.nombre }}</h4>
+                    <p><i class="fas fa-barcode"></i> <strong>Código:</strong> {{ maquina.codigo }}</p>
+                    <p><i class="fas fa-industry"></i> <strong>Marca:</strong> {{ maquina.marca }}</p>
+                    <p><i class="fas fa-cog"></i> <strong>Modelo:</strong> {{ maquina.modelo }}</p>
+                    <p><i class="fas fa-dollar-sign"></i> <strong>Precio por día:</strong> ${{ maquina.precio_por_dia }}</p>
+                </div>
+            </div>
+            <div class="col-md-6">
+                {% if maquina.imagenes.exists %}
+                    <img src="{{ maquina.imagenes.first.imagen.url }}" alt="{{ maquina.nombre }}" class="maquina-imagen">
+                {% endif %}
+            </div>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+
+            <div class="date-container">
+                <div class="date-field">
+                    <label for="{{ form.fecha_inicio.id_for_label }}">
+                        <i class="fas fa-calendar-alt"></i> Fecha de inicio
+                    </label>
+                    {{ form.fecha_inicio }}
+                    {% if form.fecha_inicio.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.fecha_inicio.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="date-field">
+                    <label for="{{ form.fecha_fin.id_for_label }}">
+                        <i class="fas fa-calendar-alt"></i> Fecha de fin
+                    </label>
+                    {{ form.fecha_fin }}
+                    {% if form.fecha_fin.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.fecha_fin.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="d-grid">
+                <button type="submit" class="btn-reservar">
+                    <i class="fas fa-check-circle"></i> Confirmar Reserva
+                </button>
+                <a href="{% url 'lista_maquinaria' %}" class="btn-cancelar">
+                    <i class="fas fa-times-circle"></i> Cancelar
+                </a>
+            </div>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://kit.fontawesome.com/a076d05399.js"></script>
+{% endblock %} 

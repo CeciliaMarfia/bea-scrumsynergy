@@ -12,5 +12,8 @@ urlpatterns = [
          views.eliminar_permiso, name='eliminar_permiso'),
     path('perfil/', views.perfil, name='perfil'),
     path('perfil/editar/', views.editar_perfil, name='editar_perfil'),
+    path('maquinaria/<int:maquina_id>/reservar/', views.reservar_maquinaria, name='reservar_maquinaria'),
+    path('maquinaria/', views.lista_maquinaria, name='lista_maquinaria'),
+    path('mis-reservas/', views.mis_reservas, name='mis_reservas'),
 ]
 # ---

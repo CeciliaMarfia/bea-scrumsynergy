@@ -1,0 +1,257 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block styles %}
+.reservas-container {
+    background-color: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 1rem;
+    padding: 2rem;
+    margin-top: 2rem;
+}
+
+.page-title {
+    color: white;
+    text-align: center;
+    font-size: 2.5rem;
+    margin-bottom: 2rem;
+    font-weight: bold;
+}
+
+.reserva-card {
+    background-color: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 0.8rem;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    color: white;
+    transition: transform 0.3s ease;
+}
+
+.reserva-card:hover {
+    transform: translateY(-5px);
+}
+
+.reserva-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.maquina-nombre {
+    font-size: 1.5rem;
+    color: #d16c44;
+    font-weight: bold;
+}
+
+.estado-reserva {
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: bold;
+}
+
+.estado-activa {
+    background-color: rgba(40, 167, 69, 0.2);
+    border: 1px solid #28a745;
+}
+
+.estado-finalizada {
+    background-color: rgba(108, 117, 125, 0.2);
+    border: 1px solid #6c757d;
+}
+
+.estado-cancelada {
+    background-color: rgba(220, 53, 69, 0.2);
+    border: 1px solid #dc3545;
+}
+
+.reserva-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.info-label {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 0.3rem;
+}
+
+.info-value {
+    font-size: 1.1rem;
+}
+
+.no-reservas {
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 0.8rem;
+    padding: 3rem 2rem;
+    text-align: center;
+    color: white;
+}
+
+.no-reservas i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    color: #d16c44;
+}
+
+.no-reservas h3 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.no-reservas p {
+    font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.btn-nueva-reserva {
+    display: inline-block;
+    background-color: #d16c44;
+    color: white;
+    padding: 0.8rem 1.2rem;
+    border-radius: 0.6rem;
+    text-decoration: none;
+    font-weight: bold;
+    margin-top: 1.5rem;
+    transition: all 0.3s ease;
+    width: 200px;
+}
+
+.btn-nueva-reserva:hover {
+    background-color: #b95a33;
+    color: white;
+    transform: translateY(-2px);
+}
+
+.messages {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 2rem;
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto 2rem auto;
+}
+
+.messages li {
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    border-radius: 0.6rem;
+    text-align: center;
+    background-color: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.messages .success {
+    background-color: rgba(40, 167, 69, 0.2);
+    border-color: #28a745;
+}
+
+.messages .error {
+    background-color: rgba(220, 53, 69, 0.2);
+    border-color: #dc3545;
+}
+
+.header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.btn-nueva-reserva-header {
+    display: inline-block;
+    background-color: #d16c44;
+    color: white;
+    padding: 0.8rem 1.2rem;
+    border-radius: 0.6rem;
+    text-decoration: none;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.btn-nueva-reserva-header:hover {
+    background-color: #b95a33;
+    color: white;
+    transform: translateY(-2px);
+}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    {% if messages %}
+    <ul class="messages">
+        {% for message in messages %}
+        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    <div class="header-container">
+        <h1 class="page-title">Mis Reservas</h1>
+        <a href="{% url 'lista_maquinaria' %}" class="btn-nueva-reserva-header">
+            <i class="fas fa-plus-circle"></i> Nueva Reserva
+        </a>
+    </div>
+
+    {% if reservas %}
+    <div class="reservas-container">
+        {% for reserva in reservas %}
+        <div class="reserva-card">
+            <div class="reserva-header">
+                <div class="maquina-nombre">{{ reserva.maquina.nombre }}</div>
+                <div class="estado-reserva {% if reserva.estado == 'Activa' %}estado-activa{% elif reserva.estado == 'Finalizada' %}estado-finalizada{% else %}estado-cancelada{% endif %}">
+                    {{ reserva.get_estado_display }}
+                </div>
+            </div>
+            <div class="reserva-info">
+                <div class="info-item">
+                    <span class="info-label">Fecha de inicio</span>
+                    <span class="info-value">{{ reserva.fecha_inicio|date:"d/m/Y" }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Fecha de fin</span>
+                    <span class="info-value">{{ reserva.fecha_fin|date:"d/m/Y" }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Precio por día</span>
+                    <span class="info-value">${{ reserva.maquina.precio_por_dia }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Total</span>
+                    <span class="info-value">${{ reserva.precio_total }}</span>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="no-reservas">
+        <i class="fas fa-calendar-times"></i>
+        <h3>No tienes reservas activas</h3>
+        <p>¡Comienza alquilando una máquina!</p>
+        <div class="text-center">
+            <a href="{% url 'lista_maquinaria' %}" class="btn-nueva-reserva">
+                <i class="fas fa-plus-circle"></i> Nueva Reserva
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://kit.fontawesome.com/a076d05399.js"></script>
+{% endblock %} 

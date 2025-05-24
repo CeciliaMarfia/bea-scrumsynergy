@@ -5,11 +5,11 @@ from django.contrib.auth.forms import UserCreationForm
 import os
 from django.conf import settings
 from .machinery.forms import AltaMaquinariaForm
-from .models import Maquina, HomeVideo, PermisoEspecial, Perfil
+from .models import Maquina, HomeVideo, PermisoEspecial, Perfil, Reserva
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
-from .forms import RegistroUsuarioForm, PermisoEspecialForm, EditarPerfilForm
+from .forms import RegistroUsuarioForm, PermisoEspecialForm, EditarPerfilForm, ReservaMaquinariaForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import PasswordResetView, PasswordResetDoneView
 from django.contrib.auth.models import User
@@ -20,6 +20,7 @@ import string
 import uuid
 from django.urls import reverse
 from django.contrib.sites.shortcuts import get_current_site
+from django.db import transaction
 
 # Create your views here.
 
@@ -343,3 +344,55 @@ def reenviar_verificacion(request):
             messages.error(request, 'No existe una cuenta con ese correo electrónico.')
     
     return redirect('login')
+
+
+@login_required
+def reservar_maquinaria(request, maquina_id):
+    maquina = get_object_or_404(Maquina, id=maquina_id)
+    
+    if not maquina.esta_disponible():
+        messages.error(request, 'No hay stock disponible para esta máquina.')
+        return redirect('lista_maquinaria')
+
+    if request.method == 'POST':
+        form = ReservaMaquinariaForm(request.POST)
+        if form.is_valid():
+            reserva = form.save(commit=False)
+            reserva.maquina = maquina
+            reserva.cliente = request.user
+            
+            # Calcular el monto total
+            dias = (form.cleaned_data['fecha_fin'] - form.cleaned_data['fecha_inicio']).days + 1
+            reserva.monto_total = maquina.precio_por_dia * dias
+            
+            try:
+                with transaction.atomic():
+                    reserva.save()
+                    messages.success(request, f'Reserva creada exitosamente. Número de reserva: {reserva.numero_reserva}')
+                    return redirect('mis_reservas')
+            except Exception as e:
+                messages.error(request, 'Error al crear la reserva. Por favor, intente nuevamente.')
+                return redirect('lista_maquinaria')
+    else:
+        form = ReservaMaquinariaForm()
+
+    return render(request, 'reserva/reservar_maquinaria.html', {
+        'form': form,
+        'maquina': maquina
+    })
+
+
+@login_required
+def lista_maquinaria(request):
+    maquinas = Maquina.objects.filter(estado='disponible', stock__gt=0)
+    return render(request, 'listados/lista_maquinaria.html', {
+        'maquinas': maquinas
+    })
+
+
+@login_required
+def mis_reservas(request):
+    reservas = Reserva.objects.filter(cliente=request.user).order_by('-fecha_reserva')
+    return render(request, 'reserva/mis_reservas.html', {
+        'reservas': reservas
+    })

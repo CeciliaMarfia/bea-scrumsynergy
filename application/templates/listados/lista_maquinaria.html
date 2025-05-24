@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block styles %}
+.maquinarias-container {
+    background-color: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 1rem;
+    padding: 2rem;
+    margin-top: 2rem;
+}
+
+.maquinaria-card {
+    background-color: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 0.8rem;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    margin-bottom: 2rem;
+}
+
+.maquinaria-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.maquinaria-card .card-body {
+    padding: 1.5rem;
+    color: white;
+}
+
+.maquinaria-card .card-title {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+    color: #d16c44;
+}
+
+.maquinaria-info {
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+}
+
+.maquinaria-info p {
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.maquinaria-info p:last-child {
+    border-bottom: none;
+}
+
+.btn-detalle, .btn-reservar {
+    display: inline-block;
+    width: 200px;
+    padding: 0.8rem 1.2rem;
+    border-radius: 0.6rem;
+    text-decoration: none;
+    font-weight: bold;
+    text-align: center;
+    transition: all 0.3s ease;
+    margin: 0 auto;
+}
+
+.btn-detalle {
+    background-color: rgba(255, 255, 255, 0.15);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    margin-bottom: 0.8rem;
+}
+
+.btn-detalle:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+    transform: translateY(-2px);
+}
+
+.btn-reservar {
+    background-color: #d16c44;
+    color: white;
+    border: none;
+}
+
+.btn-reservar:hover {
+    background-color: #b95a33;
+    color: white;
+    transform: translateY(-2px);
+}
+
+.card-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 1.5rem;
+}
+
+.maquinaria-img {
+    width: 100%;
+    height: 250px;
+    object-fit: cover;
+}
+
+.no-maquinarias {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: white;
+    padding: 2rem;
+    border-radius: 0.8rem;
+    text-align: center;
+    margin-top: 2rem;
+}
+
+.page-title {
+    color: white;
+    text-align: center;
+    font-size: 2.5rem;
+    margin-bottom: 2rem;
+    font-weight: bold;
+}
+
+.maquinarias-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 2rem;
+    padding: 1rem;
+}
+
+@media (max-width: 768px) {
+    .maquinarias-grid {
+        grid-template-columns: 1fr;
+    }
+}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="page-title">Maquinarias Disponibles</h1>
+
+    {% if maquinas %}
+    <div class="maquinarias-container">
+        <div class="maquinarias-grid">
+            {% for maquina in maquinas %}
+            <div class="maquinaria-card">
+                {% if maquina.imagenes.exists %}
+                <img src="{{ maquina.imagenes.first.imagen.url }}" class="maquinaria-img" alt="{{ maquina.nombre }}">
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ maquina.nombre }}</h5>
+                    <div class="maquinaria-info">
+                        <p><i class="fas fa-barcode"></i> <strong>Código:</strong> {{ maquina.codigo }}</p>
+                        <p><i class="fas fa-industry"></i> <strong>Marca:</strong> {{ maquina.marca }}</p>
+                        <p><i class="fas fa-cog"></i> <strong>Modelo:</strong> {{ maquina.modelo }}</p>
+                        <p><i class="fas fa-dollar-sign"></i> <strong>Precio por día:</strong> ${{ maquina.precio_por_dia }}</p>
+                        <p><i class="fas fa-boxes"></i> <strong>Stock disponible:</strong> {{ maquina.stock }}</p>
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn-detalle">
+                            <i class="fas fa-info-circle"></i> Mostrar Detalle
+                        </button>
+                        <a href="{% url 'reservar_maquinaria' maquina.id %}" class="btn-reservar">
+                            <i class="fas fa-calendar-plus"></i> Reservar
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% else %}
+    <div class="no-maquinarias">
+        <i class="fas fa-exclamation-circle fa-3x mb-3"></i>
+        <h3>No hay maquinarias disponibles en este momento</h3>
+        <p>Por favor, vuelve a consultar más tarde.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://kit.fontawesome.com/a076d05399.js"></script>
+{% endblock %} 

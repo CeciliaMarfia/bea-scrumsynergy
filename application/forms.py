@@ -2,9 +2,10 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from datetime import date
-from .models import Perfil, PermisoEspecial
+from .models import Perfil, PermisoEspecial, Reserva
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
+from django.utils import timezone
 
 
 class RegistroUsuarioForm(UserCreationForm):
@@ -185,3 +186,26 @@ class EditarPerfilForm(forms.ModelForm):
                 perfil.documento_foto = self.cleaned_data['documento_foto']
             perfil.save()
         return user
+
+
+class ReservaMaquinariaForm(forms.ModelForm):
+    class Meta:
+        model = Reserva
+        fields = ['fecha_inicio', 'fecha_fin']
+        widgets = {
+            'fecha_inicio': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'fecha_fin': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        fecha_inicio = cleaned_data.get('fecha_inicio')
+        fecha_fin = cleaned_data.get('fecha_fin')
+
+        if fecha_inicio and fecha_fin:
+            if fecha_inicio < timezone.now().date():
+                raise forms.ValidationError('La fecha de inicio no puede ser anterior a la fecha actual.')
+            if fecha_fin < fecha_inicio:
+                raise forms.ValidationError('La fecha de fin no puede ser anterior a la fecha de inicio.')
+
+        return cleaned_data
