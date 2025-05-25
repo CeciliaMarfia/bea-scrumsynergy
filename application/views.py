@@ -424,10 +424,46 @@ def reservar_maquinaria(request, maquina_id):
 
 @login_required
 def lista_maquinaria(request):
-    maquinas = Maquina.objects.filter(estado='disponible').order_by('-id')
-    return render(request, 'listados/lista_maquinaria.html', {
-        'maquinas': maquinas
-    })
+    # Obtener todas las máquinas disponibles como base
+    maquinas = Maquina.objects.filter(estado='disponible')
+    
+    # Obtener los filtros seleccionados
+    ubicaciones_seleccionadas = request.GET.getlist('ubicacion')
+    tipos_seleccionados = request.GET.getlist('tipo')
+    
+    # Aplicar filtros si están presentes
+    if ubicaciones_seleccionadas:
+        maquinas = maquinas.filter(ubicacion__in=ubicaciones_seleccionadas)
+    
+    if tipos_seleccionados:
+        maquinas = maquinas.filter(tipo__in=tipos_seleccionados)
+    
+    # Obtener todas las ubicaciones y contar máquinas por ubicación
+    todas_las_maquinas = Maquina.objects.filter(estado='disponible')
+    ubicaciones_con_conteo = {}
+    for ubicacion in todas_las_maquinas.values_list('ubicacion', flat=True).distinct():
+        ubicaciones_con_conteo[ubicacion] = todas_las_maquinas.filter(ubicacion=ubicacion).count()
+    
+    # Obtener todos los tipos y contar máquinas por tipo
+    tipos = dict(Maquina.TIPO_CHOICES)
+    tipos_con_conteo = {}
+    for tipo_value, tipo_label in tipos.items():
+        tipos_con_conteo[tipo_value] = todas_las_maquinas.filter(tipo=tipo_value).count()
+    
+    # Ordenar por ID descendente
+    maquinas = maquinas.order_by('-id')
+    
+    context = {
+        'maquinas': maquinas,
+        'ubicaciones': ubicaciones_con_conteo.keys(),
+        'ubicaciones_con_conteo': ubicaciones_con_conteo,
+        'tipos': tipos.items(),
+        'tipos_con_conteo': tipos_con_conteo,
+        'ubicaciones_seleccionadas': ubicaciones_seleccionadas,
+        'tipos_seleccionados': tipos_seleccionados,
+    }
+    
+    return render(request, 'listados/lista_maquinaria.html', context)
 
 
 @login_required

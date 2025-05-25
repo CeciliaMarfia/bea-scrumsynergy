@@ -1,13 +1,109 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 {% block styles %}
+.container {
+    display: flex;
+    gap: 2rem;
+    padding: 2rem;
+}
+
+.sidebar {
+    flex: 0 0 300px;
+    background-color: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 1rem;
+    padding: 1.5rem;
+}
+
+.main-content {
+    flex: 1;
+}
+
+.page-title {
+    color: white;
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    font-weight: bold;
+}
+
+.results-count {
+    color: #d16c44;
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+}
+
+.filter-section {
+    margin-bottom: 2rem;
+}
+
+.filter-title {
+    color: white;
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+    font-weight: 500;
+}
+
+.filter-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+}
+
+.filter-item {
+    margin-bottom: 0.5rem;
+    width: 100%;
+}
+
+.filter-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    width: 100%;
+    border: 2px solid transparent;
+    user-select: none;
+}
+
+.filter-link:hover {
+    background-color: rgba(209, 108, 68, 0.1);
+    color: #d16c44;
+}
+
+.filter-link.active {
+    background-color: rgba(209, 108, 68, 0.15) !important;
+    color: #d16c44 !important;
+    border: 2px solid #d16c44 !important;
+    font-weight: bold !important;
+}
+
+.filter-count {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.filter-link:hover .filter-count {
+    color: rgba(209, 108, 68, 0.7);
+}
+
+.filter-link.active .filter-count {
+    color: #d16c44;
+    font-weight: bold;
+}
+
 .maquinarias-container {
     background-color: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
     border-radius: 1rem;
     padding: 2rem;
-    margin-top: 2rem;
 }
 
 .maquinaria-card {
@@ -27,28 +123,53 @@
 .maquinaria-card .card-body {
     padding: 1.5rem;
     color: white;
+    text-align: center;
 }
 
 .maquinaria-card .card-title {
     font-size: 1.5rem;
     font-weight: bold;
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
     color: #d16c44;
 }
 
-.maquinaria-info {
-    margin-bottom: 0.5rem;
-    font-size: 1.1rem;
-}
-
-.maquinaria-info p {
+.maquinaria-ubicacion {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    color: rgba(255, 255, 255, 0.7);
     margin-bottom: 1rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 0.9rem;
 }
 
-.maquinaria-info p:last-child {
-    border-bottom: none;
+.maquinaria-ubicacion i {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.maquinaria-precio {
+    font-size: 1.3rem;
+    color: white;
+    margin-bottom: 1.5rem;
+}
+
+.maquinaria-precio .precio-valor {
+    font-weight: bold;
+    color: #d16c44;
+}
+
+.maquinaria-img {
+    width: 100%;
+    height: 250px;
+    object-fit: cover;
+}
+
+.card-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
 }
 
 .btn-detalle, .btn-reservar {
@@ -60,14 +181,12 @@
     font-weight: bold;
     text-align: center;
     transition: all 0.3s ease;
-    margin: 0 auto;
 }
 
 .btn-detalle {
     background-color: rgba(255, 255, 255, 0.15);
     color: white;
     border: 1px solid rgba(255, 255, 255, 0.2);
-    margin-bottom: 0.8rem;
 }
 
 .btn-detalle:hover {
@@ -88,19 +207,6 @@
     transform: translateY(-2px);
 }
 
-.card-actions {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-top: 1.5rem;
-}
-
-.maquinaria-img {
-    width: 100%;
-    height: 250px;
-    object-fit: cover;
-}
-
 .no-maquinarias {
     background-color: rgba(255, 255, 255, 0.1);
     color: white;
@@ -108,14 +214,6 @@
     border-radius: 0.8rem;
     text-align: center;
     margin-top: 2rem;
-}
-
-.page-title {
-    color: white;
-    text-align: center;
-    font-size: 2.5rem;
-    margin-bottom: 2rem;
-    font-weight: bold;
 }
 
 .maquinarias-grid {
@@ -130,50 +228,188 @@
         grid-template-columns: 1fr;
     }
 }
+
+.btn-filter {
+    padding: 0.5rem 1.5rem;
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 1rem;
+    font-family: inherit;
+}
+
+.btn-apply {
+    background-color: #d16c44;
+    color: white;
+}
+
+.btn-clear {
+    background-color: #546469;
+    color: white;
+}
+
+.btn-filter:hover {
+    transform: translateY(-2px);
+}
+
+.btn-apply:hover {
+    background-color: #b95a33;
+}
+
+.btn-clear:hover {
+    background-color: #3d484c;
+}
 {% endblock %}
 
 {% block content %}
 <div class="container">
-    <h1 class="page-title">Maquinarias Disponibles</h1>
+    <aside class="sidebar">
+        <form method="get" id="filterForm" action="{% url 'lista_maquinaria' %}">
+            {% if ubicaciones %}
+            <div class="filter-section">
+                <h3 class="filter-title">Ubicación</h3>
+                <ul class="filter-list">
+                    {% for ubicacion in ubicaciones %}
+                    <li class="filter-item">
+                        <label class="filter-link {% if ubicacion in ubicaciones_seleccionadas %}active{% endif %}">
+                            <input type="checkbox" 
+                                   name="ubicacion" 
+                                   value="{{ ubicacion }}"
+                                   {% if ubicacion in ubicaciones_seleccionadas %}checked{% endif %}
+                                   style="display: none;">
+                            <span>{{ ubicacion }}</span>
+                            <span class="filter-count">({{ ubicaciones_con_conteo|get_item:ubicacion }})</span>
+                        </label>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
 
-    {% if maquinas %}
-    <div class="maquinarias-container">
-        <div class="maquinarias-grid">
-            {% for maquina in maquinas %}
-            <div class="maquinaria-card">
-                {% if maquina.imagenes.exists %}
-                <img src="{{ maquina.imagenes.first.imagen.url }}" class="maquinaria-img" alt="{{ maquina.nombre }}">
-                {% endif %}
-                <div class="card-body">
-                    <h5 class="card-title">{{ maquina.nombre }}</h5>
-                    <div class="maquinaria-info">
-                        <p><i class="fas fa-barcode"></i> <strong>Código:</strong> {{ maquina.codigo }}</p>
-                        <p><i class="fas fa-industry"></i> <strong>Marca:</strong> {{ maquina.marca }}</p>
-                        <p><i class="fas fa-cog"></i> <strong>Modelo:</strong> {{ maquina.modelo }}</p>
-                        <p><i class="fas fa-dollar-sign"></i> <strong>Precio por día:</strong> ${{ maquina.precio_por_dia }}</p>
-                        <p><i class="fas fa-boxes"></i> <strong>Stock disponible:</strong> {{ maquina.stock }}</p>
-                    </div>
-                    <div class="card-actions">
-                        <button class="btn-detalle">
-                            <i class="fas fa-info-circle"></i> Mostrar Detalle
-                        </button>
-                        <a href="{% url 'reservar_maquinaria' maquina.id %}" class="btn-reservar">
-                            <i class="fas fa-calendar-plus"></i> Reservar
-                        </a>
+            <div class="filter-section">
+                <h3 class="filter-title">Categorías</h3>
+                <ul class="filter-list">
+                    {% for tipo_value, tipo_label in tipos %}
+                    <li class="filter-item">
+                        <label class="filter-link {% if tipo_value in tipos_seleccionados %}active{% endif %}">
+                            <input type="checkbox" 
+                                   name="tipo" 
+                                   value="{{ tipo_value }}"
+                                   {% if tipo_value in tipos_seleccionados %}checked{% endif %}
+                                   style="display: none;">
+                            <span>{{ tipo_label }}</span>
+                            <span class="filter-count">({{ tipos_con_conteo|get_item:tipo_value }})</span>
+                        </label>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div style="margin-top: 2rem;">
+                <button type="submit" class="btn-filter btn-apply" style="width: 100%;">
+                    <i class="fas fa-filter"></i> Aplicar filtros
+                </button>
+                <a href="{% url 'lista_maquinaria' %}" class="btn-filter btn-clear" style="width: 100%; margin-top: 1rem;">
+                    <i class="fas fa-times"></i> Limpiar filtros
+                </a>
+            </div>
+        </form>
+    </aside>
+
+    <main class="main-content">
+        <h1 class="page-title">Maquinarias Disponibles</h1>
+        <div class="results-count">{{ maquinas|length }} resultados</div>
+
+        {% if maquinas %}
+        <div class="maquinarias-container">
+            <div class="maquinarias-grid">
+                {% for maquina in maquinas %}
+                <div class="maquinaria-card">
+                    {% if maquina.imagenes.exists %}
+                    <img src="{{ maquina.imagenes.first.imagen.url }}" class="maquinaria-img" alt="{{ maquina.nombre }}">
+                    {% endif %}
+                    <div class="card-body">
+                        <h5 class="card-title">{{ maquina.nombre }}</h5>
+                        <div class="maquinaria-ubicacion">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>{{ maquina.ubicacion }}</span>
+                        </div>
+                        <div class="maquinaria-precio">
+                            <span class="precio-valor">${{ maquina.precio_por_dia }}</span> por día
+                        </div>
+                        <div class="card-actions">
+                            <button class="btn-detalle">
+                                <i class="fas fa-info-circle"></i> Mostrar Detalle
+                            </button>
+                            <a href="{% url 'reservar_maquinaria' maquina.id %}" class="btn-reservar">
+                                <i class="fas fa-calendar-plus"></i> Reservar
+                            </a>
+                        </div>
                     </div>
                 </div>
+                {% endfor %}
             </div>
-            {% endfor %}
         </div>
-    </div>
-    {% else %}
-    <div class="no-maquinarias">
-        <i class="fas fa-exclamation-circle fa-3x mb-3"></i>
-        <h3>No hay maquinarias disponibles en este momento</h3>
-        <p>Por favor, vuelve a consultar más tarde.</p>
-    </div>
-    {% endif %}
+        {% else %}
+        <div class="no-maquinarias">
+            <i class="fas fa-exclamation-circle fa-3x mb-3"></i>
+            <h3>No hay maquinarias disponibles en este momento</h3>
+            <p>Por favor, vuelve a consultar más tarde.</p>
+        </div>
+        {% endif %}
+    </main>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Funcionalidad de los filtros
+    const filterItems = document.querySelectorAll('.filter-item input[type="checkbox"]');
+    
+    filterItems.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const filterLink = this.closest('.filter-link');
+            if (this.checked) {
+                filterLink.classList.add('active');
+            } else {
+                filterLink.classList.remove('active');
+            }
+        });
+    });
+});
+
+// Funciones para el modal
+function showModal(modalId) {
+    document.getElementById(modalId).style.display = 'block';
+    document.body.style.overflow = 'hidden';
+}
+
+function closeModal(modalId) {
+    document.getElementById(modalId).style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+function cambiarImagenPrincipal(imgElement, modalId) {
+    const modal = document.getElementById(modalId);
+    const imagenPrincipal = modal.querySelector('.imagen-principal');
+    const srcTemp = imagenPrincipal.src;
+    imagenPrincipal.src = imgElement.src;
+    imgElement.src = srcTemp;
+}
+
+// Cerrar modal al hacer clic fuera de él
+window.onclick = function(event) {
+    if (event.target.classList.contains('modal')) {
+        event.target.style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
+}
+</script>
 {% endblock %}
 
 {% block extra_js %}
