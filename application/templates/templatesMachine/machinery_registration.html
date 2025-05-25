@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Alta de Maquinaria</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
   <style>
     * {
       box-sizing: border-box;
@@ -71,7 +72,8 @@
     }
 
     form input,
-    form select {
+    form select,
+    form textarea {
       width: 100%;
       padding: 0.8rem;
       border: 1px solid #ccc;
@@ -82,9 +84,22 @@
     }
 
     form input:focus,
-    form select:focus {
+    form select:focus,
+    form textarea:focus {
       border-color: #d16c44;
       outline: none;
+    }
+
+    .helptext {
+      display: block;
+      font-size: 0.9rem;
+      color: #666;
+      margin-top: 0.3rem;
+      margin-bottom: 1rem;
+    }
+
+    form p {
+      margin-bottom: 1.5rem;
     }
 
     .submit-btn {
@@ -106,10 +121,15 @@
     }
 
     .errorlist {
-      color: red;
-      margin: 0.5rem 0 0.2rem 0;
+      color: #dc3545;
+      margin: 0.5rem 0;
+      padding-left: 0;
       list-style: none;
       font-size: 0.9rem;
+    }
+
+    .errorlist li {
+      margin-bottom: 0.3rem;
     }
 
     .success {
@@ -120,47 +140,237 @@
     .hidden {
       display: none;
     }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: #546469;
+      font-weight: 600;
+    }
+
+    .form-group input[type="file"] {
+      padding: 1rem;
+      border: 2px solid #ccc;
+      border-radius: 0.6rem;
+      width: 100%;
+      cursor: pointer;
+      background-color: #f8f9fa;
+      transition: all 0.3s ease;
+    }
+
+    .form-group input[type="file"]:hover {
+      border-color: #d16c44;
+      background-color: #fff;
+    }
+
+    .selected-files {
+      margin-top: 1rem;
+      padding: 0.5rem;
+      background-color: #fff;
+      border-radius: 0.4rem;
+      display: none;
+    }
+
+    .custom-file-upload {
+      border: 2px dashed #ccc;
+      border-radius: 0.6rem;
+      padding: 1rem;
+      text-align: center;
+      cursor: pointer;
+      margin-top: 0.5rem;
+      transition: all 0.3s ease;
+    }
+
+    .custom-file-upload:hover {
+      border-color: #d16c44;
+      background-color: #f8f9fa;
+    }
+
+    #preview-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .image-preview {
+      position: relative;
+      padding: 0.5rem;
+      border: 1px solid #ddd;
+      border-radius: 0.4rem;
+      text-align: center;
+    }
+
+    .image-preview img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 0.3rem;
+    }
+
+    .image-preview span {
+      display: block;
+      font-size: 0.8rem;
+      margin-top: 0.5rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
   </style>
-</head>
-<body>
-  <div class="container">
-    <a href="{% url 'home' %}" class="back-btn">← Volver</a>
-    <div class="form-card">
-      <h2>Alta de Maquinaria</h2>
-
-      {% if form.errors %}
-        <p style="color: red; text-align: center;">Por favor corregí los errores debajo:</p>
-      {% endif %}
-
-      <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        {{ form.as_p }}
-
-        <button type="submit" class="submit-btn">Dar de Alta</button>
-      </form>
-    </div>
-  </div>
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
+      const form = document.querySelector('form');
+      const imageInput = document.querySelector('input[name="imagenes"]');
+      const previewContainer = document.getElementById('preview-container');
+      const selectedFilesCount = document.getElementById('selected-files-count');
       const tipoCancelacionSelect = document.querySelector('#id_tipo_cancelacion');
-      const politicaCancelacionField = document.querySelector('#id_politica_cancelacion').parentNode;
+      const politicaCancelacionGroup = document.querySelector('#id_politica_cancelacion').closest('.form-group');
 
+      // Función para manejar la visibilidad del campo de política de cancelación
       function updatePoliticaCancelacionVisibility() {
         const selectedValue = tipoCancelacionSelect.value;
+        const politicaInput = document.querySelector('#id_politica_cancelacion');
+
         if (selectedValue === 'parcial') {
-          politicaCancelacionField.classList.remove('hidden');
+          politicaCancelacionGroup.style.display = 'block';
+          politicaInput.required = true;
         } else {
-          politicaCancelacionField.classList.add('hidden');
+          politicaCancelacionGroup.style.display = 'none';
+          politicaInput.required = false;
+          if (selectedValue === 'total') {
+            politicaInput.value = '100';
+          } else if (selectedValue === 'sin_reembolso') {
+            politicaInput.value = '0';
+          }
         }
       }
 
-      // Initial state
+      // Inicializar el estado del campo
       updatePoliticaCancelacionVisibility();
 
-      // Add event listener for changes
+      // Agregar listener para cambios en el tipo de cancelación
       tipoCancelacionSelect.addEventListener('change', updatePoliticaCancelacionVisibility);
+
+      // Manejo de imágenes
+      imageInput.addEventListener('change', function(e) {
+        previewContainer.innerHTML = '';
+        const files = Array.from(e.target.files);
+        
+        // Validar el número de archivos
+        if (files.length > 10) {
+          alert('Por favor seleccione un máximo de 10 imágenes');
+          imageInput.value = '';
+          return;
+        }
+
+        // Validar el tamaño y tipo de cada archivo
+        const invalidFiles = files.filter(file => {
+          const isImage = file.type.startsWith('image/');
+          const isValidSize = file.size <= 5 * 1024 * 1024; // 5MB
+          return !isImage || !isValidSize;
+        });
+
+        if (invalidFiles.length > 0) {
+          alert('Algunas imágenes no son válidas. Asegúrese de que sean imágenes y no excedan 5MB cada una.');
+          imageInput.value = '';
+          return;
+        }
+
+        // Mostrar previsualizaciones
+        files.forEach(file => {
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            const preview = document.createElement('div');
+            preview.className = 'image-preview';
+            preview.innerHTML = `
+              <img src="${e.target.result}" alt="Preview">
+              <div class="image-name">${file.name}</div>
+            `;
+            previewContainer.appendChild(preview);
+          };
+          reader.readAsDataURL(file);
+        });
+
+        selectedFilesCount.textContent = `${files.length} archivo(s) seleccionado(s)`;
+      });
+
+      // Validación del formulario
+      form.addEventListener('submit', function(e) {
+        const files = imageInput.files;
+        if (files.length === 0) {
+          e.preventDefault();
+          alert('Por favor seleccione al menos una imagen');
+          return;
+        }
+
+        // Validación adicional para política de cancelación parcial
+        const tipoCancelacion = tipoCancelacionSelect.value;
+        const politicaInput = document.querySelector('#id_politica_cancelacion');
+        
+        if (tipoCancelacion === 'parcial') {
+          const porcentaje = parseFloat(politicaInput.value);
+          if (isNaN(porcentaje) || porcentaje < 10 || porcentaje > 90) {
+            e.preventDefault();
+            alert('El porcentaje de reembolso parcial debe estar entre 10% y 90%');
+          }
+        }
+      });
     });
   </script>
+</head>
+<body>
+  <div class="container">
+    <a href="{% url 'home' %}" class="back-btn">
+      <i class="fas fa-arrow-left"></i> Volver
+    </a>
+    <div class="form-card">
+      <h2>Alta de Maquinaria</h2>
+
+      {% if messages %}
+        <div class="messages">
+          {% for message in messages %}
+            <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
+              {{ message }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <form method="post" enctype="multipart/form-data" accept-charset="utf-8" id="maquinariaForm">
+        {% csrf_token %}
+        {% for field in form %}
+          <div class="form-group">
+            {{ field.label_tag }}
+            {% if field.name == 'imagenes' %}
+              <div class="custom-file-upload">
+                {{ field }}
+                <div id="selected-files-count"></div>
+              </div>
+              <div id="preview-container"></div>
+            {% else %}
+              {{ field }}
+            {% endif %}
+            {% if field.help_text %}
+              <span class="helptext">{{ field.help_text }}</span>
+            {% endif %}
+            {% if field.errors %}
+              <ul class="errorlist">
+                {% for error in field.errors %}
+                  <li>{{ error }}</li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+          </div>
+        {% endfor %}
+        <button type="submit" class="submit-btn">
+          <i class="fas fa-save"></i> Registrar Maquinaria
+        </button>
+      </form>
+    </div>
+  </div>
 </body>
 </html> 

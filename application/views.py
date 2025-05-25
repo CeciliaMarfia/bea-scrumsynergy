@@ -5,7 +5,7 @@ from django.contrib.auth.forms import UserCreationForm
 import os
 from django.conf import settings
 from .machinery.forms import AltaMaquinariaForm
-from .models import Maquina, HomeVideo, PermisoEspecial, Perfil, Reserva
+from .models import Maquina, HomeVideo, PermisoEspecial, Perfil, Reserva, ImagenMaquina
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
@@ -142,19 +142,59 @@ def verificar_email(request, token):
 DATA_PATH = os.path.join(settings.BASE_DIR, 'templatesMachine', 'machinery')
 
 
+@login_required
 def machinery_registration(request):
     if request.method == 'POST':
+        print("Content Type:", request.META.get('CONTENT_TYPE'))
+        print("FILES:", request.FILES)
+        print("POST:", request.POST)
+        
         form = AltaMaquinariaForm(request.POST, request.FILES)
-        if form.is_valid():
-            try:
-                maquina = form.save()
-                return render(request, 'templatesMachine/machinery_success.html')
-            except Exception as e:
-                form.add_error(None, f'Error al guardar la maquinaria: {str(e)}')
+        
+        try:
+            if form.is_valid():
+                with transaction.atomic():
+                    maquina = form.save()
+                    
+                    # Procesar las imágenes
+                    imagenes = request.FILES.getlist('imagenes')
+                    if imagenes:
+                        primera_imagen = True
+                        for imagen in imagenes:
+                            ImagenMaquina.objects.create(
+                                maquina=maquina,
+                                imagen=imagen,
+                                es_principal=primera_imagen
+                            )
+                            primera_imagen = False
+                    
+                    messages.success(request, f'¡Maquinaria {maquina.nombre} registrada exitosamente!')
+                    return redirect('home')
+            else:
+                print("Errores del formulario:", form.errors)
+                print("Errores no asociados a campos:", form.non_field_errors())
+                print("Archivos recibidos:", request.FILES.getlist('imagenes'))
+                
+                # Mostrar todos los errores de manera más específica
+                for field, errors in form.errors.items():
+                    for error in errors:
+                        messages.error(request, f"Error en {field}: {error}")
+                
+                if not request.FILES:
+                    messages.error(request, "No se han seleccionado imágenes.")
+                elif not request.FILES.getlist('imagenes'):
+                    messages.error(request, "El campo de imágenes está vacío.")
+                
+        except Exception as e:
+            print(f"Error inesperado: {str(e)}")
+            print(f"Tipo de error: {type(e)}")
+            messages.error(request, f'Error al procesar el formulario: {str(e)}')
     else:
         form = AltaMaquinariaForm()
 
-    return render(request, 'templatesMachine/machinery_registration.html', {'form': form})
+    return render(request, 'templatesMachine/machinery_registration.html', {
+        'form': form
+    })
 
 # -- fin codigo --
 
@@ -384,7 +424,7 @@ def reservar_maquinaria(request, maquina_id):
 
 @login_required
 def lista_maquinaria(request):
-    maquinas = Maquina.objects.filter(estado='disponible', stock__gt=0)
+    maquinas = Maquina.objects.filter(estado='disponible').order_by('-id')
     return render(request, 'listados/lista_maquinaria.html', {
         'maquinas': maquinas
     })

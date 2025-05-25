@@ -96,7 +96,7 @@ class Maquina(models.Model):
     )
     tipo = models.CharField(max_length=20, choices=TIPO_CHOICES)
     precio_por_dia = models.DecimalField(max_digits=10, decimal_places=2)
-    permisos_requeridos = models.TextField()
+    permisos_requeridos = models.TextField(blank=True, null=True, help_text='Deja en blanco si no se requieren permisos especiales')
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='disponible')
     stock = models.PositiveIntegerField(default=1)
 
@@ -105,31 +105,50 @@ class Maquina(models.Model):
 
     def clean(self):
         super().clean()
-        # Verificar que haya al menos una imagen
-        if self.pk and not self.imagenes.exists():
-            raise ValidationError('Debe cargar al menos una imagen de la maquinaria.')
+        # La validación de imágenes se manejará en el formulario
+        pass
 
     def esta_disponible(self):
         return self.estado == 'disponible' and self.stock > 0
 
+    def get_imagen_principal(self):
+        return self.imagenes.filter(es_principal=True).first()
+
 
 class ImagenMaquina(models.Model):
-    maquina = models.ForeignKey(Maquina, related_name='imagenes', on_delete=models.CASCADE)
-    imagen = models.ImageField(upload_to='imagenes_maquinas/')
-    es_principal = models.BooleanField(default=False)
+    maquina = models.ForeignKey(
+        Maquina, 
+        related_name='imagenes', 
+        on_delete=models.CASCADE
+    )
+    imagen = models.ImageField(
+        upload_to='imagenes_maquinas/',
+        verbose_name='Imagen',
+        help_text='Formato permitido: JPG, PNG. Tamaño máximo: 5MB'
+    )
+    es_principal = models.BooleanField(
+        default=False,
+        verbose_name='Imagen principal'
+    )
     fecha_subida = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         verbose_name = 'Imagen de maquinaria'
         verbose_name_plural = 'Imágenes de maquinaria'
+        ordering = ['-es_principal', '-fecha_subida']
 
     def __str__(self):
         return f'Imagen de {self.maquina.nombre} - {"Principal" if self.es_principal else "Secundaria"}'
 
     def save(self, *args, **kwargs):
-        if self.es_principal:
-            # Si esta imagen es principal, desmarcar las demás como principales
-            ImagenMaquina.objects.filter(maquina=self.maquina).exclude(id=self.id).update(es_principal=False)
+        # Si es la primera imagen de la máquina, hacerla principal
+        if not self.pk and not self.maquina.imagenes.exists():
+            self.es_principal = True
+        elif self.es_principal:
+            # Si esta imagen es principal, desmarcar las demás
+            ImagenMaquina.objects.filter(
+                maquina=self.maquina
+            ).exclude(id=self.id).update(es_principal=False)
         super().save(*args, **kwargs)
 
 
