@@ -1,0 +1,143 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Verificación en dos pasos - Bob el Alquilador</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet"/>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #546469, #0c0f10);
+      min-height: 100vh;
+      padding: 2rem 1rem;
+      display: flex;
+      justify-content: center;
+      align-items: start;
+    }
+
+    .form-card {
+      background-color: #fff;
+      padding: 2.5rem 2rem;
+      border-radius: 1.5rem;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .form-card h2 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      color: #546469;
+    }
+
+    .form-card p {
+      text-align: center;
+      margin-bottom: 2rem;
+      color: #666;
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+
+    .form-group {
+      margin-bottom: 1.2rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.4rem;
+      color: #546469;
+      font-weight: 600;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 0.8rem;
+      border: 1px solid #ccc;
+      border-radius: 0.6rem;
+      font-size: 1.2rem;
+      text-align: center;
+      letter-spacing: 0.5rem;
+      transition: border-color 0.3s;
+    }
+
+    input[type="text"]:focus {
+      border-color: #d16c44;
+      outline: none;
+    }
+
+    .btn-submit {
+      background-color: #d16c44;
+      color: white;
+      padding: 0.9rem;
+      border: none;
+      border-radius: 0.6rem;
+      width: 100%;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      margin-top: 1rem;
+    }
+
+    .btn-submit:hover {
+      background-color: #b95a33;
+    }
+
+    .messages {
+      list-style: none;
+      padding: 0;
+      margin-bottom: 1rem;
+    }
+
+    .messages li {
+      padding: 0.8rem;
+      margin-bottom: 0.5rem;
+      border-radius: 0.6rem;
+      text-align: center;
+    }
+
+    .messages .error {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    .messages .success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+  </style>
+</head>
+<body>
+  <div class="form-card">
+    <h2>Verificación en dos pasos</h2>
+    <p>Te hemos enviado un código de verificación a tu correo electrónico. Por favor, ingrésalo a continuación para completar el inicio de sesión.</p>
+
+    {% if messages %}
+    <ul class="messages">
+      {% for message in messages %}
+      <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+
+    <form method="POST">
+      {% csrf_token %}
+      <div class="form-group">
+        <label for="codigo">Código de verificación</label>
+        <input type="text" name="codigo" id="codigo" maxlength="6" required>
+      </div>
+      <button type="submit" class="btn-submit">Verificar</button>
+    </form>
+  </div>
+</body>
+</html> 

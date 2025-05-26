@@ -17,9 +17,23 @@ class Perfil(models.Model):
         upload_to='documentos/', blank=True, null=True)
     email_verificado = models.BooleanField(default=False)
     token_verificacion = models.CharField(max_length=100, blank=True, null=True)
+    intentos_fallidos = models.IntegerField(default=0)
+    cuenta_bloqueada = models.BooleanField(default=False)
+    codigo_verificacion = models.CharField(max_length=6, blank=True, null=True)
+    codigo_verificacion_expira = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f'Perfil de {self.usuario.username}'
+
+    def incrementar_intentos_fallidos(self):
+        self.intentos_fallidos += 1
+        if self.intentos_fallidos >= 3:
+            self.cuenta_bloqueada = True
+        self.save()
+
+    def reiniciar_intentos_fallidos(self):
+        self.intentos_fallidos = 0
+        self.save()
 
 
 class HomeVideo(models.Model):
@@ -96,7 +110,7 @@ class Maquina(models.Model):
     )
     tipo = models.CharField(max_length=20, choices=TIPO_CHOICES)
     precio_por_dia = models.DecimalField(max_digits=10, decimal_places=2)
-    permisos_requeridos = models.TextField(blank=True, null=True, help_text='Deja en blanco si no se requieren permisos especiales')
+    permisos_requeridos = models.TextField(blank=True, null=True)
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='disponible')
     stock = models.PositiveIntegerField(default=1)
 
@@ -206,3 +220,74 @@ class Reserva(models.Model):
                 raise ValidationError('La fecha de inicio no puede ser anterior a la fecha actual.')
             if self.fecha_fin < self.fecha_inicio:
                 raise ValidationError('La fecha de fin no puede ser anterior a la fecha de inicio.')
+
+
+class Pago(models.Model):
+    ESTADO_CHOICES = [
+        ('pendiente', 'Pendiente'),
+        ('exitoso', 'Exitoso'),
+        ('fallido', 'Fallido')
+    ]
+
+    MOTIVO_FALLO_CHOICES = [
+        ('tarjeta_invalida', 'Tarjeta inválida'),
+        ('fondos_insuficientes', 'Fondos insuficientes'),
+        ('error_conexion', 'Error de conexión con el banco'),
+        ('otro', 'Otro error')
+    ]
+
+    reserva = models.OneToOneField(
+        'Reserva',
+        on_delete=models.CASCADE,
+        related_name='pago'
+    )
+    monto = models.DecimalField(max_digits=10, decimal_places=2)
+    fecha_pago = models.DateTimeField(auto_now_add=True)
+    estado = models.CharField(
+        max_length=20,
+        choices=ESTADO_CHOICES,
+        default='pendiente'
+    )
+    motivo_fallo = models.CharField(
+        max_length=50,
+        choices=MOTIVO_FALLO_CHOICES,
+        null=True,
+        blank=True
+    )
+    numero_transaccion = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True
+    )
+
+    def __str__(self):
+        return f'Pago {self.id} - Reserva {self.reserva.numero_reserva}'
+
+    class Meta:
+        verbose_name = 'Pago'
+        verbose_name_plural = 'Pagos'
+
+
+class TarjetaCredito(models.Model):
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='tarjetas')
+    ultimos_digitos = models.CharField(max_length=4)
+    tipo = models.CharField(max_length=20)
+    nombre_titular = models.CharField(max_length=100)
+    fecha_vencimiento = models.DateField()
+    es_predeterminada = models.BooleanField(default=False)
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Tarjeta de Crédito'
+        verbose_name_plural = 'Tarjetas de Crédito'
+
+    def __str__(self):
+        return f'Tarjeta terminada en {self.ultimos_digitos} - {self.nombre_titular}'
+
+    def save(self, *args, **kwargs):
+        if self.es_predeterminada:
+            # Si esta tarjeta se marca como predeterminada, desmarcar las demás
+            TarjetaCredito.objects.filter(
+                usuario=self.usuario
+            ).exclude(id=self.id).update(es_predeterminada=False)
+        super().save(*args, **kwargs)

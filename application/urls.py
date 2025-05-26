@@ -18,5 +18,8 @@ urlpatterns = [
     path('maquinaria/', views.lista_maquinaria, name='lista_maquinaria'),
     path('mis-reservas/', views.mis_reservas, name='mis_reservas'),
     path('reserva/<str:numero_reserva>/cancelar/', views.cancelar_reserva, name='cancelar_reserva'),
+    path('reserva/<int:reserva_id>/pagar/', views.pagar_reserva, name='pagar_reserva'),
+    path('reserva/<int:reserva_id>/procesar-pago/', views.procesar_pago, name='procesar_pago'),
+    path('reserva/<int:reserva_id>/', views.detalle_reserva, name='detalle_reserva'),
 ]
 # ---

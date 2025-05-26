@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from datetime import date
-from .models import Perfil, PermisoEspecial, Reserva
+from .models import Perfil, PermisoEspecial, Reserva, TarjetaCredito
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
@@ -209,3 +209,81 @@ class ReservaMaquinariaForm(forms.ModelForm):
                 raise forms.ValidationError('La fecha de fin no puede ser anterior a la fecha de inicio.')
 
         return cleaned_data
+
+
+class TarjetaCreditoForm(forms.ModelForm):
+    numero_tarjeta = forms.CharField(
+        label='Número de Tarjeta',
+        max_length=16,
+        min_length=16,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Número de tarjeta',
+            'pattern': '[0-9]{16}'
+        })
+    )
+    codigo_seguridad = forms.CharField(
+        label='Código de Seguridad (CVV)',
+        max_length=4,
+        min_length=3,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'CVV',
+            'pattern': '[0-9]{3,4}',
+            'type': 'password'
+        })
+    )
+    fecha_vencimiento = forms.DateField(
+        label='Fecha de Vencimiento',
+        widget=forms.DateInput(attrs={
+            'class': 'form-control',
+            'type': 'date'
+        })
+    )
+    nombre_titular = forms.CharField(
+        label='Nombre del Titular',
+        max_length=100,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Nombre como aparece en la tarjeta'
+        })
+    )
+    es_predeterminada = forms.BooleanField(
+        label='Establecer como tarjeta predeterminada',
+        required=False,
+        initial=False
+    )
+
+    class Meta:
+        model = TarjetaCredito
+        fields = ['nombre_titular', 'fecha_vencimiento', 'es_predeterminada']
+
+    def clean_fecha_vencimiento(self):
+        fecha = self.cleaned_data.get('fecha_vencimiento')
+        if fecha and fecha < timezone.now().date():
+            raise ValidationError('La tarjeta está vencida')
+        return fecha
+
+    def clean_numero_tarjeta(self):
+        numero = self.cleaned_data.get('numero_tarjeta')
+        if not numero.isdigit():
+            raise ValidationError('El número de tarjeta debe contener solo dígitos')
+        return numero
+
+    def clean_codigo_seguridad(self):
+        codigo = self.cleaned_data.get('codigo_seguridad')
+        if not codigo.isdigit():
+            raise ValidationError('El código de seguridad debe contener solo dígitos')
+        if len(codigo) not in [3, 4]:
+            raise ValidationError('El código de seguridad debe tener 3 o 4 dígitos')
+        return codigo
+
+    def save(self, commit=True):
+        tarjeta = super().save(commit=False)
+        numero_tarjeta = self.cleaned_data.get('numero_tarjeta')
+        tarjeta.ultimos_digitos = numero_tarjeta[-4:]
+        tarjeta.tipo = 'credito'  # Por ahora solo manejamos tarjetas de crédito
+        
+        if commit:
+            tarjeta.save()
+        return tarjeta

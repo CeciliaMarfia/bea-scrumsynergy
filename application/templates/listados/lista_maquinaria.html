@@ -4,21 +4,21 @@
 
 {% block styles %}
 .container {
-    display: flex;
-    gap: 2rem;
     padding: 2rem;
 }
 
 .sidebar {
-    flex: 0 0 300px;
     background-color: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
     border-radius: 1rem;
     padding: 1.5rem;
+    width: 300px;
+    margin-right: 2rem;
+    float: left;
 }
 
 .main-content {
-    flex: 1;
+    margin-left: 320px;
 }
 
 .page-title {
@@ -97,6 +97,50 @@
 .filter-link.active .filter-count {
     color: #d16c44;
     font-weight: bold;
+}
+
+.filter-buttons {
+    margin-top: 2rem;
+    position: sticky;
+    bottom: 2rem;
+}
+
+.btn-filter {
+    padding: 1rem;
+    border: none;
+    border-radius: 0.8rem;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 1rem;
+    font-family: inherit;
+    width: 100%;
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.btn-apply {
+    background-color: #d16c44;
+    color: white;
+}
+
+.btn-clear {
+    background-color: rgba(84, 100, 105, 0.8);
+    color: white;
+}
+
+.btn-filter:hover {
+    transform: translateY(-2px);
+}
+
+.btn-apply:hover {
+    background-color: #b95a33;
+}
+
+.btn-clear:hover {
+    background-color: rgba(84, 100, 105, 1);
 }
 
 .maquinarias-container {
@@ -228,41 +272,6 @@
         grid-template-columns: 1fr;
     }
 }
-
-.btn-filter {
-    padding: 0.5rem 1.5rem;
-    border: none;
-    border-radius: 0.5rem;
-    cursor: pointer;
-    font-weight: bold;
-    transition: all 0.3s ease;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 1rem;
-    font-family: inherit;
-}
-
-.btn-apply {
-    background-color: #d16c44;
-    color: white;
-}
-
-.btn-clear {
-    background-color: #546469;
-    color: white;
-}
-
-.btn-filter:hover {
-    transform: translateY(-2px);
-}
-
-.btn-apply:hover {
-    background-color: #b95a33;
-}
-
-.btn-clear:hover {
-    background-color: #3d484c;
-}
 {% endblock %}
 
 {% block content %}
@@ -280,7 +289,8 @@
                                    name="ubicacion" 
                                    value="{{ ubicacion }}"
                                    {% if ubicacion in ubicaciones_seleccionadas %}checked{% endif %}
-                                   style="display: none;">
+                                   style="display: none;"
+                                   onchange="this.closest('.filter-link').classList.toggle('active')">
                             <span>{{ ubicacion }}</span>
                             <span class="filter-count">({{ ubicaciones_con_conteo|get_item:ubicacion }})</span>
                         </label>
@@ -300,7 +310,8 @@
                                    name="tipo" 
                                    value="{{ tipo_value }}"
                                    {% if tipo_value in tipos_seleccionados %}checked{% endif %}
-                                   style="display: none;">
+                                   style="display: none;"
+                                   onchange="this.closest('.filter-link').classList.toggle('active')">
                             <span>{{ tipo_label }}</span>
                             <span class="filter-count">({{ tipos_con_conteo|get_item:tipo_value }})</span>
                         </label>
@@ -309,11 +320,11 @@
                 </ul>
             </div>
 
-            <div style="margin-top: 2rem;">
-                <button type="submit" class="btn-filter btn-apply" style="width: 100%;">
+            <div class="filter-buttons">
+                <button type="submit" class="btn-filter btn-apply">
                     <i class="fas fa-filter"></i> Aplicar filtros
                 </button>
-                <a href="{% url 'lista_maquinaria' %}" class="btn-filter btn-clear" style="width: 100%; margin-top: 1rem;">
+                <a href="{% url 'lista_maquinaria' %}" class="btn-filter btn-clear">
                     <i class="fas fa-times"></i> Limpiar filtros
                 </a>
             </div>

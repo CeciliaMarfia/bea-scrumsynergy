@@ -5,11 +5,11 @@ from django.contrib.auth.forms import UserCreationForm
 import os
 from django.conf import settings
 from .machinery.forms import AltaMaquinariaForm
-from .models import Maquina, HomeVideo, PermisoEspecial, Perfil, Reserva, ImagenMaquina
+from .models import Maquina, HomeVideo, PermisoEspecial, Perfil, Reserva, ImagenMaquina, Pago, TarjetaCredito
 from django.core.mail import send_mail, EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
-from .forms import RegistroUsuarioForm, PermisoEspecialForm, EditarPerfilForm, ReservaMaquinariaForm
+from .forms import RegistroUsuarioForm, PermisoEspecialForm, EditarPerfilForm, ReservaMaquinariaForm, TarjetaCreditoForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import PasswordResetView, PasswordResetDoneView
 from django.contrib.auth.models import User
@@ -21,6 +21,9 @@ import uuid
 from django.urls import reverse
 from django.contrib.sites.shortcuts import get_current_site
 from django.db import transaction
+from django.utils import timezone
+from django.views.decorators.http import require_POST
+from .services import BancoService
 
 # Create your views here.
 
@@ -37,6 +40,14 @@ def login(request):
 
         try:
             user = User.objects.get(email=email)
+            
+            # Verificar si la cuenta está bloqueada
+            if user.perfil.cuenta_bloqueada:
+                return render(request, 'login.html', {
+                    'error_message': 'Por motivos de seguridad, tu cuenta ha sido temporalmente suspendida. Por favor, contacta con soporte para más información.'
+                })
+
+            # Verificar si el email está verificado
             if not user.perfil.email_verificado:
                 return render(request, 'login.html', {
                     'error_message': 'Por favor, verifica tu correo electrónico antes de iniciar sesión.',
@@ -45,15 +56,49 @@ def login(request):
                 })
             
             # Intentar autenticar usando el email como username
-            user = authenticate(request, username=email, password=password)
+            user_auth = authenticate(request, username=email, password=password)
             
-            if user is not None:
-                auth_login(request, user)
-                messages.success(request, f'¡Bienvenido/a de nuevo, {user.first_name}!')
-                return redirect('home')
+            if user_auth is not None:
+                # Generar código de verificación de 6 dígitos
+                codigo = ''.join(random.choices(string.digits, k=6))
+                user.perfil.codigo_verificacion = codigo
+                user.perfil.codigo_verificacion_expira = timezone.now() + timezone.timedelta(minutes=5)
+                user.perfil.reiniciar_intentos_fallidos()
+                user.perfil.save()
+
+                # Enviar código por email
+                subject = 'Código de verificación - Bob el Alquilador'
+                html_message = render_to_string('emails/codigo_verificacion.html', {
+                    'user': user,
+                    'codigo': codigo,
+                })
+                plain_message = strip_tags(html_message)
+
+                try:
+                    send_mail(
+                        subject,
+                        plain_message,
+                        settings.EMAIL_HOST_USER,
+                        [user.email],
+                        html_message=html_message,
+                        fail_silently=False,
+                    )
+                    # Guardar el usuario en la sesión temporalmente
+                    request.session['temp_user_id'] = user.id
+                    return redirect('verificar_codigo')
+                except Exception as e:
+                    print(f"Error al enviar correo de verificación: {str(e)}")
+                    return render(request, 'login.html', {
+                        'error_message': 'Error al enviar el código de verificación. Por favor, intenta nuevamente.'
+                    })
             else:
+                # Incrementar intentos fallidos
+                user.perfil.incrementar_intentos_fallidos()
+                mensaje = 'Usuario o contraseña incorrectos'
+                if user.perfil.cuenta_bloqueada:
+                    mensaje = 'Por motivos de seguridad, tu cuenta ha sido temporalmente suspendida. Por favor, contacta con soporte para más información.'
                 return render(request, 'login.html', {
-                    'error_message': 'Usuario o contraseña incorrectos'
+                    'error_message': mensaje
                 })
                 
         except User.DoesNotExist:
@@ -62,6 +107,40 @@ def login(request):
             })
 
     return render(request, 'login.html')
+
+
+def verificar_codigo(request):
+    user_id = request.session.get('temp_user_id')
+    if not user_id:
+        return redirect('login')
+
+    try:
+        user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return redirect('login')
+
+    if request.method == 'POST':
+        codigo_ingresado = request.POST.get('codigo')
+        
+        if not user.perfil.codigo_verificacion or timezone.now() > user.perfil.codigo_verificacion_expira:
+            messages.error(request, 'El código ha expirado. Por favor, inicia sesión nuevamente.')
+            return redirect('login')
+            
+        if codigo_ingresado == user.perfil.codigo_verificacion:
+            # Limpiar código y sesión temporal
+            user.perfil.codigo_verificacion = None
+            user.perfil.codigo_verificacion_expira = None
+            user.perfil.save()
+            del request.session['temp_user_id']
+            
+            # Iniciar sesión
+            auth_login(request, user)
+            messages.success(request, f'¡Bienvenido/a de nuevo, {user.first_name}!')
+            return redirect('home')
+        else:
+            messages.error(request, 'Código incorrecto. Por favor, intenta nuevamente.')
+
+    return render(request, 'verificar_codigo.html')
 
 
 def signup(request):
@@ -519,3 +598,82 @@ def eliminar_perfil(request):
         messages.success(request, 'Tu cuenta ha sido eliminada exitosamente.')
         return redirect('home')
     return redirect('perfil')
+
+
+@require_POST
+def procesar_pago(request, reserva_id):
+    reserva = get_object_or_404(Reserva, id=reserva_id)
+    numero_tarjeta = request.POST.get('numero_tarjeta')
+
+    # Crear registro de pago inicial
+    pago = Pago.objects.create(
+        reserva=reserva,
+        monto=reserva.monto_total,
+        estado='pendiente'
+    )
+
+    # Procesar el pago con el banco
+    resultado = BancoService.procesar_pago(numero_tarjeta, reserva.monto_total)
+
+    if resultado['exitoso']:
+        # Actualizar el pago como exitoso
+        pago.estado = 'exitoso'
+        pago.numero_transaccion = resultado['numero_transaccion']
+        pago.save()
+
+        messages.success(request, '¡Pago procesado exitosamente!')
+        return redirect('detalle_reserva', reserva_id=reserva.id)
+    else:
+        # Actualizar el pago como fallido
+        pago.estado = 'fallido'
+        pago.motivo_fallo = resultado.get('error', 'otro')
+        pago.save()
+
+        messages.error(request, resultado['mensaje'])
+        return redirect('pagar_reserva', reserva_id=reserva.id)
+
+
+@login_required
+def pagar_reserva(request, reserva_id):
+    reserva = get_object_or_404(Reserva, id=reserva_id)
+    tarjetas = TarjetaCredito.objects.filter(usuario=request.user).order_by('-es_predeterminada', '-fecha_creacion')
+    form = TarjetaCreditoForm()
+
+    if request.method == 'POST':
+        if 'agregar_tarjeta' in request.POST:
+            form = TarjetaCreditoForm(request.POST)
+            if form.is_valid():
+                tarjeta = form.save(commit=False)
+                tarjeta.usuario = request.user
+                tarjeta.save()
+                messages.success(request, 'Tarjeta agregada exitosamente')
+                return redirect('pagar_reserva', reserva_id=reserva.id)
+        elif 'usar_tarjeta' in request.POST:
+            tarjeta_id = request.POST.get('tarjeta_id')
+            if tarjeta_id:
+                try:
+                    tarjeta = TarjetaCredito.objects.get(id=tarjeta_id, usuario=request.user)
+                    # Aquí iría la lógica de procesamiento del pago
+                    reserva.estado = 'pagada'
+                    reserva.save()
+                    messages.success(request, 'Pago realizado exitosamente')
+                    return redirect('mis_reservas')
+                except TarjetaCredito.DoesNotExist:
+                    messages.error(request, 'Tarjeta no encontrada')
+            else:
+                messages.error(request, 'Selecciona una tarjeta válida')
+
+    context = {
+        'reserva': reserva,
+        'tarjetas': tarjetas,
+        'form': form,
+    }
+    return render(request, 'reservas/pagar_reserva.html', context)
+
+
+@login_required
+def detalle_reserva(request, reserva_id):
+    reserva = get_object_or_404(Reserva, id=reserva_id, cliente=request.user)
+    return render(request, 'reservas/detalle_reserva.html', {
+        'reserva': reserva
+    })

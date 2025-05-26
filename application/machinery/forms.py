@@ -110,7 +110,7 @@ class AltaMaquinariaForm(forms.ModelForm):
             'permisos_requeridos': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 4,
-                'placeholder': 'Permisos necesarios para operar (opcional)'
+                'placeholder': 'Permisos necesarios para operar (dejar en blanco si no requiere permisos)'
             })
         }
 

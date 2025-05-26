@@ -1,0 +1,270 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block styles %}
+.detalle-container {
+    width: 95%;
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 3rem;
+    background-color: rgba(84, 100, 105, 0.6);
+    backdrop-filter: blur(10px);
+    border-radius: 1.5rem;
+    color: white;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 3rem;
+}
+
+.btn-volver {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 0.8rem 2rem;
+    border-radius: 0.8rem;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    font-size: 1.1rem;
+}
+
+.btn-volver:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+}
+
+.page-title {
+    color: #d16c44;
+    font-size: 2.5rem;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.reserva-info {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 1rem;
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.info-section {
+    margin-bottom: 2rem;
+}
+
+.section-title {
+    color: #d16c44;
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    padding-bottom: 0.5rem;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.info-item {
+    background-color: rgba(255, 255, 255, 0.05);
+    padding: 1rem;
+    border-radius: 0.5rem;
+}
+
+.info-label {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.info-value {
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+.estado-badge {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    text-align: center;
+}
+
+.estado-pendiente {
+    background-color: rgba(255, 193, 7, 0.2);
+    border: 1px solid #ffc107;
+}
+
+.estado-pagada {
+    background-color: rgba(40, 167, 69, 0.2);
+    border: 1px solid #28a745;
+}
+
+.estado-cancelada {
+    background-color: rgba(220, 53, 69, 0.2);
+    border: 1px solid #dc3545;
+}
+
+.estado-finalizada {
+    background-color: rgba(108, 117, 125, 0.2);
+    border: 1px solid #6c757d;
+}
+
+.actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 2rem;
+}
+
+.btn-action {
+    padding: 0.8rem 1.5rem;
+    border-radius: 0.6rem;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-pagar {
+    background-color: #28a745;
+    color: white;
+}
+
+.btn-pagar:hover {
+    background-color: #218838;
+    transform: translateY(-2px);
+}
+
+.btn-cancelar {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn-cancelar:hover {
+    background-color: #c82333;
+    transform: translateY(-2px);
+}
+
+.alert {
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.alert-success {
+    background-color: rgba(40, 167, 69, 0.2);
+    border: 1px solid #28a745;
+}
+
+.alert-danger {
+    background-color: rgba(220, 53, 69, 0.2);
+    border: 1px solid #dc3545;
+}
+{% endblock %}
+
+{% block content %}
+<div class="detalle-container">
+    {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="header">
+        <a href="{% url 'mis_reservas' %}" class="btn-volver">
+            <i class="fas fa-arrow-left"></i> Volver a Mis Reservas
+        </a>
+        <h1 class="page-title">Detalle de Reserva</h1>
+        <div style="width: 100px;"></div>
+    </div>
+
+    <div class="reserva-info">
+        <div class="info-section">
+            <h2 class="section-title">Información de la Reserva</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">Número de Reserva</div>
+                    <div class="info-value">{{ reserva.numero_reserva }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Estado</div>
+                    <div class="info-value">
+                        <span class="estado-badge estado-{{ reserva.estado }}">
+                            {{ reserva.get_estado_display }}
+                        </span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Fecha de Reserva</div>
+                    <div class="info-value">{{ reserva.fecha_reserva|date:"d/m/Y H:i" }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-section">
+            <h2 class="section-title">Detalles de la Máquina</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">Máquina</div>
+                    <div class="info-value">{{ reserva.maquina.nombre }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Marca</div>
+                    <div class="info-value">{{ reserva.maquina.marca }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Modelo</div>
+                    <div class="info-value">{{ reserva.maquina.modelo }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-section">
+            <h2 class="section-title">Período y Costos</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">Fecha de Inicio</div>
+                    <div class="info-value">{{ reserva.fecha_inicio|date:"d/m/Y" }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Fecha de Fin</div>
+                    <div class="info-value">{{ reserva.fecha_fin|date:"d/m/Y" }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Monto Total</div>
+                    <div class="info-value">${{ reserva.monto_total }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="actions">
+            {% if reserva.estado == 'pendiente_pago' %}
+            <a href="{% url 'pagar_reserva' reserva.id %}" class="btn-action btn-pagar">
+                <i class="fas fa-credit-card"></i> Pagar Reserva
+            </a>
+            {% endif %}
+            
+            {% if reserva.estado != 'cancelada' and reserva.estado != 'finalizada' %}
+            <form method="post" action="{% url 'cancelar_reserva' reserva.numero_reserva %}" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn-action btn-cancelar" onclick="return confirm('¿Estás seguro de que deseas cancelar esta reserva?')">
+                    <i class="fas fa-times-circle"></i> Cancelar Reserva
+                </button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://kit.fontawesome.com/a076d05399.js"></script>
+{% endblock %} 

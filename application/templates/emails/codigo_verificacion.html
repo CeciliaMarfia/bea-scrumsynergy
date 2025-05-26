@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .code {
+            text-align: center;
+            font-size: 32px;
+            letter-spacing: 5px;
+            color: #d16c44;
+            margin: 30px 0;
+            font-weight: bold;
+        }
+        .footer {
+            margin-top: 30px;
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Código de verificación</h2>
+        </div>
+        
+        <p>Hola {{ user.first_name }},</p>
+        
+        <p>Has solicitado iniciar sesión en tu cuenta de Bob el Alquilador. Para completar el proceso, por favor utiliza el siguiente código de verificación:</p>
+        
+        <div class="code">{{ codigo }}</div>
+        
+        <p>Este código expirará en 5 minutos por razones de seguridad.</p>
+        
+        <p>Si no has intentado iniciar sesión, por favor ignora este mensaje.</p>
+        
+        <div class="footer">
+            <p>Este es un mensaje automático, por favor no respondas a este correo.</p>
+            <p>Bob el Alquilador &copy; 2024</p>
+        </div>
+    </div>
+</body>
+</html> 

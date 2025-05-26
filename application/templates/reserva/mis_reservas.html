@@ -233,6 +233,24 @@
     display: flex;
     gap: 1rem;
 }
+
+.btn-pagar-reserva {
+    display: inline-block;
+    background-color: #28a745;
+    color: white;
+    padding: 0.8rem 1.2rem;
+    border-radius: 0.6rem;
+    text-decoration: none;
+    font-weight: bold;
+    margin-right: 1rem;
+    transition: all 0.3s ease;
+}
+
+.btn-pagar-reserva:hover {
+    background-color: #218838;
+    color: white;
+    transform: translateY(-2px);
+}
 {% endblock %}
 
 {% block content %}
@@ -285,16 +303,21 @@
                     <span class="info-value">${{ reserva.monto_total }}</span>
                 </div>
             </div>
-            {% if reserva.estado != 'cancelada' and reserva.estado != 'finalizada' %}
             <div class="reserva-actions">
-                <form method="post" action="{% url 'cancelar_reserva' reserva.numero_reserva %}" style="display: inline;">
-                    {% csrf_token %}
-                    <button type="submit" class="btn-cancelar-reserva" onclick="return confirm('¿Estás seguro de que deseas cancelar esta reserva?')">
-                        <i class="fas fa-times-circle"></i> Cancelar Reserva
-                    </button>
-                </form>
+                {% if reserva.estado == 'pendiente_pago' %}
+                    <a href="{% url 'pagar_reserva' reserva.id %}" class="btn-pagar-reserva">
+                        <i class="fas fa-credit-card"></i> Pagar Reserva
+                    </a>
+                {% endif %}
+                {% if reserva.estado != 'cancelada' and reserva.estado != 'finalizada' %}
+                    <form method="post" action="{% url 'cancelar_reserva' reserva.numero_reserva %}" style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-cancelar-reserva" onclick="return confirm('¿Estás seguro de que deseas cancelar esta reserva?')">
+                            <i class="fas fa-times-circle"></i> Cancelar Reserva
+                        </button>
+                    </form>
+                {% endif %}
             </div>
-            {% endif %}
         </div>
         {% endfor %}
     </div>
@@ -303,11 +326,6 @@
         <i class="fas fa-calendar-times"></i>
         <h3>No tienes reservas activas</h3>
         <p>¡Comienza alquilando una máquina!</p>
-        <div class="text-center">
-            <a href="{% url 'lista_maquinaria' %}" class="btn-nueva-reserva">
-                <i class="fas fa-plus-circle"></i> Nueva Reserva
-            </a>
-        </div>
     </div>
     {% endif %}
 </div>

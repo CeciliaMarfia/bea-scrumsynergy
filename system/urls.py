@@ -29,6 +29,7 @@ auth_urls = [
     path('reenviar-verificacion/', views.reenviar_verificacion, name='reenviar_verificacion'),
     path('password_reset/', views.CustomPasswordResetView.as_view(), name='password_reset'),
     path('password_reset/done/', views.CustomPasswordResetDoneView.as_view(), name='password_reset_done'),
+    path('verificar-codigo/', views.verificar_codigo, name='verificar_codigo'),
 ]
 
 urlpatterns = [
