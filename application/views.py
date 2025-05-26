@@ -508,3 +508,14 @@ def cancelar_reserva(request, numero_reserva):
             messages.error(request, 'Esta reserva no puede ser cancelada.')
     
     return redirect('mis_reservas')
+
+
+@login_required
+def eliminar_perfil(request):
+    if request.method == 'POST':
+        user = request.user
+        auth_logout(request)
+        user.delete()
+        messages.success(request, 'Tu cuenta ha sido eliminada exitosamente.')
+        return redirect('home')
+    return redirect('perfil')
