@@ -342,9 +342,9 @@
                             <span class="precio-valor">${{ maquina.precio_por_dia }}</span> por día
                         </div>
                         <div class="card-actions">
-                            <button class="btn-detalle">
+                            <a href="{% url 'detalle_maquinaria' maquina.id %}" class="btn-detalle">
                                 <i class="fas fa-info-circle"></i> Mostrar Detalle
-                            </button>
+                            </a>
                             <a href="{% url 'reservar_maquinaria' maquina.id %}" class="btn-reservar">
                                 <i class="fas fa-calendar-plus"></i> Reservar
                             </a>

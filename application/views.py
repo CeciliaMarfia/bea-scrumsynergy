@@ -472,3 +472,11 @@ def mis_reservas(request):
     return render(request, 'reserva/mis_reservas.html', {
         'reservas': reservas
     })
+
+
+@login_required
+def detalle_maquinaria(request, maquina_id):
+    maquina = get_object_or_404(Maquina, id=maquina_id)
+    return render(request, 'listados/detalle_maquinaria.html', {
+        'maquina': maquina
+    })

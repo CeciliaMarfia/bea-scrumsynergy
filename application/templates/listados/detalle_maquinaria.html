@@ -1,0 +1,297 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block styles %}
+.detalle-container {
+    width: 95%;
+    margin: 2rem auto;
+    padding: 3rem;
+    background-color: rgba(84, 100, 105, 0.6);
+    backdrop-filter: blur(10px);
+    border-radius: 1.5rem;
+    color: white;
+}
+
+.header {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 3rem;
+}
+
+.btn-volver {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 0.8rem 2rem;
+    border-radius: 0.8rem;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    font-size: 1.1rem;
+}
+
+.btn-volver:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+}
+
+.imagenes-section {
+    margin-bottom: 2rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 1.5rem;
+}
+
+.imagen-card {
+    position: relative;
+    border-radius: 1rem;
+    overflow: hidden;
+    aspect-ratio: 16/9;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.imagen-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.imagen-card:hover img {
+    transform: scale(1.05);
+}
+
+.imagen-principal-badge {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    background-color: #d16c44;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 0.6rem;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.page-title {
+    color: #d16c44;
+    font-size: 3.5rem;
+    margin: 2rem 0 3rem 0;
+    text-transform: lowercase;
+    font-weight: 700;
+    text-align: left;
+}
+
+.info-sections {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+}
+
+.info-section {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 1rem;
+    padding: 2rem;
+}
+
+.info-title {
+    color: #d16c44;
+    font-size: 2rem;
+    margin-bottom: 2rem;
+    font-weight: 500;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    padding-bottom: 1rem;
+}
+
+.info-grid {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.info-item {
+    background-color: rgba(255, 255, 255, 0.1);
+    padding: 1.2rem;
+    border-radius: 0.8rem;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 1rem;
+}
+
+.info-label {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+.info-value {
+    color: white;
+    font-size: 1.2rem;
+    font-weight: 500;
+    text-align: right;
+}
+
+.estado-badge {
+    background-color: #4CAF50;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    display: inline-block;
+    margin-left: auto;
+}
+
+.btn-reservar {
+    display: inline-block;
+    background-color: #d16c44;
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: 0.8rem;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 1.2rem;
+    margin-top: 2rem;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.btn-reservar:hover {
+    background-color: #b95a33;
+    transform: translateY(-2px);
+}
+
+.no-stock {
+    background-color: rgba(220, 53, 69, 0.2);
+    color: white;
+    padding: 1rem;
+    border-radius: 0.8rem;
+    text-align: center;
+    margin-top: 2rem;
+    font-size: 1.2rem;
+}
+
+@media (max-width: 1200px) {
+    .info-sections {
+        grid-template-columns: 1fr;
+    }
+    .imagenes-section {
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .detalle-container {
+        width: 100%;
+        margin: 0;
+        padding: 1.5rem;
+        border-radius: 0;
+    }
+    .page-title {
+        font-size: 2.5rem;
+    }
+}
+{% endblock %}
+
+{% block content %}
+<div class="detalle-container">
+    <div class="header">
+        <a href="{% url 'lista_maquinaria' %}" class="btn-volver">
+            Volver al listado
+        </a>
+    </div>
+
+    {% if maquina.imagenes.exists %}
+    <div class="imagenes-section">
+        {% for imagen in maquina.imagenes.all %}
+        <div class="imagen-card">
+            <img src="{{ imagen.imagen.url }}" alt="{{ maquina.nombre }}">
+            {% if imagen.es_principal %}
+            <span class="imagen-principal-badge">Principal</span>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <h1 class="page-title">{{ maquina.nombre }}</h1>
+
+    <div class="info-sections">
+        <div class="info-section">
+            <h2 class="info-title">Información General</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="info-label">Código</span>
+                    <span class="info-value">{{ maquina.codigo }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Marca</span>
+                    <span class="info-value">{{ maquina.marca }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Modelo</span>
+                    <span class="info-value">{{ maquina.modelo }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Año</span>
+                    <span class="info-value">{{ maquina.anio }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Ubicación</span>
+                    <span class="info-value">{{ maquina.ubicacion }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Tipo</span>
+                    <span class="info-value">{{ maquina.get_tipo_display }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-section">
+            <h2 class="info-title">Disponibilidad y Precios</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="info-label">Estado</span>
+                    <span class="estado-badge">{{ maquina.get_estado_display }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Stock</span>
+                    <span class="info-value">{{ maquina.stock }} unidad(es)</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Precio por día</span>
+                    <span class="info-value">${{ maquina.precio_por_dia }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Política de cancelación</span>
+                    <span class="info-value">{{ maquina.get_tipo_cancelacion_display }}</span>
+                </div>
+                {% if maquina.politica_cancelacion %}
+                <div class="info-item">
+                    <span class="info-label">Porcentaje de reembolso</span>
+                    <span class="info-value">{{ maquina.politica_cancelacion }}%</span>
+                </div>
+                {% endif %}
+            </div>
+
+            {% if maquina.permisos_requeridos %}
+            <h2 class="info-title" style="margin-top: 2rem;">Permisos Requeridos</h2>
+            <div class="info-item">
+                <span class="info-value" style="text-align: left;">{{ maquina.permisos_requeridos }}</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if maquina.esta_disponible %}
+    <a href="{% url 'reservar_maquinaria' maquina.id %}" class="btn-reservar">
+        Reservar Maquinaria
+    </a>
+    {% else %}
+    <div class="no-stock">
+        No hay stock disponible para esta máquina
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://kit.fontawesome.com/a076d05399.js"></script>
+{% endblock %} 
