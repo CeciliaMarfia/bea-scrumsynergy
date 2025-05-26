@@ -16,5 +16,6 @@ urlpatterns = [
     path('maquinaria/<int:maquina_id>/', views.detalle_maquinaria, name='detalle_maquinaria'),
     path('maquinaria/', views.lista_maquinaria, name='lista_maquinaria'),
     path('mis-reservas/', views.mis_reservas, name='mis_reservas'),
+    path('reserva/<str:numero_reserva>/cancelar/', views.cancelar_reserva, name='cancelar_reserva'),
 ]
 # ---

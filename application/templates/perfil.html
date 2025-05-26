@@ -4,8 +4,12 @@
 
 {% block styles %}
 .container {
-  max-width: 1000px;
+  max-width: 1200px;
   margin: 0 auto;
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 2rem;
+  padding: 0 1rem;
 }
 
 .profile-header {
@@ -24,7 +28,7 @@
 
 .profile-info {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 2rem;
 }
 
@@ -58,18 +62,31 @@
   font-size: 1.5rem;
 }
 
+.permisos-section {
+  background: white;
+  border-radius: 1.5rem;
+  padding: 2rem;
+  height: fit-content;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.permisos-section h2 {
+  color: #546469;
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+}
+
 .permisos-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.5rem;
-  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .permiso-card {
-  background: white;
+  background: rgba(84, 100, 105, 0.05);
   border-radius: 1rem;
   padding: 1.5rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(84, 100, 105, 0.1);
 }
 
 .permiso-card h3 {
@@ -162,85 +179,122 @@
   margin-top: 1rem;
 }
 
-@media (max-width: 768px) {
-  .profile-info {
+.header-container {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.btn-volver {
+  display: inline-block;
+  background-color: #546469;
+  color: white;
+  padding: 0.8rem 1.2rem;
+  border-radius: 0.6rem;
+  text-decoration: none;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.btn-volver:hover {
+  background-color: #3d484c;
+  color: white;
+  transform: translateY(-2px);
+}
+
+@media (max-width: 1024px) {
+  .container {
     grid-template-columns: 1fr;
+  }
+  
+  .profile-info {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   }
 }
 {% endblock %}
 
 {% block content %}
 <div class="container">
-  <div class="profile-header">
-    <h1>Mi Perfil</h1>
-    <div class="profile-info">
-      <div>
-        <div class="info-group">
-          <label>Nombre</label>
-          <div class="value">{{ user.first_name }}</div>
+  <div class="profile-section">
+    <div class="profile-header">
+      <div class="header-container">
+        <a href="{% url 'home' %}" class="btn-volver">
+          <i class="fas fa-home"></i> Volver al Inicio
+        </a>
+        <h1>Mi Perfil</h1>
+      </div>
+      <div class="profile-info">
+        <div>
+          <div class="info-group">
+            <label>Nombre</label>
+            <div class="value">{{ user.first_name }}</div>
+          </div>
+          <div class="info-group">
+            <label>Apellido</label>
+            <div class="value">{{ user.last_name }}</div>
+          </div>
+          <div class="info-group">
+            <label>Correo electrónico</label>
+            <div class="value">{{ user.email }}</div>
+          </div>
+          <div class="info-group">
+            <label>DNI</label>
+            <div class="value">{{ user.perfil.dni }}</div>
+          </div>
         </div>
-        <div class="info-group">
-          <label>Apellido</label>
-          <div class="value">{{ user.last_name }}</div>
-        </div>
-        <div class="info-group">
-          <label>Correo electrónico</label>
-          <div class="value">{{ user.email }}</div>
-        </div>
-        <div class="info-group">
-          <label>DNI</label>
-          <div class="value">{{ user.perfil.dni }}</div>
+        <div>
+          <div class="info-group">
+            <label>Fecha de nacimiento</label>
+            <div class="value">{{ user.perfil.fecha_nacimiento|date:"d/m/Y" }}</div>
+          </div>
+          <div class="info-group">
+            <label>Dirección</label>
+            <div class="value">{{ user.perfil.direccion }}</div>
+          </div>
+          <div class="info-group">
+            <label>Documento</label>
+            {% if user.perfil.documento_foto %}
+            <img src="{{ user.perfil.documento_foto.url }}" alt="Documento" class="document-preview">
+            {% else %}
+            <div class="value">No hay documento cargado</div>
+            {% endif %}
+          </div>
         </div>
       </div>
-      <div>
-        <div class="info-group">
-          <label>Fecha de nacimiento</label>
-          <div class="value">{{ user.perfil.fecha_nacimiento|date:"d/m/Y" }}</div>
-        </div>
-        <div class="info-group">
-          <label>Dirección</label>
-          <div class="value">{{ user.perfil.direccion }}</div>
-        </div>
-        <div class="info-group">
-          <label>Documento</label>
-          {% if user.perfil.documento_foto %}
-          <img src="{{ user.perfil.documento_foto.url }}" alt="Documento" class="document-preview">
-          {% else %}
-          <div class="value">No hay documento cargado</div>
-          {% endif %}
-        </div>
+      <div class="actions">
+        <a href="{% url 'editar_perfil' %}" class="btn-edit">
+          <i class="fas fa-user-edit"></i> Editar Perfil
+        </a>
+        <a href="{% url 'mis_reservas' %}" class="btn-add-permiso">
+          <i class="fas fa-calendar-check"></i> Mis Reservas
+        </a>
       </div>
-    </div>
-    <div class="actions">
-      <a href="{% url 'editar_perfil' %}" class="btn-edit">
-        <i class="fas fa-user-edit"></i> Editar Perfil
-      </a>
-      <a href="{% url 'mis_reservas' %}" class="btn-add-permiso">
-        <i class="fas fa-calendar-check"></i> Mis Reservas
-      </a>
     </div>
   </div>
 
-  <h2 class="section-title">Mis Permisos Especiales</h2>
-  <div class="actions">
-    <a href="{% url 'agregar_permiso' %}" class="btn-add-permiso">Agregar Nuevo Permiso</a>
-  </div>
-  <div class="permisos-grid">
-    {% for permiso in permisos %}
-    <div class="permiso-card">
-      <h3>{{ permiso.nombre }}</h3>
-      <p>{{ permiso.descripcion }}</p>
-      <div class="fecha">Agregado el {{ permiso.fecha_creacion|date:"d/m/Y H:i" }}</div>
-      <div class="card-actions">
-        <a href="{{ permiso.archivo.url }}" class="btn-download" target="_blank">Descargar archivo</a>
-        <a href="{% url 'eliminar_permiso' permiso.id %}" class="btn-delete" onclick="return confirm('¿Estás seguro de que deseas eliminar este permiso?')">Eliminar</a>
+  <div class="permisos-section">
+    <h2>Mis Permisos Especiales</h2>
+    <a href="{% url 'agregar_permiso' %}" class="btn-add-permiso" style="width: 100%; margin-bottom: 1.5rem;">
+      <i class="fas fa-plus-circle"></i> Agregar Nuevo Permiso
+    </a>
+    <div class="permisos-grid">
+      {% for permiso in permisos %}
+      <div class="permiso-card">
+        <h3>{{ permiso.nombre }}</h3>
+        <p>{{ permiso.descripcion }}</p>
+        <div class="fecha">Agregado el {{ permiso.fecha_creacion|date:"d/m/Y H:i" }}</div>
+        <div class="card-actions">
+          <a href="{{ permiso.archivo.url }}" class="btn-download" target="_blank">Descargar archivo</a>
+          <a href="{% url 'eliminar_permiso' permiso.id %}" class="btn-delete" onclick="return confirm('¿Estás seguro de que deseas eliminar este permiso?')">Eliminar</a>
+        </div>
       </div>
+      {% empty %}
+      <div class="permiso-card" style="text-align: center;">
+        <p>No tienes permisos especiales registrados.</p>
+      </div>
+      {% endfor %}
     </div>
-    {% empty %}
-    <div class="permiso-card" style="grid-column: 1 / -1; text-align: center;">
-      <p>No tienes permisos especiales registrados.</p>
-    </div>
-    {% endfor %}
   </div>
 </div>
 {% endblock %} 

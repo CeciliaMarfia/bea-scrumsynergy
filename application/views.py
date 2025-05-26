@@ -6,7 +6,7 @@ import os
 from django.conf import settings
 from .machinery.forms import AltaMaquinariaForm
 from .models import Maquina, HomeVideo, PermisoEspecial, Perfil, Reserva, ImagenMaquina
-from django.core.mail import send_mail
+from django.core.mail import send_mail, EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from .forms import RegistroUsuarioForm, PermisoEspecialForm, EditarPerfilForm, ReservaMaquinariaForm
@@ -32,27 +32,31 @@ def home(request):
 
 def login(request):
     if request.method == 'POST':
-        username = request.POST.get('username')
+        email = request.POST.get('username')  # El campo se llama username en el form pero contiene el email
         password = request.POST.get('password')
 
         try:
-            user = User.objects.get(username=username)
+            user = User.objects.get(email=email)
             if not user.perfil.email_verificado:
                 return render(request, 'login.html', {
                     'error_message': 'Por favor, verifica tu correo electrónico antes de iniciar sesión.',
                     'show_verification_resend': True,
-                    'unverified_email': username
+                    'unverified_email': email
                 })
+            
+            # Intentar autenticar usando el email como username
+            user = authenticate(request, username=email, password=password)
+            
+            if user is not None:
+                auth_login(request, user)
+                messages.success(request, f'¡Bienvenido/a de nuevo, {user.first_name}!')
+                return redirect('home')
+            else:
+                return render(request, 'login.html', {
+                    'error_message': 'Usuario o contraseña incorrectos'
+                })
+                
         except User.DoesNotExist:
-            pass
-
-        user = authenticate(request, username=username, password=password)
-
-        if user is not None:
-            auth_login(request, user)
-            messages.success(request, f'¡Bienvenido/a de nuevo, {user.first_name}!')
-            return redirect('home')
-        else:
             return render(request, 'login.html', {
                 'error_message': 'Usuario o contraseña incorrectos'
             })
@@ -275,6 +279,12 @@ class CustomPasswordResetView(PasswordResetView):
                     and any(c in "!@#$%^&*" for c in password)):
                 return password
 
+    def send_mail(self, subject, email, context, from_email, html_email_template_name=None):
+        """
+        Sobrescribimos este método para evitar el envío del correo por defecto de Django
+        """
+        pass  # No hacemos nada aquí para evitar el envío del correo por defecto
+
     def form_valid(self, form):
         """
         Genera una contraseña aleatoria y la envía por correo electrónico.
@@ -298,36 +308,26 @@ class CustomPasswordResetView(PasswordResetView):
                 'new_password': new_password,
             })
             
-            # Versión de texto plano del correo
-            plain_message = f"""Hola {user.first_name},
-
-Has solicitado recuperar tu contraseña en Bob el Alquilador. Hemos generado una nueva contraseña para tu cuenta.
-
-Tu nueva contraseña es: {new_password}
-
-Por favor, cambia esta contraseña por una de tu elección la próxima vez que inicies sesión.
-
-Si no has solicitado este cambio, por favor contacta con nuestro equipo de soporte inmediatamente.
-
-Saludos,
-El equipo de Bob el Alquilador"""
+            # Versión de texto plano del correo (como respaldo)
+            plain_message = strip_tags(html_message)
             
-            # Enviar el correo
-            send_mail(
-                subject,
-                plain_message,
-                settings.EMAIL_HOST_USER,
-                [email],
-                html_message=html_message,
-                fail_silently=False,
+            # Enviar el correo priorizando la versión HTML
+            email_message = EmailMultiAlternatives(
+                subject=subject,
+                body=plain_message,
+                from_email=settings.EMAIL_HOST_USER,
+                to=[email]
             )
+            email_message.attach_alternative(html_message, "text/html")
+            email_message.mixed_subtype = 'related'
+            email_message.send()
+
         except User.DoesNotExist:
             # No hacemos nada si el usuario no existe
             pass
         except Exception as e:
             print(f"Error al enviar el correo: {str(e)}")  # Para debugging
-
-        # Siempre redirigimos a la página de éxito con el mismo mensaje
+        
         return super().form_valid(form)
 
 
@@ -480,3 +480,31 @@ def detalle_maquinaria(request, maquina_id):
     return render(request, 'listados/detalle_maquinaria.html', {
         'maquina': maquina
     })
+
+
+@login_required
+def cancelar_reserva(request, numero_reserva):
+    reserva = get_object_or_404(Reserva, numero_reserva=numero_reserva, cliente=request.user)
+    
+    if request.method == 'POST':
+        if reserva.estado not in ['cancelada', 'finalizada']:
+            try:
+                with transaction.atomic():
+                    # Actualizar el estado de la reserva
+                    reserva.estado = 'cancelada'
+                    reserva.save()
+                    
+                    # Devolver el stock a la máquina
+                    maquina = reserva.maquina
+                    maquina.stock += 1
+                    if maquina.stock > 0:
+                        maquina.estado = 'disponible'
+                    maquina.save()
+                    
+                    messages.success(request, f'Se canceló el alquiler con código de reserva {numero_reserva} exitosamente.')
+            except Exception as e:
+                messages.error(request, 'Hubo un error al cancelar la reserva. Por favor, intente nuevamente.')
+        else:
+            messages.error(request, 'Esta reserva no puede ser cancelada.')
+    
+    return redirect('mis_reservas')
