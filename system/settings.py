@@ -41,7 +41,7 @@ INSTALLED_APPS = [
 ]
 
 # Desactivar las URLs de autenticación por defecto
-ADMIN_ENABLED = False
+ADMIN_ENABLED = True
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
