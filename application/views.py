@@ -40,73 +40,81 @@ def login(request):
         password = request.POST.get('password')
 
         try:
-            user = User.objects.get(email=email)
+            # Primero intentamos autenticar al usuario
+            user_auth = authenticate(
+                request, username=email, password=password)
 
+            # Si la autenticación falla, verificamos si el usuario existe
+            if user_auth is None:
+                try:
+                    user = User.objects.get(email=email)
+                    # El usuario existe pero la contraseña es incorrecta
+                    user.perfil.incrementar_intentos_fallidos()
+                    mensaje = 'Usuario o contraseña incorrectos'
+                    if user.perfil.cuenta_bloqueada:
+                        mensaje = 'Por motivos de seguridad, tu cuenta ha sido temporalmente suspendida. Por favor, contacta con soporte para más información.'
+                    return render(request, 'login.html', {
+                        'error_message': mensaje
+                    })
+                except User.DoesNotExist:
+                    # El usuario no existe
+                    return render(request, 'login.html', {
+                        'error_message': 'Usuario o contraseña incorrectos'
+                    })
+
+            # Si llegamos aquí, la autenticación fue exitosa
             # Verificar si la cuenta está bloqueada
-            if user.perfil.cuenta_bloqueada:
+            if user_auth.perfil.cuenta_bloqueada:
                 return render(request, 'login.html', {
                     'error_message': 'Por motivos de seguridad, tu cuenta ha sido temporalmente suspendida. Por favor, contacta con soporte para más información.'
                 })
 
             # Verificar si el email está verificado
-            if not user.perfil.email_verificado:
+            if not user_auth.perfil.email_verificado:
                 return render(request, 'login.html', {
                     'error_message': 'Por favor, verifica tu correo electrónico antes de iniciar sesión.',
                     'show_verification_resend': True,
                     'unverified_email': email
                 })
 
-            # Intentar autenticar usando el email como username
-            user_auth = authenticate(
-                request, username=email, password=password)
+            # Generar código de verificación de 6 dígitos
+            codigo = ''.join(random.choices(string.digits, k=6))
+            user_auth.perfil.codigo_verificacion = codigo
+            user_auth.perfil.codigo_verificacion_expira = timezone.now() + \
+                timezone.timedelta(minutes=5)
+            user_auth.perfil.reiniciar_intentos_fallidos()
+            user_auth.perfil.save()
 
-            if user_auth is not None:
-                # Generar código de verificación de 6 dígitos
-                codigo = ''.join(random.choices(string.digits, k=6))
-                user.perfil.codigo_verificacion = codigo
-                user.perfil.codigo_verificacion_expira = timezone.now() + \
-                    timezone.timedelta(minutes=5)
-                user.perfil.reiniciar_intentos_fallidos()
-                user.perfil.save()
+            # Enviar código por email
+            subject = 'Código de verificación - Bob el Alquilador'
+            html_message = render_to_string('emails/codigo_verificacion.html', {
+                'user': user_auth,
+                'codigo': codigo,
+            })
+            plain_message = strip_tags(html_message)
 
-                # Enviar código por email
-                subject = 'Código de verificación - Bob el Alquilador'
-                html_message = render_to_string('emails/codigo_verificacion.html', {
-                    'user': user,
-                    'codigo': codigo,
-                })
-                plain_message = strip_tags(html_message)
-
-                try:
-                    send_mail(
-                        subject,
-                        plain_message,
-                        settings.EMAIL_HOST_USER,
-                        [user.email],
-                        html_message=html_message,
-                        fail_silently=False,
-                    )
-                    # Guardar el usuario en la sesión temporalmente
-                    request.session['temp_user_id'] = user.id
-                    return redirect('verificar_codigo')
-                except Exception as e:
-                    print(f"Error al enviar correo de verificación: {str(e)}")
-                    return render(request, 'login.html', {
-                        'error_message': 'Error al enviar el código de verificación. Por favor, intenta nuevamente.'
-                    })
-            else:
-                # Incrementar intentos fallidos
-                user.perfil.incrementar_intentos_fallidos()
-                mensaje = 'Usuario o contraseña incorrectos'
-                if user.perfil.cuenta_bloqueada:
-                    mensaje = 'Por motivos de seguridad, tu cuenta ha sido temporalmente suspendida. Por favor, contacta con soporte para más información.'
+            try:
+                send_mail(
+                    subject,
+                    plain_message,
+                    settings.EMAIL_HOST_USER,
+                    [user_auth.email],
+                    html_message=html_message,
+                    fail_silently=False,
+                )
+                # Guardar el usuario en la sesión temporalmente
+                request.session['temp_user_id'] = user_auth.id
+                return redirect('verificar_codigo')
+            except Exception as e:
+                print(f"Error al enviar correo de verificación: {str(e)}")
                 return render(request, 'login.html', {
-                    'error_message': mensaje
+                    'error_message': 'Error al enviar el código de verificación. Por favor, intenta nuevamente.'
                 })
 
-        except User.DoesNotExist:
+        except Exception as e:
+            print(f"Error durante el inicio de sesión: {str(e)}")
             return render(request, 'login.html', {
-                'error_message': 'Usuario o contraseña incorrectos'
+                'error_message': 'Ha ocurrido un error. Por favor, intenta nuevamente.'
             })
 
     return render(request, 'login.html')
