@@ -16,7 +16,8 @@ class Perfil(models.Model):
     documento_foto = models.ImageField(
         upload_to='documentos/', blank=True, null=True)
     email_verificado = models.BooleanField(default=False)
-    token_verificacion = models.CharField(max_length=100, blank=True, null=True)
+    token_verificacion = models.CharField(
+        max_length=100, blank=True, null=True)
     intentos_fallidos = models.IntegerField(default=0)
     cuenta_bloqueada = models.BooleanField(default=False)
     codigo_verificacion = models.CharField(max_length=6, blank=True, null=True)
@@ -111,7 +112,8 @@ class Maquina(models.Model):
     tipo = models.CharField(max_length=20, choices=TIPO_CHOICES)
     precio_por_dia = models.DecimalField(max_digits=10, decimal_places=2)
     permisos_requeridos = models.TextField(blank=True, null=True)
-    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='disponible')
+    estado = models.CharField(
+        max_length=20, choices=ESTADO_CHOICES, default='disponible')
     stock = models.PositiveIntegerField(default=1)
 
     def __str__(self):
@@ -131,8 +133,8 @@ class Maquina(models.Model):
 
 class ImagenMaquina(models.Model):
     maquina = models.ForeignKey(
-        Maquina, 
-        related_name='imagenes', 
+        Maquina,
+        related_name='imagenes',
         on_delete=models.CASCADE
     )
     imagen = models.ImageField(
@@ -185,12 +187,15 @@ class Reserva(models.Model):
     ]
 
     numero_reserva = models.CharField(max_length=20, unique=True)
-    maquina = models.ForeignKey(Maquina, on_delete=models.CASCADE, related_name='reservas')
-    cliente = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reservas')
+    maquina = models.ForeignKey(
+        Maquina, on_delete=models.CASCADE, related_name='reservas')
+    cliente = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='reservas')
     fecha_inicio = models.DateField()
     fecha_fin = models.DateField()
     fecha_reserva = models.DateTimeField(auto_now_add=True)
-    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='pendiente_pago')
+    estado = models.CharField(
+        max_length=20, choices=ESTADO_CHOICES, default='pendiente_pago')
     monto_total = models.DecimalField(max_digits=10, decimal_places=2)
 
     def __str__(self):
@@ -205,7 +210,7 @@ class Reserva(models.Model):
             else:
                 ultimo_id = 0
             self.numero_reserva = f'RES{timezone.now().strftime("%Y%m")}{str(ultimo_id + 1).zfill(4)}'
-        
+
         if self.pk is None:  # Si es una nueva reserva
             self.maquina.stock -= 1
             if self.maquina.stock == 0:
@@ -217,9 +222,11 @@ class Reserva(models.Model):
     def clean(self):
         if self.fecha_inicio and self.fecha_fin:
             if self.fecha_inicio < timezone.now().date():
-                raise ValidationError('La fecha de inicio no puede ser anterior a la fecha actual.')
+                raise ValidationError(
+                    'La fecha de inicio no puede ser anterior a la fecha actual.')
             if self.fecha_fin < self.fecha_inicio:
-                raise ValidationError('La fecha de fin no puede ser anterior a la fecha de inicio.')
+                raise ValidationError(
+                    'La fecha de fin no puede ser anterior a la fecha de inicio.')
 
 
 class Pago(models.Model):
@@ -269,7 +276,8 @@ class Pago(models.Model):
 
 
 class TarjetaCredito(models.Model):
-    usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='tarjetas')
+    usuario = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='tarjetas')
     ultimos_digitos = models.CharField(max_length=4)
     tipo = models.CharField(max_length=20)
     nombre_titular = models.CharField(max_length=100)
