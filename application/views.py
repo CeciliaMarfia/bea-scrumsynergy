@@ -35,12 +35,13 @@ def home(request):
 
 def login(request):
     if request.method == 'POST':
-        email = request.POST.get('username')  # El campo se llama username en el form pero contiene el email
+        # El campo se llama username en el form pero contiene el email
+        email = request.POST.get('username')
         password = request.POST.get('password')
 
         try:
             user = User.objects.get(email=email)
-            
+
             # Verificar si la cuenta está bloqueada
             if user.perfil.cuenta_bloqueada:
                 return render(request, 'login.html', {
@@ -54,15 +55,17 @@ def login(request):
                     'show_verification_resend': True,
                     'unverified_email': email
                 })
-            
+
             # Intentar autenticar usando el email como username
-            user_auth = authenticate(request, username=email, password=password)
-            
+            user_auth = authenticate(
+                request, username=email, password=password)
+
             if user_auth is not None:
                 # Generar código de verificación de 6 dígitos
                 codigo = ''.join(random.choices(string.digits, k=6))
                 user.perfil.codigo_verificacion = codigo
-                user.perfil.codigo_verificacion_expira = timezone.now() + timezone.timedelta(minutes=5)
+                user.perfil.codigo_verificacion_expira = timezone.now() + \
+                    timezone.timedelta(minutes=5)
                 user.perfil.reiniciar_intentos_fallidos()
                 user.perfil.save()
 
@@ -100,7 +103,7 @@ def login(request):
                 return render(request, 'login.html', {
                     'error_message': mensaje
                 })
-                
+
         except User.DoesNotExist:
             return render(request, 'login.html', {
                 'error_message': 'Usuario o contraseña incorrectos'
@@ -121,24 +124,27 @@ def verificar_codigo(request):
 
     if request.method == 'POST':
         codigo_ingresado = request.POST.get('codigo')
-        
+
         if not user.perfil.codigo_verificacion or timezone.now() > user.perfil.codigo_verificacion_expira:
-            messages.error(request, 'El código ha expirado. Por favor, inicia sesión nuevamente.')
+            messages.error(
+                request, 'El código ha expirado. Por favor, inicia sesión nuevamente.')
             return redirect('login')
-            
+
         if codigo_ingresado == user.perfil.codigo_verificacion:
             # Limpiar código y sesión temporal
             user.perfil.codigo_verificacion = None
             user.perfil.codigo_verificacion_expira = None
             user.perfil.save()
             del request.session['temp_user_id']
-            
+
             # Iniciar sesión
             auth_login(request, user)
-            messages.success(request, f'¡Bienvenido/a de nuevo, {user.first_name}!')
+            messages.success(
+                request, f'¡Bienvenido/a de nuevo, {user.first_name}!')
             return redirect('home')
         else:
-            messages.error(request, 'Código incorrecto. Por favor, intenta nuevamente.')
+            messages.error(
+                request, 'Código incorrecto. Por favor, intenta nuevamente.')
 
     return render(request, 'verificar_codigo.html')
 
@@ -149,7 +155,7 @@ def signup(request):
         if form.is_valid():
             # Crear usuario pero no autenticar automáticamente
             user = form.save()
-            
+
             # Generar token de verificación
             token = str(uuid.uuid4())
             user.perfil.token_verificacion = token
@@ -178,7 +184,7 @@ def signup(request):
                     fail_silently=False,
                 )
                 messages.success(
-                    request, 
+                    request,
                     'Tu cuenta ha sido creada. Por favor, revisa tu correo electrónico para verificar tu cuenta.'
                 )
                 return render(request, 'login.html', {
@@ -200,7 +206,7 @@ def signup(request):
             return redirect('login')
     else:
         form = RegistroUsuarioForm()
-    
+
     return render(request, 'signup.html', {'form': form})
 
 
@@ -211,12 +217,14 @@ def verificar_email(request, token):
             perfil.email_verificado = True
             perfil.token_verificacion = None  # Invalidar el token después de usarlo
             perfil.save()
-            messages.success(request, '¡Tu cuenta ha sido verificada exitosamente! Ahora puedes iniciar sesión.')
+            messages.success(
+                request, '¡Tu cuenta ha sido verificada exitosamente! Ahora puedes iniciar sesión.')
         else:
-            messages.info(request, 'Esta cuenta ya ha sido verificada anteriormente.')
+            messages.info(
+                request, 'Esta cuenta ya ha sido verificada anteriormente.')
     except Perfil.DoesNotExist:
         messages.error(request, 'El enlace de verificación no es válido.')
-    
+
     return redirect('login')
 
 # -- Codigo HU "Alta Maquinaria" --
@@ -231,14 +239,14 @@ def machinery_registration(request):
         print("Content Type:", request.META.get('CONTENT_TYPE'))
         print("FILES:", request.FILES)
         print("POST:", request.POST)
-        
+
         form = AltaMaquinariaForm(request.POST, request.FILES)
-        
+
         try:
             if form.is_valid():
                 with transaction.atomic():
                     maquina = form.save()
-                    
+
                     # Procesar las imágenes
                     imagenes = request.FILES.getlist('imagenes')
                     if imagenes:
@@ -250,28 +258,30 @@ def machinery_registration(request):
                                 es_principal=primera_imagen
                             )
                             primera_imagen = False
-                    
-                    messages.success(request, f'¡Maquinaria {maquina.nombre} registrada exitosamente!')
+
+                    messages.success(
+                        request, f'¡Maquinaria {maquina.nombre} registrada exitosamente!')
                     return redirect('home')
             else:
                 print("Errores del formulario:", form.errors)
                 print("Errores no asociados a campos:", form.non_field_errors())
                 print("Archivos recibidos:", request.FILES.getlist('imagenes'))
-                
+
                 # Mostrar todos los errores de manera más específica
                 for field, errors in form.errors.items():
                     for error in errors:
                         messages.error(request, f"Error en {field}: {error}")
-                
+
                 if not request.FILES:
                     messages.error(request, "No se han seleccionado imágenes.")
                 elif not request.FILES.getlist('imagenes'):
                     messages.error(request, "El campo de imágenes está vacío.")
-                
+
         except Exception as e:
             print(f"Error inesperado: {str(e)}")
             print(f"Tipo de error: {type(e)}")
-            messages.error(request, f'Error al procesar el formulario: {str(e)}')
+            messages.error(
+                request, f'Error al procesar el formulario: {str(e)}')
     else:
         form = AltaMaquinariaForm()
 
@@ -311,8 +321,13 @@ def lista_permisos(request):
 @login_required
 def perfil(request):
     permisos = PermisoEspecial.objects.all().order_by('-fecha_creacion')
+    user = request.user
+    # Asegurarse de que el perfil existe
+    perfil, created = Perfil.objects.get_or_create(usuario=user)
     return render(request, 'perfil.html', {
-        'permisos': permisos
+        'permisos': permisos,
+        'user': user,
+        'perfil': perfil
     })
 
 
@@ -350,7 +365,8 @@ class CustomPasswordResetView(PasswordResetView):
         """Genera una contraseña aleatoria segura."""
         characters = string.ascii_letters + string.digits + "!@#$%^&*"
         while True:
-            password = ''.join(random.choice(characters) for i in range(length))
+            password = ''.join(random.choice(characters)
+                               for i in range(length))
             # Verifica que la contraseña cumple con los requisitos mínimos
             if (any(c.islower() for c in password)
                     and any(c.isupper() for c in password)
@@ -380,16 +396,16 @@ class CustomPasswordResetView(PasswordResetView):
 
             # Preparar el correo
             subject = "Nueva contraseña - Bob el Alquilador"
-            
+
             # Versión HTML del correo
             html_message = render_to_string('registration/password_reset_email.html', {
                 'user': user,
                 'new_password': new_password,
             })
-            
+
             # Versión de texto plano del correo (como respaldo)
             plain_message = strip_tags(html_message)
-            
+
             # Enviar el correo priorizando la versión HTML
             email_message = EmailMultiAlternatives(
                 subject=subject,
@@ -406,7 +422,7 @@ class CustomPasswordResetView(PasswordResetView):
             pass
         except Exception as e:
             print(f"Error al enviar el correo: {str(e)}")  # Para debugging
-        
+
         return super().form_valid(form)
 
 
@@ -448,7 +464,7 @@ def reenviar_verificacion(request):
                         fail_silently=False,
                     )
                     messages.success(
-                        request, 
+                        request,
                         'Hemos enviado un nuevo correo de verificación. Por favor, revisa tu bandeja de entrada.'
                     )
                 except Exception as e:
@@ -460,15 +476,16 @@ def reenviar_verificacion(request):
             else:
                 messages.info(request, 'Esta cuenta ya ha sido verificada.')
         except User.DoesNotExist:
-            messages.error(request, 'No existe una cuenta con ese correo electrónico.')
-    
+            messages.error(
+                request, 'No existe una cuenta con ese correo electrónico.')
+
     return redirect('login')
 
 
 @login_required
 def reservar_maquinaria(request, maquina_id):
     maquina = get_object_or_404(Maquina, id=maquina_id)
-    
+
     if not maquina.esta_disponible():
         messages.error(request, 'No hay stock disponible para esta máquina.')
         return redirect('lista_maquinaria')
@@ -479,18 +496,21 @@ def reservar_maquinaria(request, maquina_id):
             reserva = form.save(commit=False)
             reserva.maquina = maquina
             reserva.cliente = request.user
-            
+
             # Calcular el monto total
-            dias = (form.cleaned_data['fecha_fin'] - form.cleaned_data['fecha_inicio']).days + 1
+            dias = (form.cleaned_data['fecha_fin'] -
+                    form.cleaned_data['fecha_inicio']).days + 1
             reserva.monto_total = maquina.precio_por_dia * dias
-            
+
             try:
                 with transaction.atomic():
                     reserva.save()
-                    messages.success(request, f'Reserva creada exitosamente. Número de reserva: {reserva.numero_reserva}')
+                    messages.success(
+                        request, f'Reserva creada exitosamente. Número de reserva: {reserva.numero_reserva}')
                     return redirect('mis_reservas')
             except Exception as e:
-                messages.error(request, 'Error al crear la reserva. Por favor, intente nuevamente.')
+                messages.error(
+                    request, 'Error al crear la reserva. Por favor, intente nuevamente.')
                 return redirect('lista_maquinaria')
     else:
         form = ReservaMaquinariaForm()
@@ -505,33 +525,35 @@ def reservar_maquinaria(request, maquina_id):
 def lista_maquinaria(request):
     # Obtener todas las máquinas disponibles como base
     maquinas = Maquina.objects.filter(estado='disponible')
-    
+
     # Obtener los filtros seleccionados
     ubicaciones_seleccionadas = request.GET.getlist('ubicacion')
     tipos_seleccionados = request.GET.getlist('tipo')
-    
+
     # Aplicar filtros si están presentes
     if ubicaciones_seleccionadas:
         maquinas = maquinas.filter(ubicacion__in=ubicaciones_seleccionadas)
-    
+
     if tipos_seleccionados:
         maquinas = maquinas.filter(tipo__in=tipos_seleccionados)
-    
+
     # Obtener todas las ubicaciones y contar máquinas por ubicación
     todas_las_maquinas = Maquina.objects.filter(estado='disponible')
     ubicaciones_con_conteo = {}
     for ubicacion in todas_las_maquinas.values_list('ubicacion', flat=True).distinct():
-        ubicaciones_con_conteo[ubicacion] = todas_las_maquinas.filter(ubicacion=ubicacion).count()
-    
+        ubicaciones_con_conteo[ubicacion] = todas_las_maquinas.filter(
+            ubicacion=ubicacion).count()
+
     # Obtener todos los tipos y contar máquinas por tipo
     tipos = dict(Maquina.TIPO_CHOICES)
     tipos_con_conteo = {}
     for tipo_value, tipo_label in tipos.items():
-        tipos_con_conteo[tipo_value] = todas_las_maquinas.filter(tipo=tipo_value).count()
-    
+        tipos_con_conteo[tipo_value] = todas_las_maquinas.filter(
+            tipo=tipo_value).count()
+
     # Ordenar por ID descendente
     maquinas = maquinas.order_by('-id')
-    
+
     context = {
         'maquinas': maquinas,
         'ubicaciones': ubicaciones_con_conteo.keys(),
@@ -541,13 +563,14 @@ def lista_maquinaria(request):
         'ubicaciones_seleccionadas': ubicaciones_seleccionadas,
         'tipos_seleccionados': tipos_seleccionados,
     }
-    
+
     return render(request, 'listados/lista_maquinaria.html', context)
 
 
 @login_required
 def mis_reservas(request):
-    reservas = Reserva.objects.filter(cliente=request.user).order_by('-fecha_reserva')
+    reservas = Reserva.objects.filter(
+        cliente=request.user).order_by('-fecha_reserva')
     return render(request, 'reserva/mis_reservas.html', {
         'reservas': reservas
     })
@@ -563,8 +586,9 @@ def detalle_maquinaria(request, maquina_id):
 
 @login_required
 def cancelar_reserva(request, numero_reserva):
-    reserva = get_object_or_404(Reserva, numero_reserva=numero_reserva, cliente=request.user)
-    
+    reserva = get_object_or_404(
+        Reserva, numero_reserva=numero_reserva, cliente=request.user)
+
     if request.method == 'POST':
         if reserva.estado not in ['cancelada', 'finalizada']:
             try:
@@ -572,20 +596,22 @@ def cancelar_reserva(request, numero_reserva):
                     # Actualizar el estado de la reserva
                     reserva.estado = 'cancelada'
                     reserva.save()
-                    
+
                     # Devolver el stock a la máquina
                     maquina = reserva.maquina
                     maquina.stock += 1
                     if maquina.stock > 0:
                         maquina.estado = 'disponible'
                     maquina.save()
-                    
-                    messages.success(request, f'Se canceló el alquiler con código de reserva {numero_reserva} exitosamente.')
+
+                    messages.success(
+                        request, f'Se canceló el alquiler con código de reserva {numero_reserva} exitosamente.')
             except Exception as e:
-                messages.error(request, 'Hubo un error al cancelar la reserva. Por favor, intente nuevamente.')
+                messages.error(
+                    request, 'Hubo un error al cancelar la reserva. Por favor, intente nuevamente.')
         else:
             messages.error(request, 'Esta reserva no puede ser cancelada.')
-    
+
     return redirect('mis_reservas')
 
 
@@ -636,7 +662,8 @@ def procesar_pago(request, reserva_id):
 @login_required
 def pagar_reserva(request, reserva_id):
     reserva = get_object_or_404(Reserva, id=reserva_id)
-    tarjetas = TarjetaCredito.objects.filter(usuario=request.user).order_by('-es_predeterminada', '-fecha_creacion')
+    tarjetas = TarjetaCredito.objects.filter(usuario=request.user).order_by(
+        '-es_predeterminada', '-fecha_creacion')
     form = TarjetaCreditoForm()
 
     if request.method == 'POST':
@@ -652,7 +679,8 @@ def pagar_reserva(request, reserva_id):
             tarjeta_id = request.POST.get('tarjeta_id')
             if tarjeta_id:
                 try:
-                    tarjeta = TarjetaCredito.objects.get(id=tarjeta_id, usuario=request.user)
+                    tarjeta = TarjetaCredito.objects.get(
+                        id=tarjeta_id, usuario=request.user)
                     # Aquí iría la lógica de procesamiento del pago
                     reserva.estado = 'pagada'
                     reserva.save()

@@ -1,4 +1,5 @@
-from django.db import IntegrityError
+from application.models import Perfil
+from django.db import IntegrityError, transaction
 from django.contrib.auth.models import User
 import os
 import django
@@ -8,12 +9,23 @@ django.setup()
 
 
 try:
-    superuser = User.objects.create_superuser(
-        username='ceciliamarfia',
-        email='cecilia_marfia@hotmail.com',
-        password='Hola12345!'
-    )
-    print('Superuser created successfully!')
+    with transaction.atomic():
+        # Crear el superusuario
+        superuser = User.objects.create_superuser(
+            username='admin',
+            email='admin@mail.com',
+            password='admin123'
+        )
+
+        # Crear el perfil manualmente si no existe
+        Perfil.objects.get_or_create(
+            usuario=superuser,
+            defaults={
+                'email_verificado': True  # Como es superusuario, marcamos el email como verificado
+            }
+        )
+
+        print('Superuser y perfil creados exitosamente!')
 except IntegrityError:
     print('Superuser already exists!')
 except Exception as e:

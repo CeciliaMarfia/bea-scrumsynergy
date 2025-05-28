@@ -296,29 +296,29 @@
         <div>
           <div class="info-group">
             <label>Nombre</label>
-            <div class="value">{{ user.first_name }}</div>
+            <div class="value">{{ user.first_name|default:"No especificado" }}</div>
           </div>
           <div class="info-group">
             <label>Apellido</label>
-            <div class="value">{{ user.last_name }}</div>
+            <div class="value">{{ user.last_name|default:"No especificado" }}</div>
           </div>
           <div class="info-group">
             <label>Correo electrónico</label>
-            <div class="value">{{ user.email }}</div>
+            <div class="value">{{ user.email|default:"No especificado" }}</div>
           </div>
           <div class="info-group">
             <label>DNI</label>
-            <div class="value">{{ user.perfil.dni }}</div>
+            <div class="value">{{ user.perfil.dni|default:"No especificado" }}</div>
           </div>
         </div>
         <div>
           <div class="info-group">
             <label>Fecha de nacimiento</label>
-            <div class="value">{{ user.perfil.fecha_nacimiento|date:"d/m/Y" }}</div>
+            <div class="value">{% if user.perfil.fecha_nacimiento %}{{ user.perfil.fecha_nacimiento|date:"d/m/Y" }}{% else %}No especificada{% endif %}</div>
           </div>
           <div class="info-group">
             <label>Dirección</label>
-            <div class="value">{{ user.perfil.direccion }}</div>
+            <div class="value">{{ user.perfil.direccion|default:"No especificada" }}</div>
           </div>
           <div class="info-group">
             <label>Documento</label>
@@ -369,7 +369,6 @@
   </div>
 </div>
 
-<!-- Modal de confirmación -->
 <div id="modalConfirmacion" class="modal">
   <div class="modal-content">
     <h3>¿Estás seguro que deseas eliminar tu cuenta?</h3>
@@ -393,7 +392,6 @@
     document.getElementById('modalConfirmacion').style.display = 'none';
   }
 
-  // Cerrar modal si se hace clic fuera de él
   window.onclick = function(event) {
     var modal = document.getElementById('modalConfirmacion');
     if (event.target == modal) {

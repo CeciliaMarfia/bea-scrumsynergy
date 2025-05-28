@@ -6,6 +6,7 @@ from .models import Perfil, PermisoEspecial, Reserva, TarjetaCredito
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
+from django.db import transaction
 
 
 class RegistroUsuarioForm(UserCreationForm):
@@ -91,23 +92,23 @@ class RegistroUsuarioForm(UserCreationForm):
         return email
 
     def save(self, commit=True):
-        user = super().save(commit=False)
-        user.email = self.cleaned_data['email']
-        # Asegurarnos que el username sea el email
-        user.username = self.cleaned_data['email']
-        user.first_name = self.cleaned_data['first_name']
-        user.last_name = self.cleaned_data['last_name']
+        with transaction.atomic():
+            user = super().save(commit=False)
+            user.email = self.cleaned_data['email']
+            user.username = self.cleaned_data['email']
+            user.first_name = self.cleaned_data['first_name']
+            user.last_name = self.cleaned_data['last_name']
+            user.save()  # Guardamos el usuario primero para que se cree el perfil
 
-        if commit:
-            user.save()
-            perfil = Perfil.objects.get(usuario=user)
+            # Ahora actualizamos el perfil
+            perfil = user.perfil  # La señal ya debería haber creado el perfil
             perfil.dni = self.cleaned_data['dni']
             perfil.fecha_nacimiento = self.cleaned_data['fecha_nacimiento']
             perfil.direccion = self.cleaned_data['localidad']
             perfil.documento_foto = self.cleaned_data['documento_foto']
             perfil.save()
 
-        return user
+            return user
 
 
 class PermisoEspecialForm(forms.ModelForm):
@@ -175,17 +176,26 @@ class EditarPerfilForm(forms.ModelForm):
         return email
 
     def save(self, commit=True):
-        user = super().save(commit=False)
-        if commit:
-            user.save()
-            perfil = user.perfil
-            perfil.dni = self.cleaned_data['dni']
-            perfil.fecha_nacimiento = self.cleaned_data['fecha_nacimiento']
-            perfil.direccion = self.cleaned_data['direccion']
-            if self.cleaned_data.get('documento_foto'):
-                perfil.documento_foto = self.cleaned_data['documento_foto']
-            perfil.save()
-        return user
+        with transaction.atomic():
+            user = super().save(commit=False)
+            user.first_name = self.cleaned_data['first_name']
+            user.last_name = self.cleaned_data['last_name']
+            user.email = self.cleaned_data['email']
+
+            if commit:
+                user.save()
+                perfil = user.perfil
+                perfil.dni = self.cleaned_data.get('dni')
+                perfil.fecha_nacimiento = self.cleaned_data.get(
+                    'fecha_nacimiento')
+                perfil.direccion = self.cleaned_data.get('direccion')
+
+                if 'documento_foto' in self.cleaned_data and self.cleaned_data['documento_foto']:
+                    perfil.documento_foto = self.cleaned_data['documento_foto']
+
+                perfil.save()
+
+            return user
 
 
 class ReservaMaquinariaForm(forms.ModelForm):
@@ -204,9 +214,11 @@ class ReservaMaquinariaForm(forms.ModelForm):
 
         if fecha_inicio and fecha_fin:
             if fecha_inicio < timezone.now().date():
-                raise forms.ValidationError('La fecha de inicio no puede ser anterior a la fecha actual.')
+                raise forms.ValidationError(
+                    'La fecha de inicio no puede ser anterior a la fecha actual.')
             if fecha_fin < fecha_inicio:
-                raise forms.ValidationError('La fecha de fin no puede ser anterior a la fecha de inicio.')
+                raise forms.ValidationError(
+                    'La fecha de fin no puede ser anterior a la fecha de inicio.')
 
         return cleaned_data
 
@@ -267,15 +279,18 @@ class TarjetaCreditoForm(forms.ModelForm):
     def clean_numero_tarjeta(self):
         numero = self.cleaned_data.get('numero_tarjeta')
         if not numero.isdigit():
-            raise ValidationError('El número de tarjeta debe contener solo dígitos')
+            raise ValidationError(
+                'El número de tarjeta debe contener solo dígitos')
         return numero
 
     def clean_codigo_seguridad(self):
         codigo = self.cleaned_data.get('codigo_seguridad')
         if not codigo.isdigit():
-            raise ValidationError('El código de seguridad debe contener solo dígitos')
+            raise ValidationError(
+                'El código de seguridad debe contener solo dígitos')
         if len(codigo) not in [3, 4]:
-            raise ValidationError('El código de seguridad debe tener 3 o 4 dígitos')
+            raise ValidationError(
+                'El código de seguridad debe tener 3 o 4 dígitos')
         return codigo
 
     def save(self, commit=True):
@@ -283,7 +298,7 @@ class TarjetaCreditoForm(forms.ModelForm):
         numero_tarjeta = self.cleaned_data.get('numero_tarjeta')
         tarjeta.ultimos_digitos = numero_tarjeta[-4:]
         tarjeta.tipo = 'credito'  # Por ahora solo manejamos tarjetas de crédito
-        
+
         if commit:
             tarjeta.save()
         return tarjeta

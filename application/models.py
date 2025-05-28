@@ -9,12 +9,11 @@ from django.utils import timezone
 class Perfil(models.Model):
     usuario = models.OneToOneField(
         User, on_delete=models.CASCADE, related_name='perfil')
-    dni = models.CharField(max_length=20, blank=True, null=True)
-    direccion = models.TextField(blank=True, null=True)
-    fecha_nacimiento = models.DateField(blank=True, null=True)
+    dni = models.CharField(max_length=20)
+    direccion = models.TextField()
+    fecha_nacimiento = models.DateField()
     celular = models.CharField(max_length=20, blank=True, null=True)
-    documento_foto = models.ImageField(
-        upload_to='documentos/', blank=True, null=True)
+    documento_foto = models.ImageField(upload_to='documentos/')
     email_verificado = models.BooleanField(default=False)
     token_verificacion = models.CharField(
         max_length=100, blank=True, null=True)
