@@ -524,47 +524,55 @@ def reservar_maquinaria(request, maquina_id):
     })
 
 
-@login_required
 def lista_maquinaria(request):
     # Obtener todas las máquinas disponibles como base
-    maquinas = Maquina.objects.filter(estado='disponible')
+    maquinas = Maquina.objects.filter(estado='disponible', stock__gt=0)
 
-    # Obtener los filtros seleccionados
-    ubicaciones_seleccionadas = request.GET.getlist('ubicacion')
-    tipos_seleccionados = request.GET.getlist('tipo')
+    # Aplicar filtros si se proporcionan
+    tipo = request.GET.get('tipo')
+    precio_min = request.GET.get('precio_min')
+    precio_max = request.GET.get('precio_max')
+    ubicacion = request.GET.get('ubicacion')
 
-    # Aplicar filtros si están presentes
-    if ubicaciones_seleccionadas:
-        maquinas = maquinas.filter(ubicacion__in=ubicaciones_seleccionadas)
+    if tipo:
+        maquinas = maquinas.filter(tipo=tipo)
+    if precio_min:
+        maquinas = maquinas.filter(precio_por_dia__gte=precio_min)
+    if precio_max:
+        maquinas = maquinas.filter(precio_por_dia__lte=precio_max)
+    if ubicacion:
+        maquinas = maquinas.filter(ubicacion__icontains=ubicacion)
 
-    if tipos_seleccionados:
-        maquinas = maquinas.filter(tipo__in=tipos_seleccionados)
+    # Obtener valores únicos para los filtros
+    tipos = Maquina.TIPO_CHOICES
+    ubicaciones = Maquina.objects.values_list(
+        'ubicacion', flat=True).distinct()
 
-    # Obtener todas las ubicaciones y contar máquinas por ubicación
-    todas_las_maquinas = Maquina.objects.filter(estado='disponible')
-    ubicaciones_con_conteo = {}
-    for ubicacion in todas_las_maquinas.values_list('ubicacion', flat=True).distinct():
-        ubicaciones_con_conteo[ubicacion] = todas_las_maquinas.filter(
-            ubicacion=ubicacion).count()
-
-    # Obtener todos los tipos y contar máquinas por tipo
-    tipos = dict(Maquina.TIPO_CHOICES)
+    # Calcular conteos para los filtros
     tipos_con_conteo = {}
-    for tipo_value, tipo_label in tipos.items():
-        tipos_con_conteo[tipo_value] = todas_las_maquinas.filter(
-            tipo=tipo_value).count()
+    for tipo_value, tipo_label in tipos:
+        tipos_con_conteo[tipo_value] = Maquina.objects.filter(
+            estado='disponible', stock__gt=0, tipo=tipo_value).count()
 
-    # Ordenar por ID descendente
-    maquinas = maquinas.order_by('-id')
+    ubicaciones_con_conteo = {}
+    for ubi in ubicaciones:
+        if ubi:  # Solo si la ubicación no es None o vacía
+            ubicaciones_con_conteo[ubi] = Maquina.objects.filter(
+                estado='disponible', stock__gt=0, ubicacion=ubi).count()
 
     context = {
         'maquinas': maquinas,
-        'ubicaciones': ubicaciones_con_conteo.keys(),
-        'ubicaciones_con_conteo': ubicaciones_con_conteo,
-        'tipos': tipos.items(),
+        'tipos': tipos,
+        'ubicaciones': ubicaciones,
         'tipos_con_conteo': tipos_con_conteo,
-        'ubicaciones_seleccionadas': ubicaciones_seleccionadas,
-        'tipos_seleccionados': tipos_seleccionados,
+        'ubicaciones_con_conteo': ubicaciones_con_conteo,
+        'filtros': {
+            'tipo': tipo,
+            'precio_min': precio_min,
+            'precio_max': precio_max,
+            'ubicacion': ubicacion,
+        },
+        'user_authenticated': request.user.is_authenticated
     }
 
     return render(request, 'listados/lista_maquinaria.html', context)

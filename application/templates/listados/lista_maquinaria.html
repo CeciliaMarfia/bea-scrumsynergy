@@ -200,6 +200,51 @@
     color: #d16c44;
 }
 
+.maquinaria-card .card-text {
+    margin-bottom: 1rem;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.maquinaria-card .btn-reservar {
+    display: inline-block;
+    background-color: #d16c44;
+    color: white;
+    padding: 0.8rem 1.5rem;
+    border-radius: 0.6rem;
+    text-decoration: none;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    margin-top: 1rem;
+}
+
+.maquinaria-card .btn-reservar:hover {
+    background-color: #b95a33;
+    transform: translateY(-2px);
+}
+
+.maquinaria-card .btn-login {
+    display: inline-block;
+    background-color: #546469;
+    color: white;
+    padding: 0.8rem 1.5rem;
+    border-radius: 0.6rem;
+    text-decoration: none;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    margin-top: 1rem;
+}
+
+.maquinaria-card .btn-login:hover {
+    background-color: #3d484c;
+    transform: translateY(-2px);
+}
+
+.login-message {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+}
+
 .maquinaria-ubicacion {
     display: flex;
     align-items: center;
@@ -382,9 +427,16 @@
                             <a href="{% url 'detalle_maquinaria' maquina.id %}" class="btn-detalle">
                                 <i class="fas fa-info-circle"></i> Mostrar Detalle
                             </a>
-                            <a href="{% url 'reservar_maquinaria' maquina.id %}" class="btn-reservar">
-                                <i class="fas fa-calendar-plus"></i> Reservar
-                            </a>
+                            {% if user_authenticated %}
+                                <a href="{% url 'reservar_maquinaria' maquina.id %}" class="btn-reservar">
+                                    <i class="fas fa-calendar-plus"></i> Reservar
+                                </a>
+                            {% else %}
+                                <p class="login-message">Para reservar esta maquinaria necesitas iniciar sesión</p>
+                                <a href="{% url 'login' %}?next={% url 'lista_maquinaria' %}" class="btn-login">
+                                    Iniciar Sesión
+                                </a>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
