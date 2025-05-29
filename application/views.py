@@ -382,12 +382,6 @@ class CustomPasswordResetView(PasswordResetView):
                     and any(c in "!@#$%^&*" for c in password)):
                 return password
 
-    def send_mail(self, subject, email, context, from_email, html_email_template_name=None):
-        """
-        Sobrescribimos este método para evitar el envío del correo por defecto de Django
-        """
-        pass  # No hacemos nada aquí para evitar el envío del correo por defecto
-
     def form_valid(self, form):
         """
         Genera una contraseña aleatoria y la envía por correo electrónico.
@@ -431,7 +425,8 @@ class CustomPasswordResetView(PasswordResetView):
         except Exception as e:
             print(f"Error al enviar el correo: {str(e)}")  # Para debugging
 
-        return super().form_valid(form)
+        # Redirigir a la página de éxito sin llamar al super().form_valid()
+        return redirect(self.success_url)
 
 
 class CustomPasswordResetDoneView(PasswordResetDoneView):
