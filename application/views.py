@@ -497,7 +497,6 @@ def reservar_maquinaria(request, maquina_id):
         form = ReservaMaquinariaForm(request.POST)
         if form.is_valid():
             reserva = form.save(commit=False)
-            reserva.maquina = maquina
             reserva.cliente = request.user
 
             # Calcular el monto total
@@ -516,7 +515,7 @@ def reservar_maquinaria(request, maquina_id):
                     request, 'Error al crear la reserva. Por favor, intente nuevamente.')
                 return redirect('lista_maquinaria')
     else:
-        form = ReservaMaquinariaForm()
+        form = ReservaMaquinariaForm(initial={'maquina': maquina})
 
     return render(request, 'reserva/reservar_maquinaria.html', {
         'form': form,

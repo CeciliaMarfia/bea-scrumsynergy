@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from datetime import date
-from .models import Perfil, PermisoEspecial, Reserva, TarjetaCredito
+from .models import Perfil, PermisoEspecial, Reserva, TarjetaCredito, Maquina
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
@@ -139,7 +139,8 @@ class PermisoEspecialForm(forms.ModelForm):
 class EditarPerfilForm(forms.ModelForm):
     first_name = forms.CharField(required=True, label='Nombre')
     last_name = forms.CharField(required=True, label='Apellido')
-    email = forms.EmailField(required=True, label='Correo electrónico', disabled=True)  # Email inmutable
+    email = forms.EmailField(
+        required=True, label='Correo electrónico', disabled=True)  # Email inmutable
     dni = forms.CharField(required=True, label='DNI')
     fecha_nacimiento = forms.DateField(
         required=True,
@@ -182,9 +183,11 @@ class EditarPerfilForm(forms.ModelForm):
     def clean_dni(self):
         dni = self.cleaned_data.get('dni')
         # Verificar si el DNI ya está registrado, excluyendo el usuario actual
-        existing_user = Perfil.objects.filter(dni=dni).exclude(usuario=self.instance).first()
+        existing_user = Perfil.objects.filter(
+            dni=dni).exclude(usuario=self.instance).first()
         if existing_user:
-            raise forms.ValidationError('Este DNI ya está registrado en el sistema.')
+            raise forms.ValidationError(
+                'Este DNI ya está registrado en el sistema.')
         return dni
 
     def clean_email(self):
@@ -215,9 +218,15 @@ class EditarPerfilForm(forms.ModelForm):
 
 
 class ReservaMaquinariaForm(forms.ModelForm):
+    maquina = forms.ModelChoiceField(
+        queryset=Maquina.objects.all(),
+        widget=forms.HiddenInput(),
+        required=True
+    )
+
     class Meta:
         model = Reserva
-        fields = ['fecha_inicio', 'fecha_fin']
+        fields = ['maquina', 'fecha_inicio', 'fecha_fin']
         widgets = {
             'fecha_inicio': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'fecha_fin': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
