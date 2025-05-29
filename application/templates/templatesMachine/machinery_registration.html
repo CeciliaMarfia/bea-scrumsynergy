@@ -22,16 +22,21 @@
     <form method="post" enctype="multipart/form-data" accept-charset="utf-8" id="maquinariaForm">
       {% csrf_token %}
       {% for field in form %}
-        <div class="form-group">
+        <div class="form-group" {% if field.name == 'politica_cancelacion' %}data-field="politica_cancelacion"{% endif %}>
           {{ field.label_tag }}
           {% if field.name == 'imagenes' %}
             <div class="file-input-container">
               <div class="custom-file-upload" id="drop-zone">
                 <input type="file" name="imagenes" multiple accept="image/*" class="form-control" id="id_imagenes">
                 <p class="upload-text">Arrastra las imágenes aquí o haz clic para seleccionar</p>
+                <div id="file-counter" class="file-counter">0 imágenes seleccionadas</div>
               </div>
             </div>
-            <div id="preview-container"></div>
+            <div class="image-preview-wrapper">
+              <button type="button" class="nav-button prev" onclick="prevImage()" style="display: none;">&lt;</button>
+              <div id="preview-container" class="preview-container"></div>
+              <button type="button" class="nav-button next" onclick="nextImage()" style="display: none;">&gt;</button>
+            </div>
           {% else %}
             {{ field }}
           {% endif %}
@@ -387,6 +392,115 @@ form p {
 .selected-files-counter i {
   margin-right: 0.5rem;
 }
+
+.file-counter {
+  margin-top: 10px;
+  color: #546469;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.image-preview-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-top: 20px;
+  gap: 10px;
+}
+
+.preview-container {
+  flex: 1;
+  display: flex;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  gap: 10px;
+  padding: 10px 0;
+}
+
+.preview-item {
+  flex: 0 0 auto;
+  position: relative;
+  width: 150px;
+  margin-right: 10px;
+}
+
+.preview-item img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 2px solid #d16c44;
+}
+
+.preview-item .remove-btn {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: rgba(220, 53, 69, 0.9);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.preview-item .principal-badge {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  background: rgba(209, 108, 68, 0.9);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.nav-button {
+  background: #d16c44;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  transition: background-color 0.3s;
+}
+
+.nav-button:hover {
+  background: #b95a33;
+}
+
+.nav-button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.highlight {
+  border-color: #d16c44 !important;
+  background-color: rgba(209, 108, 68, 0.1);
+}
+
+/* Ocultar el campo de porcentaje de cancelación por defecto */
+#id_politica_cancelacion {
+    display: none;
+}
+
+#id_politica_cancelacion:not(:required) {
+    display: none;
+}
+
+.form-group[data-field="politica_cancelacion"] {
+    display: none;
+}
 </style>
 {% endblock %}
 
@@ -397,10 +511,45 @@ document.addEventListener('DOMContentLoaded', function() {
   const dropZone = document.getElementById('drop-zone');
   const imageInput = document.querySelector('input[name="imagenes"]');
   const previewContainer = document.getElementById('preview-container');
+  const fileCounter = document.getElementById('file-counter');
+  const prevButton = document.querySelector('.nav-button.prev');
+  const nextButton = document.querySelector('.nav-button.next');
   const tipoCancelacionSelect = document.querySelector('#id_tipo_cancelacion');
   const politicaCancelacionGroup = document.querySelector('#id_politica_cancelacion').closest('.form-group');
   let currentIndex = 0;
   let previews = [];
+
+  // Función para manejar la visibilidad del campo de política de cancelación
+  function updatePoliticaCancelacionVisibility() {
+    const selectedValue = tipoCancelacionSelect.value;
+    const politicaInput = document.querySelector('#id_politica_cancelacion');
+
+    if (selectedValue === 'parcial') {
+      politicaCancelacionGroup.style.display = 'block';
+      politicaInput.value = '';  // Limpiar el valor para que el usuario lo ingrese
+      politicaInput.required = true;
+    } else {
+      politicaCancelacionGroup.style.display = 'none';
+      politicaInput.required = false;
+      // Establecer valores automáticamente según la selección
+      if (selectedValue === 'total') {
+        politicaInput.value = '100';
+      } else if (selectedValue === 'sin_reembolso') {
+        politicaInput.value = '0';
+      }
+    }
+  }
+
+  // Inicializar el estado del campo
+  updatePoliticaCancelacionVisibility();
+
+  // Agregar listener para cambios en el tipo de cancelación
+  tipoCancelacionSelect.addEventListener('change', updatePoliticaCancelacionVisibility);
+
+  // Actualizar contador inicial si hay archivos ya seleccionados
+  if (imageInput.files && imageInput.files.length > 0) {
+    handleFiles(imageInput.files);
+  }
 
   // Prevenir comportamiento por defecto del navegador
   ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
@@ -444,63 +593,52 @@ document.addEventListener('DOMContentLoaded', function() {
     handleFiles(this.files);
   });
 
-  function showImage(index) {
-    previews.forEach((preview, i) => {
-      preview.style.display = i === index ? 'block' : 'none';
-    });
-  }
-
   function handleFiles(files) {
+    if (!files || files.length === 0) {
+      fileCounter.textContent = '0 imágenes seleccionadas';
+      previewContainer.innerHTML = '';
+      previews = [];
+      currentIndex = 0;
+      updateNavigationButtons();
+      return;
+    }
+
     previewContainer.innerHTML = '';
     previews = [];
     currentIndex = 0;
+    
+    // Actualizar contador de archivos
+    fileCounter.textContent = `${files.length} ${files.length === 1 ? 'imagen seleccionada' : 'imágenes seleccionadas'}`;
     
     Array.from(files).forEach((file, index) => {
       if (file.type.startsWith('image/')) {
         const reader = new FileReader();
         reader.onload = function(e) {
           const preview = document.createElement('div');
-          preview.style.cssText = 'margin-bottom: 10px; text-align: center;';
+          preview.className = 'preview-item';
           preview.innerHTML = `
-            <img src="${e.target.result}" alt="Preview" style="max-width: 100%; max-height: 300px; object-fit: contain;">
-            <div style="margin-top: 5px;">${file.name}</div>
-            ${index === 0 ? '<div style="color: #d16c44; font-weight: bold;">Imagen Principal</div>' : ''}
+            <img src="${e.target.result}" alt="${file.name}" title="${file.name}">
+            <button type="button" class="remove-btn" onclick="removeImage(${index})">×</button>
+            ${index === 0 ? '<span class="principal-badge">Principal</span>' : ''}
+            <div class="image-name">${file.name}</div>
           `;
-          preview.style.display = index === 0 ? 'block' : 'none';
           previewContainer.appendChild(preview);
           previews.push(preview);
+          
+          // Mostrar/ocultar botones de navegación
+          updateNavigationButtons();
         };
         reader.readAsDataURL(file);
       }
     });
   }
 
-  // Función para manejar la visibilidad del campo de política de cancelación
-  function updatePoliticaCancelacionVisibility() {
-    const selectedValue = tipoCancelacionSelect.value;
-    const politicaInput = document.querySelector('#id_politica_cancelacion');
-
-    if (selectedValue === 'parcial') {
-      politicaCancelacionGroup.style.display = 'block';
-      politicaInput.required = true;
-    } else {
-      politicaCancelacionGroup.style.display = 'none';
-      politicaInput.required = false;
-      if (selectedValue === 'total') {
-        politicaInput.value = '100';
-      } else if (selectedValue === 'sin_reembolso') {
-        politicaInput.value = '0';
-      }
-    }
+  function updateNavigationButtons() {
+    const hasMultipleImages = previews.length > 1;
+    prevButton.style.display = hasMultipleImages ? 'flex' : 'none';
+    nextButton.style.display = hasMultipleImages ? 'flex' : 'none';
   }
 
-  // Inicializar el estado del campo
-  updatePoliticaCancelacionVisibility();
-
-  // Agregar listener para cambios en el tipo de cancelación
-  tipoCancelacionSelect.addEventListener('change', updatePoliticaCancelacionVisibility);
-
-  // Función para eliminar una imagen
   window.removeImage = function(index) {
     const dt = new DataTransfer();
     const files = Array.from(imageInput.files);
@@ -512,46 +650,44 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     imageInput.files = dt.files;
-    
-    // Actualizar previsualizaciones
-    previews[index].remove();
-    
-    // Validación del formulario
-    form.addEventListener('submit', function(e) {
-      const files = imageInput.files;
-      if (files.length === 0) {
-        e.preventDefault();
-        alert('Por favor seleccione al menos una imagen');
-        return;
-      }
-
-      // Validación adicional para política de cancelación parcial
-      const tipoCancelacion = tipoCancelacionSelect.value;
-      const politicaInput = document.querySelector('#id_politica_cancelacion');
-      
-      if (tipoCancelacion === 'parcial') {
-        const porcentaje = parseFloat(politicaInput.value);
-        if (isNaN(porcentaje) || porcentaje < 10 || porcentaje > 90) {
-          e.preventDefault();
-          alert('El porcentaje de reembolso parcial debe estar entre 10% y 90%');
-        }
-      }
-    });
+    handleFiles(imageInput.files);
   };
 
   window.prevImage = function() {
     if (currentIndex > 0) {
+      previewContainer.scrollLeft -= 170; // Ancho del preview + margen
       currentIndex--;
-      showImage(currentIndex);
     }
   };
 
   window.nextImage = function() {
     if (currentIndex < previews.length - 1) {
+      previewContainer.scrollLeft += 170; // Ancho del preview + margen
       currentIndex++;
-      showImage(currentIndex);
     }
   };
+
+  // Validación del formulario
+  form.addEventListener('submit', function(e) {
+    const files = imageInput.files;
+    if (files.length === 0) {
+      e.preventDefault();
+      alert('Por favor seleccione al menos una imagen');
+      return;
+    }
+
+    // Validación adicional para política de cancelación parcial
+    const tipoCancelacion = tipoCancelacionSelect.value;
+    const politicaInput = document.querySelector('#id_politica_cancelacion');
+    
+    if (tipoCancelacion === 'parcial') {
+      const porcentaje = parseFloat(politicaInput.value);
+      if (isNaN(porcentaje) || porcentaje < 10 || porcentaje > 90) {
+        e.preventDefault();
+        alert('El porcentaje de reembolso parcial debe estar entre 10% y 90%');
+      }
+    }
+  });
 });
 </script>
 {% endblock %} 

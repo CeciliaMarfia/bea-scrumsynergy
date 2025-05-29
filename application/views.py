@@ -708,3 +708,4 @@ def detalle_reserva(request, reserva_id):
     return render(request, 'reservas/detalle_reserva.html', {
         'reserva': reserva
     })
+#

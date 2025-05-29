@@ -97,6 +97,8 @@ class Maquina(models.Model):
     modelo = models.CharField(max_length=100)
     anio = models.PositiveIntegerField()
     ubicacion = models.CharField(max_length=255)
+    descripcion = models.TextField(
+        blank=True, null=True, help_text='Descripción detallada de la maquinaria')
     tipo_cancelacion = models.CharField(
         max_length=20,
         choices=TIPO_CANCELACION_CHOICES,
@@ -200,6 +202,33 @@ class Reserva(models.Model):
     def __str__(self):
         return f'Reserva #{self.numero_reserva} - {self.maquina.nombre}'
 
+    def clean(self):
+        if self.fecha_inicio and self.fecha_fin:
+            if self.fecha_inicio < timezone.now().date():
+                raise ValidationError(
+                    'La fecha de inicio no puede ser anterior a la fecha actual.')
+            if self.fecha_fin < self.fecha_inicio:
+                raise ValidationError(
+                    'La fecha de fin no puede ser anterior a la fecha de inicio.')
+
+            # Validar stock disponible
+            if self.maquina and self.maquina.stock < 1:
+                raise ValidationError(
+                    'No hay stock disponible para esta maquinaria.')
+
+            # Verificar si hay otras reservas que se solapan y afectan el stock
+            reservas_solapadas = Reserva.objects.filter(
+                maquina=self.maquina,
+                fecha_inicio__lte=self.fecha_fin,
+                fecha_fin__gte=self.fecha_inicio,
+                estado__in=['pendiente_pago', 'pagada']
+            ).exclude(pk=self.pk if self.pk else None)
+
+            stock_ocupado = reservas_solapadas.count()
+            if (self.maquina.stock - stock_ocupado) < 1:
+                raise ValidationError(
+                    'No hay suficiente stock disponible para las fechas seleccionadas.')
+
     def save(self, *args, **kwargs):
         if not self.numero_reserva:
             # Generar número de reserva único
@@ -211,21 +240,17 @@ class Reserva(models.Model):
             self.numero_reserva = f'RES{timezone.now().strftime("%Y%m")}{str(ultimo_id + 1).zfill(4)}'
 
         if self.pk is None:  # Si es una nueva reserva
+            # Validar stock antes de decrementar
+            if self.maquina.stock < 1:
+                raise ValidationError(
+                    'No hay stock disponible para esta maquinaria.')
+
             self.maquina.stock -= 1
             if self.maquina.stock == 0:
                 self.maquina.estado = 'reservado'
             self.maquina.save()
 
         super().save(*args, **kwargs)
-
-    def clean(self):
-        if self.fecha_inicio and self.fecha_fin:
-            if self.fecha_inicio < timezone.now().date():
-                raise ValidationError(
-                    'La fecha de inicio no puede ser anterior a la fecha actual.')
-            if self.fecha_fin < self.fecha_inicio:
-                raise ValidationError(
-                    'La fecha de fin no puede ser anterior a la fecha de inicio.')
 
 
 class Pago(models.Model):
