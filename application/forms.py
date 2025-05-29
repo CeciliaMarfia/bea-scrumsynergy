@@ -139,7 +139,7 @@ class PermisoEspecialForm(forms.ModelForm):
 class EditarPerfilForm(forms.ModelForm):
     first_name = forms.CharField(required=True, label='Nombre')
     last_name = forms.CharField(required=True, label='Apellido')
-    email = forms.EmailField(required=True, label='Correo electrónico')
+    email = forms.EmailField(required=True, label='Correo electrónico', disabled=True)  # Email inmutable
     dni = forms.CharField(required=True, label='DNI')
     fecha_nacimiento = forms.DateField(
         required=True,
@@ -168,19 +168,35 @@ class EditarPerfilForm(forms.ModelForm):
             self.fields['fecha_nacimiento'].initial = user.perfil.fecha_nacimiento
             self.fields['direccion'].initial = user.perfil.direccion
 
+    def clean_fecha_nacimiento(self):
+        fecha_nacimiento = self.cleaned_data.get('fecha_nacimiento')
+        if fecha_nacimiento:
+            hoy = date.today()
+            edad = hoy.year - fecha_nacimiento.year - \
+                ((hoy.month, hoy.day) < (fecha_nacimiento.month, fecha_nacimiento.day))
+            if edad < 18:
+                raise forms.ValidationError(
+                    'No se puede modificar la edad a menos de 18 años.')
+        return fecha_nacimiento
+
+    def clean_dni(self):
+        dni = self.cleaned_data.get('dni')
+        # Verificar si el DNI ya está registrado, excluyendo el usuario actual
+        existing_user = Perfil.objects.filter(dni=dni).exclude(usuario=self.instance).first()
+        if existing_user:
+            raise forms.ValidationError('Este DNI ya está registrado en el sistema.')
+        return dni
+
     def clean_email(self):
-        email = self.cleaned_data.get('email')
-        if User.objects.exclude(id=self.instance.id).filter(email=email).exists():
-            raise forms.ValidationError(
-                'Este correo electrónico ya está registrado.')
-        return email
+        # Devolver el email original sin modificaciones
+        return self.instance.email
 
     def save(self, commit=True):
         with transaction.atomic():
             user = super().save(commit=False)
             user.first_name = self.cleaned_data['first_name']
             user.last_name = self.cleaned_data['last_name']
-            user.email = self.cleaned_data['email']
+            # No actualizamos el email ya que es inmutable
 
             if commit:
                 user.save()
