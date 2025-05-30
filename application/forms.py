@@ -7,6 +7,7 @@ from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 from django.db import transaction
+from django.contrib.auth import password_validation
 
 
 class RegistroUsuarioForm(UserCreationForm):
@@ -62,6 +63,34 @@ class RegistroUsuarioForm(UserCreationForm):
             'password_too_common': 'La contraseña es demasiado común.',
             'password_entirely_numeric': 'La contraseña no puede ser completamente numérica.'
         }
+        # Personalizar mensajes de error para password2
+        self.fields['password2'].error_messages = {
+            'required': 'Por favor, confirma tu contraseña.',
+            'password_too_short': 'La contraseña debe tener al menos 8 caracteres.',
+            'password_too_similar': 'La contraseña es demasiado similar a tu información personal.',
+            'password_too_common': 'La contraseña es demasiado común.',
+            'password_entirely_numeric': 'La contraseña no puede ser completamente numérica.'
+        }
+
+    def clean_password1(self):
+        password1 = self.cleaned_data.get('password1')
+        try:
+            # Llamar a la validación original
+            password_validation.validate_password(password1, self.instance)
+        except forms.ValidationError as error:
+            # Reemplazar los mensajes de error específicos
+            custom_messages = []
+            for e in error.error_list:
+                if 'too similar to' in str(e):
+                    custom_messages.append(forms.ValidationError(
+                        'La contraseña es demasiado similar a tu información personal.',
+                        code='password_too_similar'
+                    ))
+                else:
+                    custom_messages.append(e)
+            if custom_messages:
+                raise forms.ValidationError(custom_messages)
+        return password1
 
     def clean(self):
         cleaned_data = super().clean()
