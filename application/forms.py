@@ -1,5 +1,5 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import UserCreationForm, PasswordChangeForm
 from django.contrib.auth.models import User
 from datetime import date
 from .models import Perfil, PermisoEspecial, Reserva, TarjetaCredito, Maquina
@@ -378,3 +378,80 @@ class TarjetaCreditoForm(forms.ModelForm):
         if commit:
             tarjeta.save()
         return tarjeta
+
+
+class CambiarPasswordForm(PasswordChangeForm):
+    old_password = forms.CharField(
+        label='Contraseña actual',
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'autocomplete': 'current-password',
+            'autofocus': True
+        })
+    )
+    new_password1 = forms.CharField(
+        label='Nueva contraseña',
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'autocomplete': 'new-password'
+        }),
+        help_text=_(
+            'Tu contraseña debe cumplir con los siguientes requisitos:\n'
+            '• Tener al menos 8 caracteres\n'
+            '• No puede ser demasiado similar a tu información personal\n'
+            '• No puede ser una contraseña común\n'
+            '• No puede ser completamente numérica\n'
+            '• No puede ser igual a tu contraseña actual'
+        )
+    )
+    new_password2 = forms.CharField(
+        label='Confirmar nueva contraseña',
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'autocomplete': 'new-password'
+        }),
+        help_text=_('Ingresa la misma contraseña que antes, para verificación.')
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Personalizar mensajes de error
+        self.error_messages['password_incorrect'] = 'La contraseña actual es incorrecta.'
+        self.error_messages['password_mismatch'] = 'Las dos contraseñas no coinciden.'
+
+        self.fields['new_password1'].error_messages = {
+            'required': 'La contraseña es obligatoria.',
+            'password_too_short': 'La contraseña debe tener al menos 8 caracteres.',
+            'password_too_similar': 'La contraseña es demasiado similar a tu información personal.',
+            'password_too_common': 'La contraseña es demasiado común.',
+            'password_entirely_numeric': 'La contraseña no puede ser completamente numérica.'
+        }
+        self.fields['new_password2'].error_messages = {
+            'required': 'Por favor, confirma tu contraseña.',
+        }
+
+    def clean_new_password1(self):
+        old_password = self.cleaned_data.get('old_password')
+        new_password = self.cleaned_data.get('new_password1')
+
+        if old_password and new_password and old_password == new_password:
+            raise forms.ValidationError(
+                'La nueva contraseña no puede ser igual a la contraseña actual.',
+                code='password_same_as_old'
+            )
+
+        try:
+            password_validation.validate_password(new_password, self.user)
+        except forms.ValidationError as error:
+            custom_messages = []
+            for e in error.error_list:
+                if 'too similar to' in str(e):
+                    custom_messages.append(forms.ValidationError(
+                        'La contraseña es demasiado similar a tu información personal.',
+                        code='password_too_similar'
+                    ))
+                else:
+                    custom_messages.append(e)
+            if custom_messages:
+                raise forms.ValidationError(custom_messages)
+        return new_password

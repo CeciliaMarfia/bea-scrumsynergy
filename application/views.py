@@ -9,7 +9,7 @@ from .models import Maquina, HomeVideo, PermisoEspecial, Perfil, Reserva, Imagen
 from django.core.mail import send_mail, EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
-from .forms import RegistroUsuarioForm, PermisoEspecialForm, EditarPerfilForm, ReservaMaquinariaForm, TarjetaCreditoForm
+from .forms import RegistroUsuarioForm, PermisoEspecialForm, EditarPerfilForm, ReservaMaquinariaForm, TarjetaCreditoForm, CambiarPasswordForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import PasswordResetView, PasswordResetDoneView
 from django.contrib.auth.models import User
@@ -342,15 +342,32 @@ def perfil(request):
 @login_required
 def editar_perfil(request):
     if request.method == 'POST':
-        form = EditarPerfilForm(
-            request.POST, request.FILES, instance=request.user)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Perfil actualizado exitosamente.')
-            return redirect('perfil')
+        if 'cambiar_password' in request.POST:
+            password_form = CambiarPasswordForm(request.user, request.POST)
+            profile_form = EditarPerfilForm(
+                instance=request.user, user=request.user)
+            if password_form.is_valid():
+                password_form.save()
+                messages.success(
+                    request, 'Tu contraseña ha sido actualizada exitosamente.')
+                return redirect('perfil')
+        else:
+            password_form = CambiarPasswordForm(request.user)
+            profile_form = EditarPerfilForm(
+                request.POST, request.FILES, instance=request.user)
+            if profile_form.is_valid():
+                profile_form.save()
+                messages.success(request, 'Perfil actualizado exitosamente.')
+                return redirect('perfil')
     else:
-        form = EditarPerfilForm(instance=request.user, user=request.user)
-    return render(request, 'editar_perfil.html', {'form': form})
+        password_form = CambiarPasswordForm(request.user)
+        profile_form = EditarPerfilForm(
+            instance=request.user, user=request.user)
+
+    return render(request, 'editar_perfil.html', {
+        'form': profile_form,
+        'password_form': password_form
+    })
 
 
 @login_required
