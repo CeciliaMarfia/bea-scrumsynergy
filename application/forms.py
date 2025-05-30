@@ -8,6 +8,38 @@ from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 from django.db import transaction
 from django.contrib.auth import password_validation
+from django.conf import settings
+
+# Diccionario global de mensajes de error en español
+PASSWORD_ERROR_MESSAGES = {
+    'password_too_short': 'La contraseña debe tener al menos 8 caracteres.',
+    'password_too_similar': 'La contraseña es demasiado similar a tu información personal.',
+    'password_too_common': 'La contraseña es demasiado común.',
+    'password_entirely_numeric': 'La contraseña no puede ser completamente numérica.',
+    'password_mismatch': 'Las dos contraseñas no coinciden.',
+    'required': 'Este campo es obligatorio.',
+    'password_same_as_old': 'La nueva contraseña no puede ser igual a la contraseña actual.',
+    'password_incorrect': 'La contraseña actual es incorrecta.'
+}
+
+
+def validate_password_length(password):
+    if len(password) < 8:
+        raise ValidationError(
+            PASSWORD_ERROR_MESSAGES['password_too_short'],
+            code='password_too_short'
+        )
+
+
+# Personalizar los mensajes de error de los validadores de Django
+password_validation.MinimumLengthValidator.message = PASSWORD_ERROR_MESSAGES[
+    'password_too_short']
+password_validation.UserAttributeSimilarityValidator.message = PASSWORD_ERROR_MESSAGES[
+    'password_too_similar']
+password_validation.CommonPasswordValidator.message = PASSWORD_ERROR_MESSAGES[
+    'password_too_common']
+password_validation.NumericPasswordValidator.message = PASSWORD_ERROR_MESSAGES[
+    'password_entirely_numeric']
 
 
 class RegistroUsuarioForm(UserCreationForm):
@@ -387,7 +419,11 @@ class CambiarPasswordForm(PasswordChangeForm):
             'class': 'form-control',
             'autocomplete': 'current-password',
             'autofocus': True
-        })
+        }),
+        error_messages={
+            'required': PASSWORD_ERROR_MESSAGES['required'],
+            'password_incorrect': PASSWORD_ERROR_MESSAGES['password_incorrect']
+        }
     )
     new_password1 = forms.CharField(
         label='Nueva contraseña',
@@ -415,43 +451,101 @@ class CambiarPasswordForm(PasswordChangeForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Personalizar mensajes de error
-        self.error_messages['password_incorrect'] = 'La contraseña actual es incorrecta.'
-        self.error_messages['password_mismatch'] = 'Las dos contraseñas no coinciden.'
+        self.error_messages = PASSWORD_ERROR_MESSAGES.copy()
 
-        self.fields['new_password1'].error_messages = {
-            'required': 'La contraseña es obligatoria.',
-            'password_too_short': 'La contraseña debe tener al menos 8 caracteres.',
-            'password_too_similar': 'La contraseña es demasiado similar a tu información personal.',
-            'password_too_common': 'La contraseña es demasiado común.',
-            'password_entirely_numeric': 'La contraseña no puede ser completamente numérica.'
-        }
-        self.fields['new_password2'].error_messages = {
-            'required': 'Por favor, confirma tu contraseña.',
-        }
+        # Aplicar mensajes de error personalizados a todos los campos
+        for field in ['old_password', 'new_password1', 'new_password2']:
+            self.fields[field].error_messages.update(PASSWORD_ERROR_MESSAGES)
+
+    def clean_old_password(self):
+        old_password = self.cleaned_data.get('old_password')
+        if not self.user.check_password(old_password):
+            raise ValidationError(
+                PASSWORD_ERROR_MESSAGES['password_incorrect'],
+                code='password_incorrect'
+            )
+        return old_password
 
     def clean_new_password1(self):
         old_password = self.cleaned_data.get('old_password')
         new_password = self.cleaned_data.get('new_password1')
 
         if old_password and new_password and old_password == new_password:
-            raise forms.ValidationError(
-                'La nueva contraseña no puede ser igual a la contraseña actual.',
+            raise ValidationError(
+                PASSWORD_ERROR_MESSAGES['password_same_as_old'],
                 code='password_same_as_old'
             )
 
         try:
             password_validation.validate_password(new_password, self.user)
-        except forms.ValidationError as error:
-            custom_messages = []
+        except ValidationError as error:
+            error_messages = []
             for e in error.error_list:
-                if 'too similar to' in str(e):
-                    custom_messages.append(forms.ValidationError(
-                        'La contraseña es demasiado similar a tu información personal.',
+                if 'too short' in str(e).lower() or 'at least 8' in str(e).lower():
+                    error_messages.append(ValidationError(
+                        PASSWORD_ERROR_MESSAGES['password_too_short'],
+                        code='password_too_short'
+                    ))
+                elif 'too similar to' in str(e).lower():
+                    error_messages.append(ValidationError(
+                        PASSWORD_ERROR_MESSAGES['password_too_similar'],
                         code='password_too_similar'
                     ))
+                elif 'too common' in str(e).lower():
+                    error_messages.append(ValidationError(
+                        PASSWORD_ERROR_MESSAGES['password_too_common'],
+                        code='password_too_common'
+                    ))
+                elif 'numeric' in str(e).lower():
+                    error_messages.append(ValidationError(
+                        PASSWORD_ERROR_MESSAGES['password_entirely_numeric'],
+                        code='password_entirely_numeric'
+                    ))
                 else:
-                    custom_messages.append(e)
-            if custom_messages:
-                raise forms.ValidationError(custom_messages)
+                    error_messages.append(e)
+            if error_messages:
+                raise ValidationError(error_messages)
+
         return new_password
+
+    def clean_new_password2(self):
+        password1 = self.cleaned_data.get('new_password1')
+        password2 = self.cleaned_data.get('new_password2')
+
+        if password1 and password2:
+            if password1 != password2:
+                raise ValidationError(
+                    PASSWORD_ERROR_MESSAGES['password_mismatch'],
+                    code='password_mismatch'
+                )
+            try:
+                password_validation.validate_password(password2, self.user)
+            except ValidationError as error:
+                error_messages = []
+                for e in error.error_list:
+                    if 'too short' in str(e).lower() or 'at least 8' in str(e).lower():
+                        error_messages.append(ValidationError(
+                            PASSWORD_ERROR_MESSAGES['password_too_short'],
+                            code='password_too_short'
+                        ))
+                    elif 'too similar to' in str(e).lower():
+                        error_messages.append(ValidationError(
+                            PASSWORD_ERROR_MESSAGES['password_too_similar'],
+                            code='password_too_similar'
+                        ))
+                    elif 'too common' in str(e).lower():
+                        error_messages.append(ValidationError(
+                            PASSWORD_ERROR_MESSAGES['password_too_common'],
+                            code='password_too_common'
+                        ))
+                    elif 'numeric' in str(e).lower():
+                        error_messages.append(ValidationError(
+                            PASSWORD_ERROR_MESSAGES['password_entirely_numeric'],
+                            code='password_entirely_numeric'
+                        ))
+                    else:
+                        error_messages.append(e)
+                if error_messages:
+                    raise ValidationError(error_messages)
+
+        return password2
