@@ -170,11 +170,23 @@ class EditarPerfilForm(forms.ModelForm):
     last_name = forms.CharField(required=True, label='Apellido')
     email = forms.EmailField(
         required=True, label='Correo electrónico', disabled=True)  # Email inmutable
-    dni = forms.CharField(required=True, label='DNI')
+    dni = forms.CharField(
+        required=True,
+        label='DNI',
+        widget=forms.TextInput(attrs={
+            'type': 'text',
+            'pattern': '[0-9]{7,8}',
+            'title': 'Ingrese un DNI válido de 7 u 8 dígitos',
+            'maxlength': '8'
+        })
+    )
     fecha_nacimiento = forms.DateField(
         required=True,
         label='Fecha de nacimiento',
-        widget=forms.DateInput(attrs={'type': 'date'})
+        widget=forms.DateInput(attrs={
+            'type': 'date',
+            'class': 'form-control'
+        })
     )
     direccion = forms.CharField(required=True, label='Dirección')
     documento_foto = forms.ImageField(
@@ -195,7 +207,10 @@ class EditarPerfilForm(forms.ModelForm):
             self.fields['last_name'].initial = user.last_name
             self.fields['email'].initial = user.email
             self.fields['dni'].initial = user.perfil.dni
-            self.fields['fecha_nacimiento'].initial = user.perfil.fecha_nacimiento
+            # Formatear la fecha al formato YYYY-MM-DD para el input type="date"
+            if user.perfil.fecha_nacimiento:
+                self.fields['fecha_nacimiento'].widget.attrs['value'] = user.perfil.fecha_nacimiento.strftime(
+                    '%Y-%m-%d')
             self.fields['direccion'].initial = user.perfil.direccion
 
     def clean_fecha_nacimiento(self):
@@ -211,6 +226,13 @@ class EditarPerfilForm(forms.ModelForm):
 
     def clean_dni(self):
         dni = self.cleaned_data.get('dni')
+        # Verificar que el DNI solo contenga números
+        if not dni.isdigit():
+            raise forms.ValidationError('El DNI debe contener solo números.')
+        # Verificar la longitud del DNI
+        if len(dni) < 7 or len(dni) > 8:
+            raise forms.ValidationError(
+                'El DNI debe tener entre 7 y 8 dígitos.')
         # Verificar si el DNI ya está registrado, excluyendo el usuario actual
         existing_user = Perfil.objects.filter(
             dni=dni).exclude(usuario=self.instance).first()
