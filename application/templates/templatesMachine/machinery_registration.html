@@ -26,13 +26,13 @@
       {% csrf_token %}
       {% for field in form %}
         <div class="form-group {% if field.errors %}has-error{% endif %}" {% if field.name == 'politica_cancelacion' %}data-field="politica_cancelacion"{% endif %}>
-          {{ field.label_tag }}
           {% if field.name == 'imagenes' %}
+            <label for="id_imagenes">Imágenes:</label>
             <div class="file-input-container {% if field.errors %}is-invalid{% endif %}">
               <div class="custom-file-upload" id="drop-zone">
                 <input type="file" name="imagenes" multiple accept="image/*" class="form-control {% if field.errors %}is-invalid{% endif %}" id="id_imagenes">
                 <p class="upload-text">Arrastra las imágenes aquí o haz clic para seleccionar</p>
-                <div id="file-counter" class="file-counter">0 imágenes seleccionadas</div>
+                <div id="file-counter">0 imágenes seleccionadas</div>
               </div>
             </div>
             <div class="image-preview-wrapper">
@@ -41,6 +41,7 @@
               <button type="button" class="nav-button next" onclick="nextImage()" style="display: none;">&gt;</button>
             </div>
           {% else %}
+            {{ field.label_tag }}
             {{ field }}
           {% endif %}
           {% if field.help_text %}
@@ -429,12 +430,12 @@ form p {
 }
 
 .preview-container {
-  flex: 1;
   display: flex;
   overflow-x: auto;
   scroll-behavior: smooth;
   gap: 10px;
   padding: 10px 0;
+  min-height: 150px;
 }
 
 .preview-item {
@@ -452,7 +453,7 @@ form p {
   border: 2px solid #d16c44;
 }
 
-.preview-item .remove-btn {
+.remove-btn {
   position: absolute;
   top: 5px;
   right: 5px;
@@ -469,7 +470,7 @@ form p {
   font-size: 14px;
 }
 
-.preview-item .principal-badge {
+.principal-badge {
   position: absolute;
   top: 5px;
   left: 5px;
@@ -592,255 +593,158 @@ form p {
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  const form = document.querySelector('form');
-  const dropZone = document.getElementById('drop-zone');
-  const imageInput = document.querySelector('input[name="imagenes"]');
-  const previewContainer = document.getElementById('preview-container');
-  const fileCounter = document.getElementById('file-counter');
-  const prevButton = document.querySelector('.nav-button.prev');
-  const nextButton = document.querySelector('.nav-button.next');
-  const tipoCancelacionSelect = document.querySelector('#id_tipo_cancelacion');
-  const politicaCancelacionGroup = document.querySelector('#id_politica_cancelacion').closest('.form-group');
-  let currentIndex = 0;
-  let previews = [];
+    const form = document.querySelector('form');
+    const dropZone = document.getElementById('drop-zone');
+    const imageInput = document.getElementById('id_imagenes');
+    const previewContainer = document.getElementById('preview-container');
+    const fileCounter = document.getElementById('file-counter');
+    const prevButton = document.querySelector('.nav-button.prev');
+    const nextButton = document.querySelector('.nav-button.next');
+    let currentIndex = 0;
+    let previews = [];
 
-  // Función para manejar la visibilidad del campo de política de cancelación
-  function updatePoliticaCancelacionVisibility() {
-    const selectedValue = tipoCancelacionSelect.value;
-    const politicaInput = document.querySelector('#id_politica_cancelacion');
+    // Manejo de la política de cancelación
+    const tipoCancelacionSelect = document.getElementById('id_tipo_cancelacion');
+    const politicaCancelacionInput = document.getElementById('id_politica_cancelacion');
+    const politicaCancelacionGroup = politicaCancelacionInput.closest('.form-group');
 
-    if (selectedValue === 'parcial') {
-      politicaCancelacionGroup.style.display = 'block';
-      politicaInput.value = '';  // Limpiar el valor para que el usuario lo ingrese
-      politicaInput.required = true;
-    } else {
-      politicaCancelacionGroup.style.display = 'none';
-      politicaInput.required = false;
-      // Establecer valores automáticamente según la selección
-      if (selectedValue === 'total') {
-        politicaInput.value = '100';
-      } else if (selectedValue === 'sin_reembolso') {
-        politicaInput.value = '0';
-      }
-    }
-  }
-
-  // Inicializar el estado del campo
-  updatePoliticaCancelacionVisibility();
-
-  // Agregar listener para cambios en el tipo de cancelación
-  tipoCancelacionSelect.addEventListener('change', updatePoliticaCancelacionVisibility);
-
-  // Actualizar contador inicial si hay archivos ya seleccionados
-  if (imageInput.files && imageInput.files.length > 0) {
-    handleFiles(imageInput.files);
-  }
-
-  // Prevenir comportamiento por defecto del navegador
-  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-    dropZone.addEventListener(eventName, preventDefaults, false);
-    document.body.addEventListener(eventName, preventDefaults, false);
-  });
-
-  function preventDefaults (e) {
-    e.preventDefault();
-    e.stopPropagation();
-  }
-
-  // Resaltar zona de drop
-  ['dragenter', 'dragover'].forEach(eventName => {
-    dropZone.addEventListener(eventName, highlight, false);
-  });
-
-  ['dragleave', 'drop'].forEach(eventName => {
-    dropZone.addEventListener(eventName, unhighlight, false);
-  });
-
-  function highlight(e) {
-    dropZone.classList.add('highlight');
-  }
-
-  function unhighlight(e) {
-    dropZone.classList.remove('highlight');
-  }
-
-  // Manejar archivos soltados
-  dropZone.addEventListener('drop', handleDrop, false);
-
-  function handleDrop(e) {
-    const dt = e.dataTransfer;
-    const files = dt.files;
-    handleFiles(files);
-  }
-
-  // Manejar selección de archivos
-  imageInput.addEventListener('change', function() {
-    handleFiles(this.files);
-  });
-
-  function handleFiles(files) {
-    if (!files || files.length === 0) {
-      fileCounter.textContent = '0 imágenes seleccionadas';
-      previewContainer.innerHTML = '';
-      previews = [];
-      currentIndex = 0;
-      updateNavigationButtons();
-      return;
+    function actualizarCampoPolitica() {
+        const seleccion = tipoCancelacionSelect.value;
+        if (seleccion === 'parcial') {
+            politicaCancelacionGroup.style.display = 'block';
+            politicaCancelacionInput.value = '';
+            politicaCancelacionInput.readOnly = false;
+            politicaCancelacionInput.required = true;
+        } else {
+            politicaCancelacionGroup.style.display = 'none';
+            politicaCancelacionInput.required = false;
+            politicaCancelacionInput.value = seleccion === 'total' ? '100' : '0';
+        }
     }
 
-    previewContainer.innerHTML = '';
-    previews = [];
-    currentIndex = 0;
-    
-    // Actualizar contador de archivos
-    fileCounter.textContent = `${files.length} ${files.length === 1 ? 'imagen seleccionada' : 'imágenes seleccionadas'}`;
-    
-    Array.from(files).forEach((file, index) => {
-      if (file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          const preview = document.createElement('div');
-          preview.className = 'preview-item';
-          preview.innerHTML = `
-            <img src="${e.target.result}" alt="${file.name}" title="${file.name}">
-            <button type="button" class="remove-btn" onclick="removeImage(${index})">×</button>
-            ${index === 0 ? '<span class="principal-badge">Principal</span>' : ''}
-            <div class="image-name">${file.name}</div>
-          `;
-          previewContainer.appendChild(preview);
-          previews.push(preview);
-          
-          // Mostrar/ocultar botones de navegación
-          updateNavigationButtons();
-        };
-        reader.readAsDataURL(file);
-      }
+    actualizarCampoPolitica();
+    tipoCancelacionSelect.addEventListener('change', actualizarCampoPolitica);
+
+    // Manejo de imágenes
+    function handleFiles(files) {
+        if (!files || files.length === 0) {
+            fileCounter.textContent = '0 imágenes seleccionadas';
+            previewContainer.innerHTML = '';
+            previews = [];
+            currentIndex = 0;
+            updateNavigationButtons();
+            return;
+        }
+
+        const totalFiles = files.length;
+        fileCounter.textContent = `${totalFiles} ${totalFiles === 1 ? 'imagen seleccionada' : 'imágenes seleccionadas'}`;
+        
+        previewContainer.innerHTML = '';
+        previews = [];
+        currentIndex = 0;
+
+        Array.from(files).forEach((file, index) => {
+            if (!file.type.startsWith('image/')) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.createElement('div');
+                preview.className = 'preview-item';
+                preview.innerHTML = `
+                    <img src="${e.target.result}" alt="${file.name}" title="${file.name}">
+                    <button type="button" class="remove-btn" data-index="${index}">×</button>
+                    ${index === 0 ? '<span class="principal-badge">Principal</span>' : ''}
+                    <div class="image-name">${file.name}</div>
+                `;
+
+                preview.querySelector('.remove-btn').addEventListener('click', function() {
+                    removeImage(this.dataset.index);
+                });
+
+                previewContainer.appendChild(preview);
+                previews.push(preview);
+                updateNavigationButtons();
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function removeImage(index) {
+        const dt = new DataTransfer();
+        const files = Array.from(imageInput.files);
+        
+        files.forEach((file, i) => {
+            if(i !== parseInt(index)) {
+                dt.items.add(file);
+            }
+        });
+        
+        imageInput.files = dt.files;
+        handleFiles(imageInput.files);
+    }
+
+    function updateNavigationButtons() {
+        const hasMultipleImages = previews.length > 1;
+        prevButton.style.display = hasMultipleImages ? 'flex' : 'none';
+        nextButton.style.display = hasMultipleImages ? 'flex' : 'none';
+    }
+
+    // Event Listeners para el manejo de archivos
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, preventDefaults, false);
+        document.body.addEventListener(eventName, preventDefaults, false);
     });
-  }
 
-  function updateNavigationButtons() {
-    const hasMultipleImages = previews.length > 1;
-    prevButton.style.display = hasMultipleImages ? 'flex' : 'none';
-    nextButton.style.display = hasMultipleImages ? 'flex' : 'none';
-  }
-
-  window.removeImage = function(index) {
-    const dt = new DataTransfer();
-    const files = Array.from(imageInput.files);
-    
-    files.forEach((file, i) => {
-      if(i !== index) {
-        dt.items.add(file);
-      }
-    });
-    
-    imageInput.files = dt.files;
-    handleFiles(imageInput.files);
-  };
-
-  window.prevImage = function() {
-    if (currentIndex > 0) {
-      previewContainer.scrollLeft -= 170; // Ancho del preview + margen
-      currentIndex--;
-    }
-  };
-
-  window.nextImage = function() {
-    if (currentIndex < previews.length - 1) {
-      previewContainer.scrollLeft += 170; // Ancho del preview + margen
-      currentIndex++;
-    }
-  };
-
-  // Validación del formulario
-  form.addEventListener('submit', function(e) {
-    let hasErrors = false;
-    const requiredFields = form.querySelectorAll('input[required], select[required], textarea[required]');
-    
-    requiredFields.forEach(field => {
-      if (!field.value) {
+    function preventDefaults(e) {
         e.preventDefault();
-        hasErrors = true;
-        field.classList.add('is-invalid');
-        const formGroup = field.closest('.form-group');
-        if (!formGroup.querySelector('.invalid-feedback')) {
-          const feedback = document.createElement('div');
-          feedback.className = 'invalid-feedback d-block';
-          feedback.innerHTML = `<div class="error-message"><i class="fas fa-exclamation-circle"></i> Este campo es obligatorio</div>`;
-          formGroup.appendChild(feedback);
-        }
-      } else {
-        field.classList.remove('is-invalid');
-        const formGroup = field.closest('.form-group');
-        const feedback = formGroup.querySelector('.invalid-feedback');
-        if (feedback) {
-          feedback.remove();
-        }
-      }
-    });
-
-    const files = imageInput.files;
-    if (files.length === 0) {
-      e.preventDefault();
-      hasErrors = true;
-      dropZone.classList.add('is-invalid');
-      const formGroup = dropZone.closest('.form-group');
-      if (!formGroup.querySelector('.invalid-feedback')) {
-        const feedback = document.createElement('div');
-        feedback.className = 'invalid-feedback d-block';
-        feedback.innerHTML = `<div class="error-message"><i class="fas fa-exclamation-circle"></i> Debe seleccionar al menos una imagen</div>`;
-        formGroup.appendChild(feedback);
-      }
-    } else {
-      dropZone.classList.remove('is-invalid');
-      const formGroup = dropZone.closest('.form-group');
-      const feedback = formGroup.querySelector('.invalid-feedback');
-      if (feedback) {
-        feedback.remove();
-      }
+        e.stopPropagation();
     }
 
-    // Validación adicional para política de cancelación parcial
-    const tipoCancelacion = tipoCancelacionSelect.value;
-    const politicaInput = document.querySelector('#id_politica_cancelacion');
-    
-    if (tipoCancelacion === 'parcial') {
-      const porcentaje = parseFloat(politicaInput.value);
-      if (isNaN(porcentaje) || porcentaje < 10 || porcentaje > 90) {
-        e.preventDefault();
-        hasErrors = true;
-        politicaInput.classList.add('is-invalid');
-        const formGroup = politicaInput.closest('.form-group');
-        if (!formGroup.querySelector('.invalid-feedback')) {
-          const feedback = document.createElement('div');
-          feedback.className = 'invalid-feedback d-block';
-          feedback.innerHTML = `<div class="error-message"><i class="fas fa-exclamation-circle"></i> El porcentaje de reembolso parcial debe estar entre 10% y 90%</div>`;
-          formGroup.appendChild(feedback);
-        }
-      }
-    }
-  });
-
-  // Remover mensajes de error cuando el usuario comienza a escribir
-  form.querySelectorAll('input, select, textarea').forEach(field => {
-    field.addEventListener('input', function() {
-      if (this.value) {
-        this.classList.remove('is-invalid');
-        const formGroup = this.closest('.form-group');
-        const feedback = formGroup.querySelector('.invalid-feedback');
-        if (feedback) {
-          feedback.remove();
-        }
-      }
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => dropZone.classList.add('highlight'), false);
     });
-  });
 
-  // Cerrar alertas
-  document.querySelectorAll('.btn-close').forEach(button => {
-    button.addEventListener('click', function() {
-      this.closest('.alert').remove();
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => dropZone.classList.remove('highlight'), false);
     });
-  });
+
+    dropZone.addEventListener('drop', function(e) {
+        const dt = e.dataTransfer;
+        handleFiles(dt.files);
+    });
+
+    imageInput.addEventListener('change', function() {
+        handleFiles(this.files);
+    });
+
+    window.prevImage = function() {
+        if (currentIndex > 0) {
+            previewContainer.scrollLeft -= 170;
+            currentIndex--;
+        }
+    };
+
+    window.nextImage = function() {
+        if (currentIndex < previews.length - 1) {
+            previewContainer.scrollLeft += 170;
+            currentIndex++;
+        }
+    };
+
+    // Validación del formulario
+    form.addEventListener('submit', function(e) {
+        if (imageInput.files.length === 0) {
+            e.preventDefault();
+            dropZone.classList.add('is-invalid');
+            const formGroup = dropZone.closest('.form-group');
+            if (!formGroup.querySelector('.invalid-feedback')) {
+                const feedback = document.createElement('div');
+                feedback.className = 'invalid-feedback d-block';
+                feedback.innerHTML = `<div class="error-message"><i class="fas fa-exclamation-circle"></i> Debe seleccionar al menos una imagen</div>`;
+                formGroup.appendChild(feedback);
+            }
+        }
+    });
 });
 </script>
 {% endblock %} 
