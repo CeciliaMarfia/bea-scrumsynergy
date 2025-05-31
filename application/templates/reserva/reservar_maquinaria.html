@@ -174,16 +174,12 @@
     <h1 class="page-title">Reservar Maquinaria</h1>
 
     <div class="reserva-container">
-        {% if not maquina.esta_disponible %}
-        <div class="alert alert-danger text-center mb-4">
-            <i class="fas fa-exclamation-circle"></i> Esta máquina no está disponible actualmente.
+        {% if proxima_disponibilidad %}
+        <div class="alert alert-info text-center mb-4">
+            <i class="fas fa-info-circle"></i> Esta máquina estará disponible a partir del {{ proxima_disponibilidad|date:"d/m/Y" }}
         </div>
-        <div class="d-grid">
-            <a href="{% url 'lista_maquinaria' %}" class="btn-cancelar">
-                <i class="fas fa-arrow-left"></i> Volver a la lista
-            </a>
-        </div>
-        {% else %}
+        {% endif %}
+
         <div class="row mb-4">
             <div class="col-md-6">
                 <div class="maquina-info">
@@ -250,7 +246,6 @@
                 </a>
             </div>
         </form>
-        {% endif %}
     </div>
 </div>
 

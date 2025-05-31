@@ -144,7 +144,6 @@
     color: #d16c44;
     font-size: 3.5rem;
     margin: 2rem 0 3rem 0;
-    text-transform: lowercase;
     font-weight: 700;
     text-align: left;
 }
@@ -440,9 +439,9 @@
     {% if not maquina.esta_disponible %}
     <div class="no-stock">
         {% if proxima_disponibilidad %}
-            Esta máquina está reservada actualmente. Podrás realizar una reserva a partir del {{ proxima_disponibilidad|date:"d/m/Y" }}
+            Esta máquina estará disponible para reservar a partir del {{ proxima_disponibilidad|date:"d/m/Y" }}
         {% else %}
-            Esta máquina está reservada actualmente
+            Esta máquina no está disponible actualmente.
         {% endif %}
     </div>
     {% endif %}

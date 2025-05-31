@@ -470,16 +470,14 @@ def reenviar_verificacion(request):
 @login_required
 def reservar_maquinaria(request, maquina_id):
     maquina = get_object_or_404(Maquina, id=maquina_id)
-
-    if not maquina.esta_disponible():
-        messages.error(request, 'Esta máquina no está disponible actualmente.')
-        return redirect('lista_maquinaria')
+    proxima_disponibilidad = maquina.get_proxima_disponibilidad()
 
     if request.method == 'POST':
         form = ReservaMaquinariaForm(request.POST)
         if form.is_valid():
             reserva = form.save(commit=False)
             reserva.cliente = request.user
+            reserva.maquina = maquina
 
             # Calcular el monto total
             dias = (form.cleaned_data['fecha_fin'] -
@@ -495,13 +493,18 @@ def reservar_maquinaria(request, maquina_id):
             except Exception as e:
                 messages.error(
                     request, 'Error al crear la reserva. Por favor, intente nuevamente.')
-                return redirect('lista_maquinaria')
+                return redirect('detalle_maquinaria', maquina_id=maquina.id)
     else:
-        form = ReservaMaquinariaForm(initial={'maquina': maquina})
+        initial_data = {
+            'maquina': maquina,
+            'fecha_inicio': proxima_disponibilidad
+        }
+        form = ReservaMaquinariaForm(initial=initial_data)
 
     return render(request, 'reserva/reservar_maquinaria.html', {
         'form': form,
-        'maquina': maquina
+        'maquina': maquina,
+        'proxima_disponibilidad': proxima_disponibilidad
     })
 
 
@@ -574,8 +577,12 @@ def lista_maquinaria(request):
 
 @login_required
 def mis_reservas(request):
+    # Obtener solo las reservas reales (excluyendo errores)
     reservas = Reserva.objects.filter(
-        cliente=request.user).order_by('-fecha_reserva')
+        cliente=request.user,
+        numero_reserva__isnull=False  # Asegurarse de que tenga número de reserva
+    ).order_by('-fecha_reserva')
+
     return render(request, 'reserva/mis_reservas.html', {
         'reservas': reservas
     })

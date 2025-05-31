@@ -15,7 +15,7 @@ PASSWORD_ERROR_MESSAGES = {
     'password_too_short': 'La contraseña debe tener al menos 8 caracteres.',
     'password_too_similar': 'La contraseña es demasiado similar a tu información personal.',
     'password_too_common': 'La contraseña es demasiado común.',
-    'password_entirely_numeric': 'La contraseña no puede ser completamente numérica.',
+    'password_entirely_numeric': 'La contraseña es demasiado numérica.',
     'password_mismatch': 'Las dos contraseñas no coinciden.',
     'required': 'Este campo es obligatorio.',
     'password_same_as_old': 'La nueva contraseña no puede ser igual a la contraseña actual.',
@@ -319,14 +319,48 @@ class ReservaMaquinariaForm(forms.ModelForm):
         cleaned_data = super().clean()
         fecha_inicio = cleaned_data.get('fecha_inicio')
         fecha_fin = cleaned_data.get('fecha_fin')
+        maquina = cleaned_data.get('maquina')
 
-        if fecha_inicio and fecha_fin:
+        if fecha_inicio and fecha_fin and maquina:
+            # Validar que la fecha de inicio no sea anterior a la fecha actual
             if fecha_inicio < timezone.now().date():
                 raise forms.ValidationError(
                     'La fecha de inicio no puede ser anterior a la fecha actual.')
+
+            # Validar que la fecha de fin no sea anterior a la fecha de inicio
             if fecha_fin < fecha_inicio:
                 raise forms.ValidationError(
                     'La fecha de fin no puede ser anterior a la fecha de inicio.')
+
+            # Validar que la reserva no exceda los 7 días
+            duracion = (fecha_fin - fecha_inicio).days + 1
+            if duracion > 7:
+                raise forms.ValidationError(
+                    'La reserva no puede exceder los 7 días.')
+
+            # Obtener todas las reservas activas que podrían solaparse
+            reservas_existentes = Reserva.objects.filter(
+                maquina=maquina,
+                estado__in=['pendiente_pago', 'pagada'],
+                fecha_fin__gte=fecha_inicio
+            ).exclude(
+                estado='cancelada'
+            ).order_by('fecha_inicio')
+
+            # Verificar solapamiento con otras reservas y períodos de mantenimiento
+            for reserva in reservas_existentes:
+                # Verificar solapamiento directo con la reserva
+                if (fecha_inicio <= reserva.fecha_fin and fecha_fin >= reserva.fecha_inicio):
+                    raise forms.ValidationError(
+                        f'La máquina está reservada del {reserva.fecha_inicio.strftime("%d/%m/%Y")} al {reserva.fecha_fin.strftime("%d/%m/%Y")}.')
+
+                # Verificar período de mantenimiento (2 días después de cada reserva)
+                # La nueva reserva debe comenzar al menos 3 días después de la fecha de fin
+                fecha_disponible = reserva.fecha_fin + \
+                    timezone.timedelta(days=3)
+                if fecha_inicio <= fecha_disponible and fecha_inicio > reserva.fecha_fin:
+                    raise forms.ValidationError(
+                        f'La máquina estará disponible a partir del {fecha_disponible.strftime("%d/%m/%Y")}.')
 
         return cleaned_data
 

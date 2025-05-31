@@ -281,7 +281,7 @@
         <div class="reserva-card">
             <div class="reserva-header">
                 <div class="maquina-nombre">{{ reserva.maquina.nombre }}</div>
-                <div class="estado-reserva {% if reserva.estado == 'Activa' %}estado-activa{% elif reserva.estado == 'Finalizada' %}estado-finalizada{% else %}estado-cancelada{% endif %}">
+                <div class="estado-reserva {% if reserva.estado == 'pagada' %}estado-activa{% elif reserva.estado == 'finalizada' %}estado-finalizada{% elif reserva.estado == 'cancelada' %}estado-cancelada{% else %}estado-pendiente{% endif %}">
                     {{ reserva.get_estado_display }}
                 </div>
             </div>

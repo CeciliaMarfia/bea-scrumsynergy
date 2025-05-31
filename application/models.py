@@ -149,13 +149,9 @@ class Maquina(models.Model):
     def get_proxima_disponibilidad(self):
         """
         Obtiene la fecha más próxima en que la máquina estará disponible para reservar.
-        Si la máquina está en mantenimiento o no disponible por otras razones,
-        retorna None.
+        Si la máquina está reservada hasta el día X, estará disponible el día X + 3
+        (considerando los 2 días de mantenimiento).
         """
-        # Si la máquina no está en estado base disponible, no estará disponible
-        if self.estado != 'disponible':
-            return None
-
         hoy = timezone.now().date()
 
         # Obtener todas las reservas activas futuras ordenadas por fecha de fin
@@ -164,19 +160,19 @@ class Maquina(models.Model):
             fecha_fin__gte=hoy
         ).exclude(
             estado='cancelada'
-        ).order_by('fecha_inicio')
+        ).order_by('fecha_fin')  # Ordenar por fecha_fin para obtener la última
 
         if not reservas_futuras.exists():
+            # Si no hay reservas futuras y la máquina está en mantenimiento
+            if self.estado == 'mantenimiento':
+                return None
             return hoy
 
-        # Verificar si hay un hueco entre hoy y la primera reserva
-        primera_reserva = reservas_futuras.first()
-        if primera_reserva.fecha_inicio > hoy:
-            return hoy
-
-        # Si hay reservas, encontrar la última y agregar 2 días de mantenimiento
+        # Obtener la última reserva (la que termina más tarde)
         ultima_reserva = reservas_futuras.last()
-        return ultima_reserva.fecha_fin + timezone.timedelta(days=2)
+        # La máquina estará disponible 3 días después de la fecha de fin
+        # (el día siguiente después de los 2 días de mantenimiento)
+        return ultima_reserva.fecha_fin + timezone.timedelta(days=3)
 
     def get_imagen_principal(self):
         return self.imagenes.filter(es_principal=True).first()
