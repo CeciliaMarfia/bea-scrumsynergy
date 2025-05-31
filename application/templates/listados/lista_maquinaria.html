@@ -340,6 +340,69 @@
         grid-template-columns: 1fr;
     }
 }
+
+.estado-badge {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    margin: 1rem 0;
+    width: 100%;
+    text-align: center;
+}
+
+.estado-badge.disponible {
+    background-color: rgba(40, 167, 69, 0.2);
+    color: #2ecc71;
+    border: 1px solid rgba(46, 204, 113, 0.3);
+}
+
+.estado-badge.reservada {
+    background-color: rgba(231, 76, 60, 0.2);
+    color: #e74c3c;
+    border: 1px solid rgba(231, 76, 60, 0.3);
+}
+
+.proxima-disponibilidad {
+    background-color: rgba(255, 255, 255, 0.1);
+    padding: 0.8rem;
+    border-radius: 0.5rem;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+    color: #f1c40f;
+    text-align: center;
+}
+
+.btn-ver-detalle {
+    display: inline-block;
+    background-color: #d16c44;
+    color: white;
+    padding: 0.8rem 1.5rem;
+    border-radius: 0.5rem;
+    text-decoration: none;
+    margin-top: 1rem;
+    transition: all 0.3s ease;
+    width: 100%;
+    text-align: center;
+}
+
+.btn-ver-detalle:hover {
+    background-color: #b95a33;
+    transform: translateY(-2px);
+    color: white;
+    text-decoration: none;
+}
+
+.card-img-top {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
+
+.card-text {
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 0.5rem;
+}
 {% endblock %}
 
 {% block content %}
@@ -404,39 +467,40 @@
         <a href="{% url 'home' %}" class="back-btn">
             <i class="fas fa-arrow-left"></i> Regresar al inicio
         </a>
-        <div class="results-count">{{ maquinas|length }} resultados</div>
+        <div class="results-count">{{ maquinas_info|length }} resultados</div>
 
-        {% if maquinas %}
+        {% if maquinas_info %}
         <div class="maquinarias-container">
             <div class="maquinarias-grid">
-                {% for maquina in maquinas %}
+                {% for maquina_info in maquinas_info %}
                 <div class="maquinaria-card">
-                    {% if maquina.imagenes.exists %}
-                    <img src="{{ maquina.imagenes.first.imagen.url }}" class="maquinaria-img" alt="{{ maquina.nombre }}">
+                    {% if maquina_info.maquina.imagenes.exists %}
+                        <img src="{{ maquina_info.maquina.imagenes.first.imagen.url }}" alt="{{ maquina_info.maquina.nombre }}" class="card-img-top">
                     {% endif %}
                     <div class="card-body">
-                        <h5 class="card-title">{{ maquina.nombre }}</h5>
-                        <div class="maquinaria-ubicacion">
-                            <i class="fas fa-map-marker-alt"></i>
-                            <span>{{ maquina.ubicacion }}</span>
-                        </div>
-                        <div class="maquinaria-precio">
-                            <span class="precio-valor">${{ maquina.precio_por_dia }}</span> por día
-                        </div>
-                        <div class="card-actions">
-                            <a href="{% url 'detalle_maquinaria' maquina.id %}" class="btn-detalle">
-                                <i class="fas fa-info-circle"></i> Mostrar Detalle
-                            </a>
-                            {% if user_authenticated %}
-                                <a href="{% url 'reservar_maquinaria' maquina.id %}" class="btn-reservar">
-                                    <i class="fas fa-calendar-plus"></i> Reservar
-                                </a>
-                            {% else %}
-                                <p class="login-message">Para reservar esta maquinaria necesitas iniciar sesión</p>
-                                <a href="{% url 'login' %}?next={% url 'lista_maquinaria' %}" class="btn-login">
-                                    Iniciar Sesión
-                                </a>
+                        <h5 class="card-title">{{ maquina_info.maquina.nombre }}</h5>
+                        <p class="card-text">{{ maquina_info.maquina.marca }} - {{ maquina_info.maquina.modelo }}</p>
+                        <p class="card-text"><strong>Precio por día:</strong> ${{ maquina_info.maquina.precio_por_dia }}</p>
+                        
+                        {% if maquina_info.maquina.esta_disponible %}
+                            <div class="estado-badge disponible">
+                                <i class="fas fa-check-circle"></i> Disponible
+                            </div>
+                        {% else %}
+                            <div class="estado-badge reservada">
+                                <i class="fas fa-clock"></i> Reservada
+                            </div>
+                            {% if maquina_info.proxima_disponibilidad %}
+                                <div class="proxima-disponibilidad">
+                                    Disponible a partir del {{ maquina_info.proxima_disponibilidad|date:"d/m/Y" }}
+                                </div>
                             {% endif %}
+                        {% endif %}
+
+                        <div class="card-actions">
+                            <a href="{% url 'detalle_maquinaria' maquina_info.maquina.id %}" class="btn-ver-detalle">
+                                <i class="fas fa-info-circle"></i> Ver Detalle
+                            </a>
                         </div>
                     </div>
                 </div>

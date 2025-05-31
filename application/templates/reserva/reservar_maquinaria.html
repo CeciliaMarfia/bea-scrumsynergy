@@ -176,7 +176,7 @@
     <div class="reserva-container">
         {% if not maquina.esta_disponible %}
         <div class="alert alert-danger text-center mb-4">
-            <i class="fas fa-exclamation-circle"></i> No hay stock disponible para esta máquina.
+            <i class="fas fa-exclamation-circle"></i> Esta máquina no está disponible actualmente.
         </div>
         <div class="d-grid">
             <a href="{% url 'lista_maquinaria' %}" class="btn-cancelar">
@@ -206,7 +206,9 @@
             {{ form.maquina }}
             {% if form.non_field_errors %}
                 <div class="alert alert-danger">
-                    {{ form.non_field_errors }}
+                    {% for error in form.non_field_errors %}
+                        {{ error }}
+                    {% endfor %}
                 </div>
             {% endif %}
 
@@ -218,7 +220,9 @@
                     {{ form.fecha_inicio }}
                     {% if form.fecha_inicio.errors %}
                         <div class="invalid-feedback d-block">
-                            {{ form.fecha_inicio.errors }}
+                            {% for error in form.fecha_inicio.errors %}
+                                {{ error }}
+                            {% endfor %}
                         </div>
                     {% endif %}
                 </div>
@@ -229,7 +233,9 @@
                     {{ form.fecha_fin }}
                     {% if form.fecha_fin.errors %}
                         <div class="invalid-feedback d-block">
-                            {{ form.fecha_fin.errors }}
+                            {% for error in form.fecha_fin.errors %}
+                                {{ error }}
+                            {% endfor %}
                         </div>
                     {% endif %}
                 </div>

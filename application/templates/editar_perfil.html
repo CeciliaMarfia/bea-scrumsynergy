@@ -224,33 +224,33 @@
 
     <div class="form-section">
       <h3>Información Personal</h3>
-      <form method="POST" enctype="multipart/form-data">
-        {% csrf_token %}
-        
-        {% for field in form %}
-        <div class="form-group">
-          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-          {{ field }}
-          {% if field.help_text %}
-          <small class="help-text">{{ field.help_text }}</small>
-          {% endif %}
-          {% if field.name == 'documento_foto' and user.perfil.documento_foto %}
-          <div class="current-document">
-            <small>Documento actual:</small><br>
-            <img src="{{ user.perfil.documento_foto.url }}" alt="Documento actual">
-          </div>
-          {% endif %}
-          {% if field.errors %}
-          <ul class="errorlist">
-            {% for error in field.errors %}
-            <li>{{ error }}</li>
-            {% endfor %}
-          </ul>
-          {% endif %}
+    <form method="POST" enctype="multipart/form-data">
+      {% csrf_token %}
+      
+      {% for field in form %}
+      <div class="form-group">
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.help_text %}
+        <small class="help-text">{{ field.help_text }}</small>
+        {% endif %}
+        {% if field.name == 'documento_foto' and user.perfil.documento_foto %}
+        <div class="current-document">
+          <small>Documento actual:</small><br>
+          <img src="{{ user.perfil.documento_foto.url }}" alt="Documento actual">
         </div>
-        {% endfor %}
+        {% endif %}
+        {% if field.errors %}
+        <ul class="errorlist">
+          {% for error in field.errors %}
+          <li>{{ error }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+      {% endfor %}
 
-        <button type="submit" class="btn-submit">Guardar Cambios</button>
+      <button type="submit" class="btn-submit">Guardar Cambios</button>
       </form>
     </div>
 
@@ -293,7 +293,7 @@
       </form>
     </div>
 
-    <a href="{% url 'perfil' %}" class="btn-cancel">Cancelar</a>
+      <a href="{% url 'perfil' %}" class="btn-cancel">Cancelar</a>
   </div>
 
   <script>

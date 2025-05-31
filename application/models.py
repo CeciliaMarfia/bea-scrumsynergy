@@ -116,18 +116,67 @@ class Maquina(models.Model):
     permisos_requeridos = models.TextField(blank=True, null=True)
     estado = models.CharField(
         max_length=20, choices=ESTADO_CHOICES, default='disponible')
-    stock = models.PositiveIntegerField(default=1)
 
     def __str__(self):
         return f'{self.nombre} ({self.marca} - {self.modelo})'
 
     def clean(self):
         super().clean()
-        # La validación de imágenes se manejará en el formulario
         pass
 
     def esta_disponible(self):
-        return self.estado == 'disponible' and self.stock > 0
+        """
+        Verifica si la máquina está disponible para reservar.
+        Una máquina está disponible si:
+        1. Su estado base es 'disponible'
+        2. No tiene reservas activas que se superpongan con la fecha actual o futuras
+        """
+        # Verificar si el estado base de la máquina es disponible
+        if self.estado != 'disponible':
+            return False
+
+        # Verificar si hay reservas activas actuales o futuras
+        hoy = timezone.now().date()
+        reservas_activas = self.reservas.filter(
+            estado__in=['pendiente_pago', 'pagada'],
+            fecha_fin__gte=hoy
+        ).exclude(
+            estado='cancelada'
+        ).exists()
+
+        return not reservas_activas
+
+    def get_proxima_disponibilidad(self):
+        """
+        Obtiene la fecha más próxima en que la máquina estará disponible para reservar.
+        Si la máquina está en mantenimiento o no disponible por otras razones,
+        retorna None.
+        """
+        # Si la máquina no está en estado base disponible, no estará disponible
+        if self.estado != 'disponible':
+            return None
+
+        hoy = timezone.now().date()
+
+        # Obtener todas las reservas activas futuras ordenadas por fecha de fin
+        reservas_futuras = self.reservas.filter(
+            estado__in=['pendiente_pago', 'pagada'],
+            fecha_fin__gte=hoy
+        ).exclude(
+            estado='cancelada'
+        ).order_by('fecha_inicio')
+
+        if not reservas_futuras.exists():
+            return hoy
+
+        # Verificar si hay un hueco entre hoy y la primera reserva
+        primera_reserva = reservas_futuras.first()
+        if primera_reserva.fecha_inicio > hoy:
+            return hoy
+
+        # Si hay reservas, encontrar la última y agregar 2 días de mantenimiento
+        ultima_reserva = reservas_futuras.last()
+        return ultima_reserva.fecha_fin + timezone.timedelta(days=2)
 
     def get_imagen_principal(self):
         return self.imagenes.filter(es_principal=True).first()
@@ -205,30 +254,65 @@ class Reserva(models.Model):
 
     def clean(self):
         if self.fecha_inicio and self.fecha_fin:
-            if self.fecha_inicio < timezone.now().date():
-                raise ValidationError(
-                    'La fecha de inicio no puede ser anterior a la fecha actual.')
+            hoy = timezone.now().date()
+
+            # Validar que la fecha de inicio no sea anterior a hoy
+            if self.fecha_inicio < hoy:
+                raise ValidationError({
+                    'fecha_inicio': 'La fecha de inicio debe ser igual o posterior a la fecha actual.'
+                })
+
+            # Validar que la fecha de fin no sea anterior a la fecha de inicio
             if self.fecha_fin < self.fecha_inicio:
-                raise ValidationError(
-                    'La fecha de fin no puede ser anterior a la fecha de inicio.')
+                raise ValidationError({
+                    'fecha_fin': 'La fecha de fin no puede ser anterior a la fecha de inicio.'
+                })
 
-            # Validar stock disponible
-            if self.maquina and self.maquina.stock < 1:
-                raise ValidationError(
-                    'No hay stock disponible para esta maquinaria.')
+            # Validar que la reserva no exceda los 7 días
+            duracion = (self.fecha_fin - self.fecha_inicio).days + 1
+            if duracion > 7:
+                raise ValidationError({
+                    'fecha_fin': 'La reserva no puede exceder los 7 días.'
+                })
 
-            # Verificar si hay otras reservas que se solapan y afectan el stock
-            reservas_solapadas = Reserva.objects.filter(
+            # Verificar si hay otras reservas que se solapan y el período de mantenimiento
+            reservas_previas = Reserva.objects.filter(
                 maquina=self.maquina,
-                fecha_inicio__lte=self.fecha_fin,
-                fecha_fin__gte=self.fecha_inicio,
-                estado__in=['pendiente_pago', 'pagada']
-            ).exclude(pk=self.pk if self.pk else None)
+                # Solo reservas activas
+                estado__in=['pendiente_pago', 'pagada'],
+                fecha_fin__gte=hoy,  # Solo reservas vigentes o futuras
+            ).exclude(
+                pk=self.pk if self.pk else None  # Excluir la reserva actual
+            ).exclude(
+                estado='cancelada'  # Excluir explícitamente las reservas canceladas
+            ).order_by('fecha_inicio')
 
-            stock_ocupado = reservas_solapadas.count()
-            if (self.maquina.stock - stock_ocupado) < 1:
-                raise ValidationError(
-                    'No hay suficiente stock disponible para las fechas seleccionadas.')
+            # Si no hay reservas previas, no hay necesidad de más validaciones
+            if not reservas_previas.exists():
+                return
+
+            # Verificar cada reserva previa
+            for reserva in reservas_previas:
+                # Verificar si la nueva reserva se solapa con una reserva existente
+                if (
+                    # Inicio durante otra reserva
+                    (self.fecha_inicio >= reserva.fecha_inicio and self.fecha_inicio <= reserva.fecha_fin) or
+                    # Fin durante otra reserva
+                    (self.fecha_fin >= reserva.fecha_inicio and self.fecha_fin <= reserva.fecha_fin) or
+                    (self.fecha_inicio <= reserva.fecha_inicio and self.fecha_fin >=
+                     reserva.fecha_fin)  # Engloba otra reserva
+                ):
+                    raise ValidationError({
+                        'fecha_inicio': f'La máquina está reservada del {reserva.fecha_inicio.strftime("%d/%m/%Y")} al {reserva.fecha_fin.strftime("%d/%m/%Y")}.'
+                    })
+
+                # Verificar período de mantenimiento
+                fin_mantenimiento = reserva.fecha_fin + \
+                    timezone.timedelta(days=2)
+                if self.fecha_inicio <= fin_mantenimiento and self.fecha_inicio > reserva.fecha_fin:
+                    raise ValidationError({
+                        'fecha_inicio': f'La máquina estará en mantenimiento hasta el {fin_mantenimiento.strftime("%d/%m/%Y")}.'
+                    })
 
     def save(self, *args, **kwargs):
         if not self.numero_reserva:
@@ -240,16 +324,25 @@ class Reserva(models.Model):
                 ultimo_id = 0
             self.numero_reserva = f'RES{timezone.now().strftime("%Y%m")}{str(ultimo_id + 1).zfill(4)}'
 
-        if self.pk is None:  # Si es una nueva reserva
-            # Validar stock antes de decrementar
-            if self.maquina.stock < 1:
-                raise ValidationError(
-                    'No hay stock disponible para esta maquinaria.')
-
-            self.maquina.stock -= 1
-            if self.maquina.stock == 0:
-                self.maquina.estado = 'reservado'
+        # Actualizar el estado de la máquina solo si es una nueva reserva o se está cancelando
+        if self.pk is None:  # Nueva reserva
+            self.maquina.estado = 'reservado'
             self.maquina.save()
+        elif self.estado == 'cancelada':  # Cancelación
+            # Verificar si hay otras reservas activas para esta máquina
+            otras_reservas_activas = Reserva.objects.filter(
+                maquina=self.maquina,
+                estado__in=['pendiente_pago', 'pagada'],
+                fecha_fin__gte=timezone.now().date()
+            ).exclude(
+                pk=self.pk
+            ).exclude(
+                estado='cancelada'
+            ).exists()
+
+            if not otras_reservas_activas:
+                self.maquina.estado = 'disponible'
+                self.maquina.save()
 
         super().save(*args, **kwargs)
 

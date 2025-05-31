@@ -235,7 +235,7 @@
       {% for field in form %}
       {% if not field.is_hidden %}
           <div class="form-group">
-            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
             {% if field.name == 'password1' or field.name == 'password2' %}
               <div class="password-container">
                 {{ field }}
@@ -251,18 +251,18 @@
                 </button>
               </div>
             {% else %}
-              {{ field }}
+        {{ field }}
             {% endif %}
-            {% if field.help_text %}
-            <small class="help-text">{{ field.help_text }}</small>
-            {% endif %}
-            {% if field.errors %}
-            <ul class="errorlist">
-              {% for error in field.errors %}
-              <li>{{ error }}</li>
-              {% endfor %}
-            </ul>
-            {% endif %}
+        {% if field.help_text %}
+        <small class="help-text">{{ field.help_text }}</small>
+        {% endif %}
+        {% if field.errors %}
+        <ul class="errorlist">
+          {% for error in field.errors %}
+          <li>{{ error }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
           </div>
       {% else %}
       {{ field }}

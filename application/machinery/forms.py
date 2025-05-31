@@ -59,7 +59,11 @@ class AltaMaquinariaForm(forms.ModelForm):
         widget=MultipleFileInput(attrs={
             'class': 'form-control',
             'accept': 'image/*'
-        })
+        }),
+        error_messages={
+            'required': 'Debe seleccionar al menos una imagen.',
+            'invalid': 'El archivo seleccionado no es una imagen válida.',
+        }
     )
 
     class Meta:
@@ -67,7 +71,7 @@ class AltaMaquinariaForm(forms.ModelForm):
         fields = [
             'codigo', 'nombre', 'marca', 'modelo', 'anio',
             'ubicacion', 'descripcion', 'tipo_cancelacion', 'politica_cancelacion',
-            'tipo', 'precio_por_dia', 'permisos_requeridos', 'stock'
+            'tipo', 'precio_por_dia', 'permisos_requeridos'
         ]
 
         widgets = {
@@ -123,12 +127,38 @@ class AltaMaquinariaForm(forms.ModelForm):
                 'class': 'form-control',
                 'rows': 4,
                 'placeholder': 'Permisos necesarios para operar (dejar en blanco si no requiere permisos)'
-            }),
-            'stock': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'min': '1',
-                'placeholder': 'Cantidad disponible'
             })
+        }
+
+        error_messages = {
+            'codigo': {
+                'required': 'El código de la máquina es obligatorio.',
+                'unique': 'Ya existe una máquina con este código.'
+            },
+            'nombre': {
+                'required': 'El nombre de la máquina es obligatorio.'
+            },
+            'marca': {
+                'required': 'La marca de la máquina es obligatoria.'
+            },
+            'modelo': {
+                'required': 'El modelo de la máquina es obligatorio.'
+            },
+            'anio': {
+                'required': 'El año de la máquina es obligatorio.',
+                'invalid': 'Ingrese un año válido.'
+            },
+            'ubicacion': {
+                'required': 'La ubicación de la máquina es obligatoria.'
+            },
+            'tipo': {
+                'required': 'El tipo de máquina es obligatorio.'
+            },
+            'precio_por_dia': {
+                'required': 'El precio por día es obligatorio.',
+                'invalid': 'Ingrese un precio válido.',
+                'min_value': 'El precio debe ser mayor a 0.'
+            }
         }
 
     def __init__(self, *args, **kwargs):
@@ -139,7 +169,6 @@ class AltaMaquinariaForm(forms.ModelForm):
         self.fields['anio'].label = "Año"
         self.fields['permisos_requeridos'].label = "Permisos requeridos"
         self.fields['permisos_requeridos'].required = False
-        self.fields['stock'].label = "Stock disponible"
 
     def clean_codigo(self):
         codigo = self.cleaned_data.get('codigo')
@@ -195,12 +224,6 @@ class AltaMaquinariaForm(forms.ModelForm):
                 raise ValidationError("Todos los archivos deben ser imágenes.")
 
         return imagenes
-
-    def clean_stock(self):
-        stock = self.cleaned_data.get('stock')
-        if stock is not None and stock < 1:
-            raise ValidationError('El stock debe ser al menos 1')
-        return stock
 
     def save(self, commit=True):
         try:

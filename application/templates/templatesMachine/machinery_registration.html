@@ -3,8 +3,8 @@
 
 {% block content %}
 <div class="container">
-  <a href="{% url 'lista_maquinaria' %}" class="back-link">
-    <i class="fas fa-arrow-left"></i> Volver a la lista
+  <a href="{% url 'home' %}" class="back-link">
+    <i class="fas fa-arrow-left"></i> Volver al inicio
   </a>
   <div class="form-card">
     <h2>Alta de Maquinaria</h2>
@@ -12,22 +12,25 @@
     {% if messages %}
       <div class="messages">
         {% for message in messages %}
-          <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
-            {{ message }}
-          </div>
+          {% if message.tags == 'success' %}
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+              {{ message }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          {% endif %}
         {% endfor %}
       </div>
     {% endif %}
 
-    <form method="post" enctype="multipart/form-data" accept-charset="utf-8" id="maquinariaForm">
+    <form method="post" enctype="multipart/form-data" accept-charset="utf-8" id="maquinariaForm" novalidate>
       {% csrf_token %}
       {% for field in form %}
-        <div class="form-group" {% if field.name == 'politica_cancelacion' %}data-field="politica_cancelacion"{% endif %}>
+        <div class="form-group {% if field.errors %}has-error{% endif %}" {% if field.name == 'politica_cancelacion' %}data-field="politica_cancelacion"{% endif %}>
           {{ field.label_tag }}
           {% if field.name == 'imagenes' %}
-            <div class="file-input-container">
+            <div class="file-input-container {% if field.errors %}is-invalid{% endif %}">
               <div class="custom-file-upload" id="drop-zone">
-                <input type="file" name="imagenes" multiple accept="image/*" class="form-control" id="id_imagenes">
+                <input type="file" name="imagenes" multiple accept="image/*" class="form-control {% if field.errors %}is-invalid{% endif %}" id="id_imagenes">
                 <p class="upload-text">Arrastra las imágenes aquí o haz clic para seleccionar</p>
                 <div id="file-counter" class="file-counter">0 imágenes seleccionadas</div>
               </div>
@@ -41,14 +44,16 @@
             {{ field }}
           {% endif %}
           {% if field.help_text %}
-            <span class="helptext">{{ field.help_text }}</span>
+            <small class="form-text text-muted">{{ field.help_text }}</small>
           {% endif %}
           {% if field.errors %}
-            <ul class="errorlist">
+            <div class="invalid-feedback d-block">
               {% for error in field.errors %}
-                <li>{{ error }}</li>
+                <div class="error-message">
+                  <i class="fas fa-exclamation-circle"></i> {{ error }}
+                </div>
               {% endfor %}
-            </ul>
+            </div>
           {% endif %}
         </div>
       {% endfor %}
@@ -516,6 +521,69 @@ form p {
 .form-group[data-field="politica_cancelacion"] {
     display: none;
 }
+
+.has-error input,
+.has-error select,
+.has-error textarea,
+.has-error .custom-file-upload {
+  border-color: #dc3545;
+}
+
+.invalid-feedback {
+  display: block;
+  width: 100%;
+  margin-top: 0.25rem;
+  font-size: 0.875em;
+  color: #dc3545;
+}
+
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.error-message i {
+  font-size: 1rem;
+}
+
+.alert {
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid transparent;
+  border-radius: 0.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.alert-danger {
+  color: #842029;
+  background-color: #f8d7da;
+  border-color: #f5c2c7;
+}
+
+.alert-success {
+  color: #0f5132;
+  background-color: #d1e7dd;
+  border-color: #badbcc;
+}
+
+.btn-close {
+  background: transparent;
+  border: none;
+  font-size: 1.25rem;
+  font-weight: bold;
+  line-height: 1;
+  color: inherit;
+  opacity: 0.5;
+  cursor: pointer;
+}
+
+.btn-close:hover {
+  opacity: 1;
+}
 </style>
 {% endblock %}
 
@@ -684,11 +752,50 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Validación del formulario
   form.addEventListener('submit', function(e) {
+    let hasErrors = false;
+    const requiredFields = form.querySelectorAll('input[required], select[required], textarea[required]');
+    
+    requiredFields.forEach(field => {
+      if (!field.value) {
+        e.preventDefault();
+        hasErrors = true;
+        field.classList.add('is-invalid');
+        const formGroup = field.closest('.form-group');
+        if (!formGroup.querySelector('.invalid-feedback')) {
+          const feedback = document.createElement('div');
+          feedback.className = 'invalid-feedback d-block';
+          feedback.innerHTML = `<div class="error-message"><i class="fas fa-exclamation-circle"></i> Este campo es obligatorio</div>`;
+          formGroup.appendChild(feedback);
+        }
+      } else {
+        field.classList.remove('is-invalid');
+        const formGroup = field.closest('.form-group');
+        const feedback = formGroup.querySelector('.invalid-feedback');
+        if (feedback) {
+          feedback.remove();
+        }
+      }
+    });
+
     const files = imageInput.files;
     if (files.length === 0) {
       e.preventDefault();
-      alert('Por favor seleccione al menos una imagen');
-      return;
+      hasErrors = true;
+      dropZone.classList.add('is-invalid');
+      const formGroup = dropZone.closest('.form-group');
+      if (!formGroup.querySelector('.invalid-feedback')) {
+        const feedback = document.createElement('div');
+        feedback.className = 'invalid-feedback d-block';
+        feedback.innerHTML = `<div class="error-message"><i class="fas fa-exclamation-circle"></i> Debe seleccionar al menos una imagen</div>`;
+        formGroup.appendChild(feedback);
+      }
+    } else {
+      dropZone.classList.remove('is-invalid');
+      const formGroup = dropZone.closest('.form-group');
+      const feedback = formGroup.querySelector('.invalid-feedback');
+      if (feedback) {
+        feedback.remove();
+      }
     }
 
     // Validación adicional para política de cancelación parcial
@@ -699,9 +806,38 @@ document.addEventListener('DOMContentLoaded', function() {
       const porcentaje = parseFloat(politicaInput.value);
       if (isNaN(porcentaje) || porcentaje < 10 || porcentaje > 90) {
         e.preventDefault();
-        alert('El porcentaje de reembolso parcial debe estar entre 10% y 90%');
+        hasErrors = true;
+        politicaInput.classList.add('is-invalid');
+        const formGroup = politicaInput.closest('.form-group');
+        if (!formGroup.querySelector('.invalid-feedback')) {
+          const feedback = document.createElement('div');
+          feedback.className = 'invalid-feedback d-block';
+          feedback.innerHTML = `<div class="error-message"><i class="fas fa-exclamation-circle"></i> El porcentaje de reembolso parcial debe estar entre 10% y 90%</div>`;
+          formGroup.appendChild(feedback);
+        }
       }
     }
+  });
+
+  // Remover mensajes de error cuando el usuario comienza a escribir
+  form.querySelectorAll('input, select, textarea').forEach(field => {
+    field.addEventListener('input', function() {
+      if (this.value) {
+        this.classList.remove('is-invalid');
+        const formGroup = this.closest('.form-group');
+        const feedback = formGroup.querySelector('.invalid-feedback');
+        if (feedback) {
+          feedback.remove();
+        }
+      }
+    });
+  });
+
+  // Cerrar alertas
+  document.querySelectorAll('.btn-close').forEach(button => {
+    button.addEventListener('click', function() {
+      this.closest('.alert').remove();
+    });
   });
 });
 </script>

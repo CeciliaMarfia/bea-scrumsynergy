@@ -244,52 +244,17 @@ DATA_PATH = os.path.join(settings.BASE_DIR, 'templatesMachine', 'machinery')
 @login_required
 def machinery_registration(request):
     if request.method == 'POST':
-        print("Content Type:", request.META.get('CONTENT_TYPE'))
-        print("FILES:", request.FILES)
-        print("POST:", request.POST)
-
         form = AltaMaquinariaForm(request.POST, request.FILES)
 
         try:
             if form.is_valid():
                 with transaction.atomic():
                     maquina = form.save()
-
-                    # Procesar las imágenes
-                    imagenes = request.FILES.getlist('imagenes')
-                    if imagenes:
-                        primera_imagen = True
-                        for imagen in imagenes:
-                            ImagenMaquina.objects.create(
-                                maquina=maquina,
-                                imagen=imagen,
-                                es_principal=primera_imagen
-                            )
-                            primera_imagen = False
-
                     messages.success(
                         request, f'¡Maquinaria {maquina.nombre} registrada exitosamente!')
                     return redirect('home')
-            else:
-                print("Errores del formulario:", form.errors)
-                print("Errores no asociados a campos:", form.non_field_errors())
-                print("Archivos recibidos:", request.FILES.getlist('imagenes'))
-
-                # Mostrar todos los errores de manera más específica
-                for field, errors in form.errors.items():
-                    for error in errors:
-                        messages.error(request, f"Error en {field}: {error}")
-
-                if not request.FILES:
-                    messages.error(request, "No se han seleccionado imágenes.")
-                elif not request.FILES.getlist('imagenes'):
-                    messages.error(request, "El campo de imágenes está vacío.")
-
         except Exception as e:
-            print(f"Error inesperado: {str(e)}")
-            print(f"Tipo de error: {type(e)}")
-            messages.error(
-                request, f'Error al procesar el formulario: {str(e)}')
+            form.add_error(None, f'Error al procesar el formulario: {str(e)}')
     else:
         form = AltaMaquinariaForm()
 
@@ -507,7 +472,7 @@ def reservar_maquinaria(request, maquina_id):
     maquina = get_object_or_404(Maquina, id=maquina_id)
 
     if not maquina.esta_disponible():
-        messages.error(request, 'No hay stock disponible para esta máquina.')
+        messages.error(request, 'Esta máquina no está disponible actualmente.')
         return redirect('lista_maquinaria')
 
     if request.method == 'POST':
@@ -541,8 +506,8 @@ def reservar_maquinaria(request, maquina_id):
 
 
 def lista_maquinaria(request):
-    # Obtener todas las máquinas disponibles como base
-    maquinas = Maquina.objects.filter(estado='disponible', stock__gt=0)
+    # Obtener todas las máquinas (no solo las disponibles)
+    maquinas = Maquina.objects.all()
 
     # Aplicar filtros si se proporcionan
     tipo = request.GET.get('tipo')
@@ -564,20 +529,33 @@ def lista_maquinaria(request):
     ubicaciones = Maquina.objects.values_list(
         'ubicacion', flat=True).distinct()
 
-    # Calcular conteos para los filtros
+    # Calcular conteos para los filtros (ahora incluye todas las máquinas)
     tipos_con_conteo = {}
     for tipo_value, tipo_label in tipos:
         tipos_con_conteo[tipo_value] = Maquina.objects.filter(
-            estado='disponible', stock__gt=0, tipo=tipo_value).count()
+            tipo=tipo_value).count()
 
     ubicaciones_con_conteo = {}
     for ubi in ubicaciones:
         if ubi:  # Solo si la ubicación no es None o vacía
             ubicaciones_con_conteo[ubi] = Maquina.objects.filter(
-                estado='disponible', stock__gt=0, ubicacion=ubi).count()
+                ubicacion=ubi).count()
+
+    # Calcular próxima disponibilidad para cada máquina
+    hoy = timezone.now().date()
+    maquinas_info = []
+    for maquina in maquinas:
+        proxima_disponibilidad = None
+        if not maquina.esta_disponible():
+            proxima_disponibilidad = maquina.get_proxima_disponibilidad()
+
+        maquinas_info.append({
+            'maquina': maquina,
+            'proxima_disponibilidad': proxima_disponibilidad
+        })
 
     context = {
-        'maquinas': maquinas,
+        'maquinas_info': maquinas_info,
         'tipos': tipos,
         'ubicaciones': ubicaciones,
         'tipos_con_conteo': tipos_con_conteo,
@@ -603,11 +581,15 @@ def mis_reservas(request):
     })
 
 
-@login_required
 def detalle_maquinaria(request, maquina_id):
     maquina = get_object_or_404(Maquina, id=maquina_id)
+
+    # Obtener la próxima disponibilidad usando el nuevo método
+    proxima_disponibilidad = maquina.get_proxima_disponibilidad()
+
     return render(request, 'listados/detalle_maquinaria.html', {
-        'maquina': maquina
+        'maquina': maquina,
+        'proxima_disponibilidad': proxima_disponibilidad
     })
 
 
@@ -624,11 +606,9 @@ def cancelar_reserva(request, numero_reserva):
                     reserva.estado = 'cancelada'
                     reserva.save()
 
-                    # Devolver el stock a la máquina
+                    # Actualizar el estado de la máquina
                     maquina = reserva.maquina
-                    maquina.stock += 1
-                    if maquina.stock > 0:
-                        maquina.estado = 'disponible'
+                    maquina.estado = 'disponible'
                     maquina.save()
 
                     messages.success(
