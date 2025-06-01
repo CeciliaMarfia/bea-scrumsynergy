@@ -52,4 +52,5 @@ urlpatterns = [
          views.procesar_pago, name='procesar_pago'),
     path('reserva/<int:reserva_id>/',
          views.detalle_reserva, name='detalle_reserva'),
+    path('reserva/<int:reserva_id>/pago-mercadopago/', views.pago_mercadopago, name='pago_mercadopago'),
 ]

@@ -24,6 +24,7 @@ from django.db import transaction
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 from .services import BancoService
+from django.http import HttpResponse
 
 # Create your views here.
 
@@ -829,3 +830,12 @@ def ver_perfil_empleado(request, empleado_id):
     return render(request, 'registration/perfil_empleado.html', {
         'empleado': empleado
     })
+
+
+@login_required
+def pago_mercadopago(request, reserva_id):
+    if request.method == 'POST':
+        print('HOLA')
+        # Aquí podrías agregar lógica real de Mercado Pago en el futuro
+        return redirect('detalle_reserva', reserva_id=reserva_id)
+    return HttpResponse('Método no permitido', status=405)

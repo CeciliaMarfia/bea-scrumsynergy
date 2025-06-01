@@ -408,7 +408,7 @@
             <input type="radio" name="metodo_pago" value="mercadopago" class="metodo-pago-radio" id="mercadopago">
             <div class="metodo-pago-content">
                 <label for="mercadopago" class="metodo-pago-title">Mercado Pago</label>
-                <p class="metodo-pago-description">Paga con tu cuenta de Mercado Pago (Próximamente)</p>
+                <p class="metodo-pago-description">Paga con tu cuenta de Mercado Pago</p>
             </div>
         </div>
     </div>
@@ -458,6 +458,13 @@
             </form>
         </div>
     </div>
+
+    <div id="mercadopago-form-container" style="display: none; max-width: 500px; margin: 2rem auto;">
+        <form id="mercadopago-form" method="post" action="{% url 'pago_mercadopago' reserva.id %}">
+            {% csrf_token %}
+            <button type="submit" class="btn-pagar">Pagar con Mercado Pago</button>
+        </form>
+    </div>
 </div>
 
 <script>
@@ -474,15 +481,16 @@ function selectPaymentMethod(method) {
     // Mostrar/ocultar secciones correspondientes
     const tarjetasGuardadas = document.getElementById('tarjetas-guardadas');
     const formNuevaTarjeta = document.getElementById('form-nueva-tarjeta');
+    const mercadopagoForm = document.getElementById('mercadopago-form-container');
     
     if (method === 'tarjeta') {
         tarjetasGuardadas.style.display = 'block';
-        // Ocultar el formulario de nueva tarjeta si está visible
         formNuevaTarjeta.style.display = 'none';
-    } else {
+        mercadopagoForm.style.display = 'none';
+    } else if (method === 'mercadopago') {
         tarjetasGuardadas.style.display = 'none';
         formNuevaTarjeta.style.display = 'none';
-        alert('El pago con Mercado Pago estará disponible próximamente.');
+        mercadopagoForm.style.display = 'block';
     }
 }
 
