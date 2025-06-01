@@ -469,7 +469,8 @@
   const preferenceId = "{{ preference_id }}";
 
   const mp = new MercadoPago(publicKey);
-
+  console.log("Hola1")
+  console.log(preferenceId)
   const bricksBuilder = mp.bricks();
   const renderWalletBrick = async (bricksBuilder) => {
     await bricksBuilder.create("wallet", "walletBrick_container", {
@@ -478,7 +479,7 @@
       }
     });
   };
-
+  console.log("Hola2")
   renderWalletBrick(bricksBuilder);
 </script>
 

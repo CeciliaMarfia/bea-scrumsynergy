@@ -839,40 +839,39 @@ def ver_perfil_empleado(request, empleado_id):
     })
 
 
-@login_required
-def pago_mercadopago(request, reserva_id):
-    if request.method == 'POST':
-        print('HOLA')
-        reserva = get_object_or_404(
-            Reserva, id=reserva_id, cliente=request.user)
-        # Aquí podrías agregar lógica real de Mercado Pago en el futuro
+def crear_preference(request, reserva_id):
+    reserva = get_object_or_404(Reserva, id=reserva_id, cliente=request.user)
 
-        # Crea un ítem en la preferencia
-        preference_data = {
-            "items": [
-                {
-                    "title": "Mi producto",
-                    "quantity": 1,
-                    "unit_price": reserva.monto_total if reserva.monto_total >= 1 else 1,
-                }
-            ],
-            "back_urls": {
-                "success": "https://www.tu-sitio/success",
-                "failure": "https://www.tu-sitio/failure",
-                "pending": "https://www.tu-sitio/pendings"
-            },
-            "auto_return": "approved",
-        }
+    # Aquí podrías agregar lógica real de Mercado Pago en el futuro
 
-        preference_response = sdk.preference().create(preference_data)
-        preference = preference_response["response"]
-    return HttpResponse('Método no permitido', status=405)
+    # Crea un ítem en la preferencia
+    preference_data = {
+        "items": [
+            {
+                "title": "Mi producto",
+                "quantity": 1,
+                "unit_price": max(reserva.monto_total, 1),
+            }
+        ],
+        "back_urls": {
+            "success": "https://8b36-2800-810-5f4-47-1c4-f1ac-a7fc-c1ab.ngrok-free.app/success",
+            "failure": "https://8b36-2800-810-5f4-47-1c4-f1ac-a7fc-c1ab.ngrok-free.app/failure",
+            "pending": "https://8b36-2800-810-5f4-47-1c4-f1ac-a7fc-c1ab.ngrok-free.app/pending"
+        },
+        "auto_return": "approved",
+    }
+
+    preference_response = sdk.preference().create(preference_data)
+    return preference_response["response"]
 
 
 def generar_preference_mercadopago(request, reserva_id):
     if request.method == 'GET':
         # Aquí va tu lógica actual de crear preference
-        preference = crear_preference()  # Tu función que crea la preferencia
+        # Tu función que crea la preferencia
+        preference = crear_preference(request, reserva_id)
+        print(preference)
+        print("hola")
         return JsonResponse({
             'preference_id': preference['id']
         })
