@@ -1,3 +1,4 @@
+import mercadopago
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
 from django.contrib import messages
@@ -26,7 +27,13 @@ from django.views.decorators.http import require_POST
 from .services import BancoService
 from django.http import HttpResponse
 
-# Create your views here.
+import os
+
+MP_ACCESS_TOKEN = os.getenv('MP_ACCESS_TOKEN')
+
+# SDK de Mercado Pago
+# Agrega credenciales
+sdk = mercadopago.SDK(MP_ACCESS_TOKEN)
 
 
 def home(request):
@@ -836,6 +843,27 @@ def ver_perfil_empleado(request, empleado_id):
 def pago_mercadopago(request, reserva_id):
     if request.method == 'POST':
         print('HOLA')
+        reserva = get_object_or_404(
+            Reserva, id=reserva_id, cliente=request.user)
         # Aquí podrías agregar lógica real de Mercado Pago en el futuro
-        return redirect('detalle_reserva', reserva_id=reserva_id)
+
+        # Crea un ítem en la preferencia
+        preference_data = {
+            "items": [
+                {
+                    "title": "Mi producto",
+                    "quantity": 1,
+                    "unit_price": reserva.monto_total if reserva.monto_total >= 1 else 1,
+                }
+            ],
+            "back_urls": {
+                "success": "https://www.tu-sitio/success",
+                "failure": "https://www.tu-sitio/failure",
+                "pending": "https://www.tu-sitio/pendings"
+            },
+            "auto_return": "approved",
+        }
+
+        preference_response = sdk.preference().create(preference_data)
+        preference = preference_response["response"]
     return HttpResponse('Método no permitido', status=405)
