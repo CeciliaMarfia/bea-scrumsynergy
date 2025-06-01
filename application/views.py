@@ -812,7 +812,7 @@ def pagar_reserva(request, reserva_id):
                     messages.error(request, 'Tarjeta no encontrada')
             else:
                 messages.error(request, 'Selecciona una tarjeta válida')
-    preference = generar_preference_mercadopago(request, reserva_id)
+    preference = crear_preference(request, reserva_id)
     print(preference)
     context = {
         'reserva': reserva,
@@ -856,9 +856,9 @@ def crear_preference(request, reserva_id):
             }
         ],
         "back_urls": {
-            "success": "https://8b36-2800-810-5f4-47-1c4-f1ac-a7fc-c1ab.ngrok-free.app/success",
-            "failure": "https://8b36-2800-810-5f4-47-1c4-f1ac-a7fc-c1ab.ngrok-free.app/failure",
-            "pending": "https://8b36-2800-810-5f4-47-1c4-f1ac-a7fc-c1ab.ngrok-free.app/pending"
+            "success": request.build_absolute_uri(reverse('payment_success')),
+            "failure": request.build_absolute_uri(reverse('payment_failure')),
+            "pending": request.build_absolute_uri(reverse('payment_pending'))
         },
         "auto_return": "approved",
     }
@@ -878,3 +878,48 @@ def generar_preference_mercadopago(request, reserva_id):
        #     'preference_id': preference['id']
         # })
         return preference
+
+
+@login_required
+def payment_success(request):
+    # Obtener el payment_id y merchant_order_id de la URL
+    payment_id = request.GET.get('payment_id')
+    merchant_order_id = request.GET.get('merchant_order_id')
+    
+    if payment_id and merchant_order_id:
+        try:
+            # Aquí podrías verificar el pago con la API de MercadoPago si lo necesitas
+            
+            # Actualizar el estado de la reserva a 'pagada'
+            reserva = Reserva.objects.filter(estado='pendiente_pago').last()
+            if reserva:
+                reserva.estado = 'pagada'
+                reserva.save()
+                
+                # Crear registro de pago exitoso
+                Pago.objects.create(
+                    reserva=reserva,
+                    monto=reserva.monto_total,
+                    estado='exitoso',
+                    numero_transaccion=payment_id
+                )
+                
+                messages.success(request, '¡Pago realizado con éxito! Tu reserva ha sido confirmada.')
+            else:
+                messages.warning(request, 'No se encontró la reserva asociada al pago.')
+        except Exception as e:
+            messages.error(request, 'Ocurrió un error al procesar el pago. Por favor, contacta al soporte.')
+    else:
+        messages.warning(request, 'No se recibieron los datos del pago.')
+    
+    return redirect('mis_reservas')
+
+@login_required
+def payment_failure(request):
+    messages.error(request, 'El pago no pudo ser procesado. Por favor, intenta nuevamente.')
+    return redirect('mis_reservas')
+
+@login_required
+def payment_pending(request):
+    messages.warning(request, 'Tu pago está pendiente de confirmación.')
+    return redirect('mis_reservas')

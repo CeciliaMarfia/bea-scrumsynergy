@@ -52,4 +52,7 @@ urlpatterns = [
          views.procesar_pago, name='procesar_pago'),
     path('reserva/<int:reserva_id>/',
          views.detalle_reserva, name='detalle_reserva'),
+    path('payment/success/', views.payment_success, name='payment_success'),
+    path('payment/failure/', views.payment_failure, name='payment_failure'),
+    path('payment/pending/', views.payment_pending, name='payment_pending'),
 ]
