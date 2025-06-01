@@ -14,9 +14,9 @@
         {% for message in messages %}
           {% if message.tags == 'success' %}
             <div class="alert alert-success alert-dismissible fade show" role="alert">
-              {{ message }}
+            {{ message }}
               <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
+          </div>
           {% endif %}
         {% endfor %}
       </div>
@@ -593,15 +593,15 @@ form p {
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const form = document.querySelector('form');
-    const dropZone = document.getElementById('drop-zone');
+  const form = document.querySelector('form');
+  const dropZone = document.getElementById('drop-zone');
     const imageInput = document.getElementById('id_imagenes');
-    const previewContainer = document.getElementById('preview-container');
-    const fileCounter = document.getElementById('file-counter');
-    const prevButton = document.querySelector('.nav-button.prev');
-    const nextButton = document.querySelector('.nav-button.next');
-    let currentIndex = 0;
-    let previews = [];
+  const previewContainer = document.getElementById('preview-container');
+  const fileCounter = document.getElementById('file-counter');
+  const prevButton = document.querySelector('.nav-button.prev');
+  const nextButton = document.querySelector('.nav-button.next');
+  let currentIndex = 0;
+  let previews = [];
 
     // Manejo de la política de cancelación
     const tipoCancelacionSelect = document.getElementById('id_tipo_cancelacion');
@@ -611,12 +611,12 @@ document.addEventListener('DOMContentLoaded', function() {
     function actualizarCampoPolitica() {
         const seleccion = tipoCancelacionSelect.value;
         if (seleccion === 'parcial') {
-            politicaCancelacionGroup.style.display = 'block';
+      politicaCancelacionGroup.style.display = 'block';
             politicaCancelacionInput.value = '';
             politicaCancelacionInput.readOnly = false;
             politicaCancelacionInput.required = true;
-        } else {
-            politicaCancelacionGroup.style.display = 'none';
+    } else {
+      politicaCancelacionGroup.style.display = 'none';
             politicaCancelacionInput.required = false;
             politicaCancelacionInput.value = seleccion === 'total' ? '100' : '0';
         }
@@ -626,61 +626,61 @@ document.addEventListener('DOMContentLoaded', function() {
     tipoCancelacionSelect.addEventListener('change', actualizarCampoPolitica);
 
     // Manejo de imágenes
-    function handleFiles(files) {
-        if (!files || files.length === 0) {
-            fileCounter.textContent = '0 imágenes seleccionadas';
-            previewContainer.innerHTML = '';
-            previews = [];
-            currentIndex = 0;
-            updateNavigationButtons();
-            return;
-        }
+  function handleFiles(files) {
+    if (!files || files.length === 0) {
+      fileCounter.textContent = '0 imágenes seleccionadas';
+      previewContainer.innerHTML = '';
+      previews = [];
+      currentIndex = 0;
+      updateNavigationButtons();
+      return;
+    }
 
         const totalFiles = files.length;
         fileCounter.textContent = `${totalFiles} ${totalFiles === 1 ? 'imagen seleccionada' : 'imágenes seleccionadas'}`;
-        
-        previewContainer.innerHTML = '';
-        previews = [];
-        currentIndex = 0;
 
+    previewContainer.innerHTML = '';
+    previews = [];
+    currentIndex = 0;
+    
         Array.from(files).forEach((file, index) => {
             if (!file.type.startsWith('image/')) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const preview = document.createElement('div');
-                preview.className = 'preview-item';
-                preview.innerHTML = `
-                    <img src="${e.target.result}" alt="${file.name}" title="${file.name}">
+    
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const preview = document.createElement('div');
+          preview.className = 'preview-item';
+          preview.innerHTML = `
+            <img src="${e.target.result}" alt="${file.name}" title="${file.name}">
                     <button type="button" class="remove-btn" data-index="${index}">×</button>
-                    ${index === 0 ? '<span class="principal-badge">Principal</span>' : ''}
-                    <div class="image-name">${file.name}</div>
-                `;
+            ${index === 0 ? '<span class="principal-badge">Principal</span>' : ''}
+            <div class="image-name">${file.name}</div>
+          `;
 
                 preview.querySelector('.remove-btn').addEventListener('click', function() {
                     removeImage(this.dataset.index);
                 });
 
-                previewContainer.appendChild(preview);
-                previews.push(preview);
-                updateNavigationButtons();
-            };
-            reader.readAsDataURL(file);
+          previewContainer.appendChild(preview);
+          previews.push(preview);
+          updateNavigationButtons();
+        };
+        reader.readAsDataURL(file);
         });
     }
 
     function removeImage(index) {
-        const dt = new DataTransfer();
-        const files = Array.from(imageInput.files);
-        
-        files.forEach((file, i) => {
+    const dt = new DataTransfer();
+    const files = Array.from(imageInput.files);
+    
+    files.forEach((file, i) => {
             if(i !== parseInt(index)) {
-                dt.items.add(file);
-            }
-        });
-        
-        imageInput.files = dt.files;
-        handleFiles(imageInput.files);
+        dt.items.add(file);
+      }
+    });
+    
+    imageInput.files = dt.files;
+    handleFiles(imageInput.files);
     }
 
     function updateNavigationButtons() {
@@ -717,24 +717,24 @@ document.addEventListener('DOMContentLoaded', function() {
         handleFiles(this.files);
     });
 
-    window.prevImage = function() {
-        if (currentIndex > 0) {
+  window.prevImage = function() {
+    if (currentIndex > 0) {
             previewContainer.scrollLeft -= 170;
-            currentIndex--;
-        }
-    };
+      currentIndex--;
+    }
+  };
 
-    window.nextImage = function() {
-        if (currentIndex < previews.length - 1) {
+  window.nextImage = function() {
+    if (currentIndex < previews.length - 1) {
             previewContainer.scrollLeft += 170;
-            currentIndex++;
-        }
-    };
+      currentIndex++;
+    }
+  };
 
-    // Validación del formulario
-    form.addEventListener('submit', function(e) {
+  // Validación del formulario
+  form.addEventListener('submit', function(e) {
         if (imageInput.files.length === 0) {
-            e.preventDefault();
+      e.preventDefault();
             dropZone.classList.add('is-invalid');
             const formGroup = dropZone.closest('.form-group');
             if (!formGroup.querySelector('.invalid-feedback')) {
@@ -742,9 +742,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 feedback.className = 'invalid-feedback d-block';
                 feedback.innerHTML = `<div class="error-message"><i class="fas fa-exclamation-circle"></i> Debe seleccionar al menos una imagen</div>`;
                 formGroup.appendChild(feedback);
-            }
-        }
-    });
+      }
+    }
+  });
 });
 </script>
 {% endblock %} 

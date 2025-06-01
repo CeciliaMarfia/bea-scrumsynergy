@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Registrar Cliente - Bob el Alquilador{% endblock %}
+
+{% block styles %}
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.form-card {
+  background: white;
+  border-radius: 1.5rem;
+  padding: 2rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-top: 2rem;
+}
+
+.form-card h2 {
+  color: #546469;
+  margin-bottom: 2rem;
+  text-align: center;
+  font-size: 2rem;
+}
+
+.header-container {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.btn-volver {
+  display: inline-block;
+  background-color: #546469;
+  color: white;
+  padding: 0.8rem 1.2rem;
+  border-radius: 0.6rem;
+  text-decoration: none;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.btn-volver:hover {
+  background-color: #3d484c;
+  color: white;
+  transform: translateY(-2px);
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  color: #546469;
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 0.8rem;
+  border: 1px solid #ccc;
+  border-radius: 0.6rem;
+  font-size: 1rem;
+  transition: border-color 0.3s;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  border-color: #d16c44;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(209, 108, 68, 0.2);
+}
+
+.form-text {
+  color: #666;
+  font-size: 0.9rem;
+  margin-top: 0.3rem;
+}
+
+.error-message {
+  color: #dc3545;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.submit-btn {
+  background-color: #d16c44;
+  color: white;
+  padding: 0.8rem 1.2rem;
+  border-radius: 0.6rem;
+  border: none;
+  font-weight: 600;
+  width: 100%;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.submit-btn:hover {
+  background-color: #b95a33;
+}
+
+.messages {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 1rem;
+}
+
+.messages li {
+  padding: 0.8rem;
+  margin-bottom: 0.5rem;
+  border-radius: 0.6rem;
+  text-align: center;
+}
+
+.messages .success {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.messages .error {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.form-group input[type="file"] {
+  padding: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.form-group input[type="date"] {
+  padding: 0.7rem;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+  
+  .form-card {
+    padding: 1.5rem;
+  }
+}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="form-card">
+    <div class="header-container">
+      <a href="{% url 'historial_reservas' %}" class="btn-volver">
+        <i class="fas fa-arrow-left"></i> Volver al Historial
+      </a>
+      <h2>Registrar Nuevo Cliente</h2>
+    </div>
+
+    {% if messages %}
+    <ul class="messages">
+      {% for message in messages %}
+      <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data" novalidate>
+      {% csrf_token %}
+      {% for field in form %}
+      <div class="form-group">
+        {{ field.label_tag }}
+        {{ field }}
+        {% if field.help_text %}
+        <small class="form-text">{{ field.help_text }}</small>
+        {% endif %}
+        {% if field.errors %}
+        {% for error in field.errors %}
+        <div class="error-message">
+          <i class="fas fa-exclamation-circle"></i> {{ error }}
+        </div>
+        {% endfor %}
+        {% endif %}
+      </div>
+      {% endfor %}
+
+      <button type="submit" class="submit-btn">
+        <i class="fas fa-user-plus"></i> Registrar Cliente
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %} 

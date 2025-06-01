@@ -1,0 +1,225 @@
+{% extends 'base.html' %}
+
+{% block title %}Perfil de Cliente - Bob el Alquilador{% endblock %}
+
+{% block styles %}
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.profile-header {
+  background: white;
+  border-radius: 1.5rem;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.profile-header h1 {
+  color: #546469;
+  margin-bottom: 1rem;
+  font-size: 2rem;
+}
+
+.profile-info {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+}
+
+.info-group {
+  margin-bottom: 1.5rem;
+}
+
+.info-group label {
+  display: block;
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 0.3rem;
+}
+
+.info-group .value {
+  color: #333;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.document-preview {
+  width: 100%;
+  max-width: 300px;
+  border-radius: 0.5rem;
+  margin-top: 1rem;
+}
+
+.header-container {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.btn-volver {
+  display: inline-block;
+  background-color: #546469;
+  color: white;
+  padding: 0.8rem 1.2rem;
+  border-radius: 0.6rem;
+  text-decoration: none;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.btn-volver:hover {
+  background-color: #3d484c;
+  color: white;
+  transform: translateY(-2px);
+}
+
+.messages {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 1rem;
+}
+
+.messages li {
+  padding: 0.8rem;
+  margin-bottom: 0.5rem;
+  border-radius: 0.6rem;
+  text-align: center;
+}
+
+.messages .success {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.messages .error {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+@media (max-width: 1024px) {
+  .profile-info {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  }
+}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="profile-section">
+    {% if messages %}
+    <ul class="messages">
+      {% for message in messages %}
+      <li class="{{ message.tags }}">{{ message }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    <div class="profile-header">
+      <div class="header-container">
+        <a href="{% url 'home' %}" class="btn-volver">
+          <i class="fas fa-arrow-left"></i> Volver al Inicio
+        </a>
+        <h1>Perfil de {{ cliente.get_full_name }}</h1>
+      </div>
+      <div class="profile-info">
+        <div>
+          <div class="info-group">
+            <label>Nombre</label>
+            <div class="value">{{ cliente.first_name|default:"No especificado" }}</div>
+          </div>
+          <div class="info-group">
+            <label>Apellido</label>
+            <div class="value">{{ cliente.last_name|default:"No especificado" }}</div>
+          </div>
+          <div class="info-group">
+            <label>Email</label>
+            <div class="value">{{ cliente.email }}</div>
+          </div>
+          <div class="info-group">
+            <label>Rol</label>
+            <div class="value">{{ cliente.perfil.role.get_name_display }}</div>
+          </div>
+        </div>
+        <div>
+          <div class="info-group">
+            <label>DNI</label>
+            <div class="value">{{ cliente.perfil.dni|default:"No especificado" }}</div>
+          </div>
+          <div class="info-group">
+            <label>Fecha de nacimiento</label>
+            <div class="value">{% if cliente.perfil.fecha_nacimiento %}{{ cliente.perfil.fecha_nacimiento|date:"d/m/Y" }}{% else %}No especificada{% endif %}</div>
+          </div>
+          <div class="info-group">
+            <label>Dirección</label>
+            <div class="value">{{ cliente.perfil.direccion|default:"No especificada" }}</div>
+          </div>
+          <div class="info-group">
+            <label>Teléfono</label>
+            <div class="value">{{ cliente.perfil.celular|default:"No especificado" }}</div>
+          </div>
+          <div class="info-group">
+            <label>Documento</label>
+            {% if cliente.perfil.documento_foto %}
+            <img src="{{ cliente.perfil.documento_foto.url }}" alt="Documento" class="document-preview">
+            {% else %}
+            <div class="value">No hay documento cargado</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Sección de Historial de Reservas -->
+    <div class="profile-header" style="margin-top: 2rem;">
+      <h2 style="color: #546469; margin-bottom: 1.5rem;">Historial de Reservas</h2>
+      {% if reservas %}
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Número de Reserva</th>
+              <th>Maquinaria</th>
+              <th>Fecha Inicio</th>
+              <th>Fecha Fin</th>
+              <th>Estado</th>
+              <th>Monto Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for reserva in reservas %}
+            <tr>
+              <td>{{ reserva.numero_reserva }}</td>
+              <td>{{ reserva.maquina.nombre }}</td>
+              <td>{{ reserva.fecha_inicio|date:"d/m/Y" }}</td>
+              <td>{{ reserva.fecha_fin|date:"d/m/Y" }}</td>
+              <td>
+                {% if reserva.estado == 'cancelada' %}
+                <span style="color: #dc3545;">Cancelada</span>
+                {% elif reserva.estado == 'pagada' %}
+                <span style="color: #28a745;">Pagada</span>
+                {% elif reserva.estado == 'pendiente_pago' %}
+                <span style="color: #ffc107;">Pendiente de Pago</span>
+                {% else %}
+                {{ reserva.get_estado_display }}
+                {% endif %}
+              </td>
+              <td>${{ reserva.monto_total|floatformat:2 }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="alert-info" style="background-color: rgba(84, 100, 105, 0.1); border: 1px solid rgba(84, 100, 105, 0.2); color: #546469; padding: 1rem; border-radius: 0.6rem; text-align: center;">
+        <i class="fas fa-info-circle"></i> Este cliente aún no tiene reservas registradas.
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %} 

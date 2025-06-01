@@ -6,6 +6,23 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 
+class Role(models.Model):
+    CLIENTE = 'cliente'
+    EMPLEADO = 'empleado'
+    DUENO = 'dueno'
+
+    ROLE_CHOICES = [
+        (CLIENTE, 'Cliente'),
+        (EMPLEADO, 'Empleado'),
+        (DUENO, 'Dueño'),
+    ]
+
+    name = models.CharField(max_length=20, choices=ROLE_CHOICES, unique=True)
+
+    def __str__(self):
+        return self.get_name_display()
+
+
 class Perfil(models.Model):
     usuario = models.OneToOneField(
         User, on_delete=models.CASCADE, related_name='perfil')
@@ -22,6 +39,8 @@ class Perfil(models.Model):
     cuenta_bloqueada = models.BooleanField(default=False)
     codigo_verificacion = models.CharField(max_length=6, blank=True, null=True)
     codigo_verificacion_expira = models.DateTimeField(null=True, blank=True)
+    role = models.ForeignKey(
+        Role, on_delete=models.SET_NULL, null=True, default=None)
 
     def __str__(self):
         return f'Perfil de {self.usuario.username}'
@@ -35,6 +54,18 @@ class Perfil(models.Model):
     def reiniciar_intentos_fallidos(self):
         self.intentos_fallidos = 0
         self.save()
+
+    @property
+    def is_dueno(self):
+        return self.role and self.role.name == Role.DUENO
+
+    @property
+    def is_empleado(self):
+        return self.role and self.role.name == Role.EMPLEADO
+
+    @property
+    def is_cliente(self):
+        return self.role and self.role.name == Role.CLIENTE
 
 
 class HomeVideo(models.Model):
@@ -61,7 +92,9 @@ class HomeVideo(models.Model):
 @receiver(post_save, sender=User)
 def crear_perfil_usuario(sender, instance, created, **kwargs):
     if created:
-        Perfil.objects.create(usuario=instance)
+        # Por defecto, asignar rol de cliente
+        default_role, _ = Role.objects.get_or_create(name=Role.CLIENTE)
+        Perfil.objects.create(usuario=instance, role=default_role)
 
 
 @receiver(post_save, sender=User)

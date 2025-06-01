@@ -5,12 +5,12 @@ from django.contrib.auth.forms import UserCreationForm
 import os
 from django.conf import settings
 from .machinery.forms import AltaMaquinariaForm
-from .models import Maquina, HomeVideo, PermisoEspecial, Perfil, Reserva, ImagenMaquina, Pago, TarjetaCredito
+from .models import Maquina, HomeVideo, PermisoEspecial, Perfil, Reserva, ImagenMaquina, Pago, TarjetaCredito, Role
 from django.core.mail import send_mail, EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from .forms import RegistroUsuarioForm, PermisoEspecialForm, EditarPerfilForm, ReservaMaquinariaForm, TarjetaCreditoForm, CambiarPasswordForm
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.views import PasswordResetView, PasswordResetDoneView
 from django.contrib.auth.models import User
 from django.urls import reverse_lazy
@@ -241,25 +241,125 @@ def verificar_email(request, token):
 DATA_PATH = os.path.join(settings.BASE_DIR, 'templatesMachine', 'machinery')
 
 
+def is_owner(user):
+    return user.is_authenticated and user.perfil.is_dueno
+
+
+def is_owner_or_employee(user):
+    return user.is_authenticated and (user.perfil.is_dueno or user.perfil.is_empleado)
+
+
 @login_required
-def machinery_registration(request):
+@user_passes_test(is_owner)
+def registrar_empleado(request):
+    if request.method == 'POST':
+        form = RegistroUsuarioForm(
+            request.POST, request.FILES, is_employee=True)
+        if form.is_valid():
+            with transaction.atomic():
+                user = form.save()
+                # Asegurarnos de que el rol de empleado se asigne correctamente
+                role, _ = Role.objects.get_or_create(name=Role.EMPLEADO)
+                user.perfil.role = role
+                user.perfil.email_verificado = True
+                user.perfil.save()
+            messages.success(request, 'Empleado registrado exitosamente.')
+            return redirect('lista_empleados')
+    else:
+        form = RegistroUsuarioForm(is_employee=True)
+
+    return render(request, 'registration/registrar_empleado.html', {'form': form})
+
+
+@login_required
+@user_passes_test(is_owner)
+def lista_empleados(request):
+    # Filtrar usuarios que tengan el rol de empleado y estén verificados
+    empleados = User.objects.filter(
+        perfil__role__name=Role.EMPLEADO,
+        perfil__email_verificado=True
+    ).order_by('first_name', 'last_name')
+    return render(request, 'registration/lista_empleados.html', {'empleados': empleados})
+
+
+@login_required
+@user_passes_test(is_owner)
+def eliminar_empleado(request, empleado_id):
+    empleado = get_object_or_404(
+        User, id=empleado_id, perfil__role__name=Role.EMPLEADO)
+    if request.method == 'POST':
+        empleado.delete()
+        messages.success(request, 'Empleado eliminado exitosamente.')
+    return redirect('lista_empleados')
+
+
+@login_required
+@user_passes_test(is_owner)
+def registrar_maquinaria(request):
     if request.method == 'POST':
         form = AltaMaquinariaForm(request.POST, request.FILES)
-
-        try:
-            if form.is_valid():
-                with transaction.atomic():
-                    maquina = form.save()
-                    messages.success(
-                        request, f'¡Maquinaria {maquina.nombre} registrada exitosamente!')
-                    return redirect('home')
-        except Exception as e:
-            form.add_error(None, f'Error al procesar el formulario: {str(e)}')
+        if form.is_valid():
+            maquina = form.save()
+            messages.success(request, 'Maquinaria registrada exitosamente.')
+            return redirect('home')
     else:
         form = AltaMaquinariaForm()
+    return render(request, 'templatesMachine/machinery_registration.html', {'form': form})
 
-    return render(request, 'templatesMachine/machinery_registration.html', {
-        'form': form
+
+@login_required
+@user_passes_test(is_owner_or_employee)
+def historial_reservas(request):
+    # Filtrar solo reservas activas (pendientes de pago y pagadas)
+    reservas = Reserva.objects.filter(
+        estado__in=['pendiente_pago', 'pagada']
+    ).order_by('fecha_inicio')  # Ordenar por fecha de inicio
+    return render(request, 'reservas/historial.html', {'reservas': reservas})
+
+
+@login_required
+@user_passes_test(is_owner_or_employee)
+def registrar_cliente(request):
+    if request.method == 'POST':
+        form = RegistroUsuarioForm(request.POST, request.FILES)
+        if form.is_valid():
+            with transaction.atomic():
+                user = form.save()
+                # Asegurarnos de que el rol de cliente se asigne correctamente
+                role, _ = Role.objects.get_or_create(name=Role.CLIENTE)
+                user.perfil.role = role
+                user.perfil.email_verificado = True  # El empleado verifica al cliente
+                user.perfil.save()
+
+                messages.success(request, 'Cliente registrado exitosamente.')
+                return redirect('historial_reservas')
+    else:
+        form = RegistroUsuarioForm()
+
+    return render(request, 'registration/registrar_cliente.html', {'form': form})
+
+
+@login_required
+@user_passes_test(is_owner_or_employee)
+def lista_clientes(request):
+    # Filtrar usuarios que tengan el rol de cliente y estén verificados
+    clientes = User.objects.filter(
+        perfil__role__name=Role.CLIENTE,
+        perfil__email_verificado=True
+    ).order_by('first_name', 'last_name')
+    return render(request, 'registration/lista_clientes.html', {'clientes': clientes})
+
+
+@login_required
+@user_passes_test(is_owner_or_employee)
+def ver_perfil_cliente(request, cliente_id):
+    cliente = get_object_or_404(
+        User, id=cliente_id, perfil__role__name=Role.CLIENTE)
+    # Get all reservations ordered by date using the correct related name
+    reservas = cliente.reservas.all().order_by('-fecha_reserva')
+    return render(request, 'registration/ver_perfil_cliente.html', {
+        'cliente': cliente,
+        'reservas': reservas
     })
 
 # -- fin codigo --
@@ -322,8 +422,8 @@ def editar_perfil(request):
                 request.POST, request.FILES, instance=request.user)
             if profile_form.is_valid():
                 profile_form.save()
-                messages.success(request, 'Perfil actualizado exitosamente.')
-                return redirect('perfil')
+            messages.success(request, 'Perfil actualizado exitosamente.')
+            return redirect('perfil')
     else:
         password_form = CambiarPasswordForm(request.user)
         profile_form = EditarPerfilForm(
@@ -719,4 +819,13 @@ def detalle_reserva(request, reserva_id):
     return render(request, 'reservas/detalle_reserva.html', {
         'reserva': reserva
     })
-#
+
+
+@login_required
+@user_passes_test(is_owner)
+def ver_perfil_empleado(request, empleado_id):
+    empleado = get_object_or_404(
+        User, id=empleado_id, perfil__role__name=Role.EMPLEADO)
+    return render(request, 'registration/perfil_empleado.html', {
+        'empleado': empleado
+    })

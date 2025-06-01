@@ -335,15 +335,19 @@
             <div class="value">{{ user.last_name|default:"No especificado" }}</div>
           </div>
           <div class="info-group">
-            <label>Correo electrónico</label>
-            <div class="value">{{ user.email|default:"No especificado" }}</div>
+            <label>Email</label>
+            <div class="value">{{ user.email }}</div>
           </div>
+          <div class="info-group">
+            <label>Rol</label>
+            <div class="value">{{ user.perfil.role.get_name_display }}</div>
+          </div>
+        </div>
+        <div>
           <div class="info-group">
             <label>DNI</label>
             <div class="value">{{ user.perfil.dni|default:"No especificado" }}</div>
           </div>
-        </div>
-        <div>
           <div class="info-group">
             <label>Fecha de nacimiento</label>
             <div class="value">{% if user.perfil.fecha_nacimiento %}{{ user.perfil.fecha_nacimiento|date:"d/m/Y" }}{% else %}No especificada{% endif %}</div>

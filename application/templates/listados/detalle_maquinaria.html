@@ -398,7 +398,7 @@
                     <div class="estado-badge {% if maquina.esta_disponible %}disponible{% else %}reservado{% endif %}">
                         <i class="fas {% if maquina.esta_disponible %}fa-check-circle{% else %}fa-clock{% endif %}"></i>
                         {% if maquina.esta_disponible %}Disponible{% else %}Reservada{% endif %}
-                    </div>
+                </div>
                 </div>
                 <div class="info-item">
                     <span class="info-label">Precio por día</span>
@@ -418,7 +418,7 @@
 
             <h2 class="info-title" style="margin-top: 2rem;">Permisos Requeridos</h2>
             <div class="info-grid">
-                <div class="info-item">
+            <div class="info-item">
                     <span class="info-label">Requiere permiso especial de gran porte</span>
                     <span class="info-value">{% if maquina.requiere_permiso_especial %}Sí{% else %}No{% endif %}</span>
                 </div>
@@ -427,9 +427,9 @@
     </div>
 
     {% if user.is_authenticated %}
-        <a href="{% url 'reservar_maquinaria' maquina.id %}" class="btn-reservar">
+    <a href="{% url 'reservar_maquinaria' maquina.id %}" class="btn-reservar">
             <i class="fas fa-calendar-plus"></i> Reservar Maquinaria
-        </a>
+    </a>
     {% else %}
         <a href="{% url 'login' %}?next={% url 'reservar_maquinaria' maquina.id %}" class="btn-reservar">
             <i class="fas fa-sign-in-alt"></i> Iniciar sesión para reservar

@@ -62,20 +62,22 @@ class RegistroUsuarioForm(UserCreationForm):
 
     class Meta:
         model = User
-        fields = ('first_name', 'last_name', 'email',
-                  'username', 'password1', 'password2')
+        fields = ('first_name', 'last_name', 'email', 'password1', 'password2')
 
     def __init__(self, *args, **kwargs):
+        self.is_employee = kwargs.pop('is_employee', False)
         super().__init__(*args, **kwargs)
-        self.fields['username'].widget = forms.HiddenInput()
-        self.fields['username'].required = False
+
+        # Ocultar el campo de username
+        if 'username' in self.fields:
+            del self.fields['username']
 
         # Personalizar mensajes de ayuda de la contraseña
         self.fields['password1'].help_text = _(
-            'Tu contraseña debe cumplir con los siguientes requisitos:\n'
-            '• Tener al menos 8 caracteres\n'
-            '• No puede ser demasiado similar a tu información personal\n'
-            '• No puede ser una contraseña común\n'
+            'Tu contraseña debe cumplir con los siguientes requisitos:\\n\\n'
+            '• Tener al menos 8 caracteres\\n'
+            '• No puede ser demasiado similar a tu información personal\\n'
+            '• No puede ser una contraseña común\\n'
             '• No puede ser completamente numérica'
         )
         self.fields['password2'].help_text = _(
@@ -104,31 +106,11 @@ class RegistroUsuarioForm(UserCreationForm):
             'password_entirely_numeric': 'La contraseña no puede ser completamente numérica.'
         }
 
-    def clean_password1(self):
-        password1 = self.cleaned_data.get('password1')
-        try:
-            # Llamar a la validación original
-            password_validation.validate_password(password1, self.instance)
-        except forms.ValidationError as error:
-            # Reemplazar los mensajes de error específicos
-            custom_messages = []
-            for e in error.error_list:
-                if 'too similar to' in str(e):
-                    custom_messages.append(forms.ValidationError(
-                        'La contraseña es demasiado similar a tu información personal.',
-                        code='password_too_similar'
-                    ))
-                else:
-                    custom_messages.append(e)
-            if custom_messages:
-                raise forms.ValidationError(custom_messages)
-        return password1
-
     def clean(self):
         cleaned_data = super().clean()
         email = cleaned_data.get('email')
 
-        # Usar el email completo como username
+        # Usar el email como username
         if email:
             cleaned_data['username'] = email
 
