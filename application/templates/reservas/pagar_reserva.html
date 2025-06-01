@@ -460,30 +460,23 @@
     </div>
 
     <div id="mercadopago-form-container" style="display: none; max-width: 500px; margin: 2rem auto;">
-        <form id="mercadopago-form" method="post" action="{% url 'pago_mercadopago' reserva.id %}">
-            {% csrf_token %}
-            <button type="submit" class="btn-pagar">Pagar con Mercado Pago</button>
-        </form>
+        <div id="walletBrick_container"></div>
     </div>
 </div>
- <script src="https://sdk.mercadopago.com/js/v2"></script>
+<script src="https://sdk.mercadopago.com/js/v2"></script>
 <script>
-  // Configure sua chave pública do Mercado Pago
   const publicKey = "APP_USR-9e79ae95-8dd5-4fa1-b02a-60613fa5b51c";
-  // Configure o ID de preferência que você deve receber do seu backend
-  const preferenceId = "YOUR_PREFERENCE_ID";
+  const preferenceId = "{{ preference_id }}";
 
-  // Inicializa o SDK do Mercado Pago
   const mp = new MercadoPago(publicKey);
 
-  // Cria o botão de pagamento
   const bricksBuilder = mp.bricks();
   const renderWalletBrick = async (bricksBuilder) => {
     await bricksBuilder.create("wallet", "walletBrick_container", {
       initialization: {
-        preferenceId: "<PREFERENCE_ID>",
+        preferenceId: preferenceId,
       }
-});
+    });
   };
 
   renderWalletBrick(bricksBuilder);

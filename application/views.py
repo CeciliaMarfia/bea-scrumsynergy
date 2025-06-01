@@ -25,7 +25,7 @@ from django.db import transaction
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 from .services import BancoService
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 
 import os
 
@@ -867,3 +867,12 @@ def pago_mercadopago(request, reserva_id):
         preference_response = sdk.preference().create(preference_data)
         preference = preference_response["response"]
     return HttpResponse('Método no permitido', status=405)
+
+
+def generar_preference_mercadopago(request, reserva_id):
+    if request.method == 'GET':
+        # Aquí va tu lógica actual de crear preference
+        preference = crear_preference()  # Tu función que crea la preferencia
+        return JsonResponse({
+            'preference_id': preference['id']
+        })
