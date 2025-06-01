@@ -466,6 +466,21 @@
 <script src="https://sdk.mercadopago.com/js/v2"></script>
 <script>
   const publicKey = "APP_USR-9e79ae95-8dd5-4fa1-b02a-60613fa5b51c";
+  const preferenceId = "{{ preference_id }}";
+
+  const mp = new MercadoPago(publicKey);
+  console.log("Hola1")
+  console.log(preferenceId)
+  const bricksBuilder = mp.bricks();
+  const renderWalletBrick = async (bricksBuilder) => {
+    await bricksBuilder.create("wallet", "walletBrick_container", {
+      initialization: {
+        preferenceId: preferenceId,
+      }
+    });
+  };
+  console.log("Hola2")
+  renderWalletBrick(bricksBuilder);
 </script>
 
 <script>
@@ -492,31 +507,6 @@ function selectPaymentMethod(method) {
         tarjetasGuardadas.style.display = 'none';
         formNuevaTarjeta.style.display = 'none';
         mercadopagoForm.style.display = 'block';
-        
-        // Obtener el ID de la reserva de la URL
-        const urlParts = window.location.pathname.split('/');
-        const reservaId = urlParts[urlParts.length - 2]; // Asumiendo que la URL es /pagar_reserva/<id>/
-        
-        // Hacer la llamada AJAX para obtener el preference_id
-        fetch(`/generar_preference_mercadopago/${reservaId}/`)
-            .then(response => response.json())
-            .then(data => {
-                console.log("Preference ID recibido:", data.preference_id);
-                // Inicializar el Brick de MercadoPago con el nuevo preference_id
-                const mp = new MercadoPago(publicKey);
-                const bricksBuilder = mp.bricks();
-                const renderWalletBrick = async (bricksBuilder) => {
-                    await bricksBuilder.create("wallet", "walletBrick_container", {
-                        initialization: {
-                            preferenceId: data.preference_id,
-                        }
-                    });
-                };
-                renderWalletBrick(bricksBuilder);
-            })
-            .catch(error => {
-                console.error('Error al obtener preference_id:', error);
-            });
     }
 }
 
