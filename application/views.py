@@ -812,11 +812,13 @@ def pagar_reserva(request, reserva_id):
                     messages.error(request, 'Tarjeta no encontrada')
             else:
                 messages.error(request, 'Selecciona una tarjeta válida')
-
+    preference = generar_preference_mercadopago(request, reserva_id)
+    print(preference)
     context = {
         'reserva': reserva,
         'tarjetas': tarjetas,
         'form': form,
+        'preference_id': preference["id"],
     }
     return render(request, 'reservas/pagar_reserva.html', context)
 
@@ -850,7 +852,7 @@ def crear_preference(request, reserva_id):
             {
                 "title": "Mi producto",
                 "quantity": 1,
-                "unit_price": max(reserva.monto_total, 1),
+                "unit_price": max(int(reserva.monto_total), 1),
             }
         ],
         "back_urls": {
@@ -872,6 +874,7 @@ def generar_preference_mercadopago(request, reserva_id):
         preference = crear_preference(request, reserva_id)
         print(preference)
         print("hola")
-        return JsonResponse({
-            'preference_id': preference['id']
-        })
+      #  return JsonResponse({
+       #     'preference_id': preference['id']
+        # })
+        return preference
