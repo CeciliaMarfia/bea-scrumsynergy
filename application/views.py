@@ -309,7 +309,7 @@ def registrar_maquinaria(request):
         if form.is_valid():
             maquina = form.save()
             messages.success(request, 'Maquinaria registrada exitosamente.')
-            return redirect('home')
+        return redirect('home')
     else:
         form = AltaMaquinariaForm()
     return render(request, 'templatesMachine/machinery_registration.html', {'form': form})

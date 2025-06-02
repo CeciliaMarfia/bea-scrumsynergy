@@ -371,7 +371,7 @@ class Reserva(models.Model):
 
             if not otras_reservas_activas:
                 self.maquina.estado = 'disponible'
-                self.maquina.save()
+            self.maquina.save()
 
         super().save(*args, **kwargs)
 
