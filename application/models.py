@@ -281,6 +281,16 @@ class Reserva(models.Model):
     def __str__(self):
         return f'Reserva #{self.numero_reserva} - {self.maquina.nombre}'
 
+    @property
+    def dias(self):
+        """
+        Calcula el número de días entre la fecha de inicio y fin de la reserva.
+        El cálculo es inclusivo, es decir, si la reserva es del 1 al 3, son 3 días.
+        """
+        if self.fecha_inicio and self.fecha_fin:
+            return (self.fecha_fin - self.fecha_inicio).days + 1
+        return 0
+
     def clean(self):
         if self.fecha_inicio and self.fecha_fin:
             hoy = timezone.now().date()
