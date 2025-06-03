@@ -178,6 +178,17 @@ class PermisoEspecialForm(forms.ModelForm):
         help_texts = {
             'archivo': 'Sube el archivo del permiso en formato PDF o imagen'
         }
+        error_messages = {
+            'nombre': {
+                'required': 'El nombre del permiso es obligatorio.',
+            },
+            'descripcion': {
+                'required': 'La descripción del permiso es obligatoria.',
+            },
+            'archivo': {
+                'required': 'Debes subir un archivo para el permiso.',
+            }
+        }
 
     def clean_archivo(self):
         archivo = self.cleaned_data.get('archivo')
