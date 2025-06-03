@@ -715,7 +715,8 @@ def cancelar_reserva(request, numero_reserva):
         reserva = get_object_or_404(Reserva, numero_reserva=numero_reserva)
     else:
         # Si es cliente, solo puede cancelar sus propias reservas
-        reserva = get_object_or_404(Reserva, numero_reserva=numero_reserva, cliente=request.user)
+        reserva = get_object_or_404(
+            Reserva, numero_reserva=numero_reserva, cliente=request.user)
 
     if request.method == 'POST':
         if reserva.estado not in ['cancelada', 'finalizada']:
@@ -723,7 +724,7 @@ def cancelar_reserva(request, numero_reserva):
                 with transaction.atomic():
                     # Guardar el estado anterior para saber si estaba pagada
                     estaba_pagada = reserva.estado == 'pagada'
-                    
+
                     # Actualizar el estado de la reserva
                     reserva.estado = 'cancelada'
                     reserva.save()
@@ -735,7 +736,7 @@ def cancelar_reserva(request, numero_reserva):
 
                     # Preparar y enviar el correo electrónico
                     subject = 'Cancelación de Reserva - Bob el Alquilador'
-                    
+
                     # Determinar quién canceló la reserva
                     cancelador = "usted mismo"
                     if is_owner_or_employee(request.user) and request.user != reserva.cliente:
@@ -751,7 +752,8 @@ def cancelar_reserva(request, numero_reserva):
                         'cancelador': cancelador
                     }
 
-                    html_message = render_to_string('emails/cancelacion_reserva.html', context)
+                    html_message = render_to_string(
+                        'emails/cancelacion_reserva.html', context)
                     plain_message = strip_tags(html_message)
 
                     send_mail(
@@ -764,7 +766,7 @@ def cancelar_reserva(request, numero_reserva):
                     )
 
                     messages.success(
-                        request, f'Se canceló el alquiler con código de reserva {numero_reserva} exitosamente.')
+                        request, f'Se canceló la reserva con código de reserva {numero_reserva} exitosamente.')
             except Exception as e:
                 messages.error(
                     request, 'Hubo un error al cancelar la reserva. Por favor, intente nuevamente.')
