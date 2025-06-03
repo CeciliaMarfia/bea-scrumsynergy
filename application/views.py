@@ -340,7 +340,7 @@ def registrar_cliente(request):
                 user.perfil.save()
 
                 messages.success(request, 'Cliente registrado exitosamente.')
-                return redirect('historial_reservas')
+                return redirect('ver_perfil_cliente', cliente_id=user.id)
     else:
         form = RegistroUsuarioForm()
 

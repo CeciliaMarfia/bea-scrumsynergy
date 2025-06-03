@@ -26,7 +26,7 @@ class Role(models.Model):
 class Perfil(models.Model):
     usuario = models.OneToOneField(
         User, on_delete=models.CASCADE, related_name='perfil')
-    dni = models.CharField(max_length=20, blank=True, null=True)
+    dni = models.CharField(max_length=20, blank=True, null=True, unique=True)
     direccion = models.TextField(blank=True, null=True)
     fecha_nacimiento = models.DateField(null=True, blank=True)
     celular = models.CharField(max_length=20, blank=True, null=True)

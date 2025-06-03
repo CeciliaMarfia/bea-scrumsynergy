@@ -134,6 +134,18 @@ class RegistroUsuarioForm(UserCreationForm):
                 'Este correo electrónico ya está registrado.')
         return email
 
+    def clean_dni(self):
+        dni = self.cleaned_data.get('dni')
+        if not dni.isdigit():
+            raise forms.ValidationError('El DNI debe contener solo números.')
+        if len(dni) < 7 or len(dni) > 8:
+            raise forms.ValidationError(
+                'El DNI debe tener entre 7 y 8 dígitos.')
+        if Perfil.objects.filter(dni=dni).exists():
+            raise forms.ValidationError(
+                'Este DNI ya está registrado en el sistema.')
+        return dni
+
     def save(self, commit=True):
         with transaction.atomic():
             user = super().save(commit=False)
