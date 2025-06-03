@@ -175,6 +175,8 @@ def signup(request):
             # Generar token de verificación
             token = str(uuid.uuid4())
             user.perfil.token_verificacion = token
+            # Establecer la expiración del token a 5 minutos desde ahora
+            user.perfil.token_verificacion_expira = timezone.now() + timezone.timedelta(minutes=5)
             user.perfil.save()
 
             # Obtener el dominio actual
@@ -201,7 +203,7 @@ def signup(request):
                 )
                 messages.success(
                     request,
-                    'Tu cuenta ha sido creada. Por favor, revisa tu correo electrónico para verificar tu cuenta.'
+                    'Tu cuenta ha sido creada. Por favor, revisa tu correo electrónico para verificar tu cuenta. El enlace expirará en 5 minutos.'
                 )
                 return render(request, 'login.html', {
                     'show_verification_resend': True,
@@ -229,9 +231,19 @@ def signup(request):
 def verificar_email(request, token):
     try:
         perfil = Perfil.objects.get(token_verificacion=token)
+        
+        # Verificar si el token ha expirado
+        if perfil.token_verificacion_expira and timezone.now() > perfil.token_verificacion_expira:
+            messages.error(request, 'El enlace de verificación ha expirado. Por favor, solicita uno nuevo.')
+            return render(request, 'login.html', {
+                'show_verification_resend': True,
+                'unverified_email': perfil.usuario.email
+            })
+            
         if not perfil.email_verificado:
             perfil.email_verificado = True
             perfil.token_verificacion = None  # Invalidar el token después de usarlo
+            perfil.token_verificacion_expira = None
             perfil.save()
             messages.success(
                 request, '¡Tu cuenta ha sido verificada exitosamente! Ahora puedes iniciar sesión.')
@@ -427,11 +439,16 @@ def editar_perfil(request):
         else:
             password_form = CambiarPasswordForm(request.user)
             profile_form = EditarPerfilForm(
-                request.POST, request.FILES, instance=request.user)
+                request.POST, request.FILES, instance=request.user, user=request.user)
             if profile_form.is_valid():
                 profile_form.save()
-            messages.success(request, 'Perfil actualizado exitosamente.')
-            return redirect('perfil')
+                messages.success(request, 'Perfil actualizado exitosamente.')
+                return redirect('perfil')
+            else:
+                # Si hay errores, mostrarlos como mensajes
+                for field, errors in profile_form.errors.items():
+                    for error in errors:
+                        messages.error(request, f'{error}')
     else:
         password_form = CambiarPasswordForm(request.user)
         profile_form = EditarPerfilForm(
@@ -532,6 +549,8 @@ def reenviar_verificacion(request):
                 # Generar nuevo token de verificación
                 token = str(uuid.uuid4())
                 user.perfil.token_verificacion = token
+                # Establecer la expiración del token a 5 minutos desde ahora
+                user.perfil.token_verificacion_expira = timezone.now() + timezone.timedelta(minutes=5)
                 user.perfil.save()
 
                 # Obtener el dominio actual
@@ -558,7 +577,7 @@ def reenviar_verificacion(request):
                     )
                     messages.success(
                         request,
-                        'Hemos enviado un nuevo correo de verificación. Por favor, revisa tu bandeja de entrada.'
+                        'Hemos enviado un nuevo correo de verificación. Por favor, revisa tu bandeja de entrada. El enlace expirará en 5 minutos.'
                     )
                 except Exception as e:
                     print(f"Error al enviar correo de verificación: {str(e)}")

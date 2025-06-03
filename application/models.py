@@ -35,6 +35,7 @@ class Perfil(models.Model):
     email_verificado = models.BooleanField(default=False)
     token_verificacion = models.CharField(
         max_length=100, blank=True, null=True)
+    token_verificacion_expira = models.DateTimeField(null=True, blank=True)
     intentos_fallidos = models.IntegerField(default=0)
     cuenta_bloqueada = models.BooleanField(default=False)
     codigo_verificacion = models.CharField(max_length=6, blank=True, null=True)

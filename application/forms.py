@@ -223,7 +223,11 @@ class EditarPerfilForm(forms.ModelForm):
         widget=forms.DateInput(attrs={
             'type': 'date',
             'class': 'form-control'
-        })
+        }),
+        error_messages={
+            'required': 'La fecha de nacimiento es obligatoria.',
+            'invalid': 'Por favor, ingrese una fecha válida.'
+        }
     )
     direccion = forms.CharField(required=True, label='Dirección')
     documento_foto = forms.ImageField(
@@ -244,11 +248,9 @@ class EditarPerfilForm(forms.ModelForm):
             self.fields['last_name'].initial = user.last_name
             self.fields['email'].initial = user.email
             self.fields['dni'].initial = user.perfil.dni
-            # Formatear la fecha al formato YYYY-MM-DD para el input type="date"
-            if user.perfil.fecha_nacimiento:
-                self.fields['fecha_nacimiento'].widget.attrs['value'] = user.perfil.fecha_nacimiento.strftime(
-                    '%Y-%m-%d')
             self.fields['direccion'].initial = user.perfil.direccion
+            if user.perfil.fecha_nacimiento:
+                self.fields['fecha_nacimiento'].initial = user.perfil.fecha_nacimiento
 
     def clean_fecha_nacimiento(self):
         fecha_nacimiento = self.cleaned_data.get('fecha_nacimiento')
@@ -258,7 +260,7 @@ class EditarPerfilForm(forms.ModelForm):
                 ((hoy.month, hoy.day) < (fecha_nacimiento.month, fecha_nacimiento.day))
             if edad < 18:
                 raise forms.ValidationError(
-                    'No se puede modificar la edad a menos de 18 años.')
+                    'Debes ser mayor de 18 años.')
         return fecha_nacimiento
 
     def clean_dni(self):
@@ -293,8 +295,7 @@ class EditarPerfilForm(forms.ModelForm):
                 user.save()
                 perfil = user.perfil
                 perfil.dni = self.cleaned_data.get('dni')
-                perfil.fecha_nacimiento = self.cleaned_data.get(
-                    'fecha_nacimiento')
+                perfil.fecha_nacimiento = self.cleaned_data.get('fecha_nacimiento')
                 perfil.direccion = self.cleaned_data.get('direccion')
 
                 if 'documento_foto' in self.cleaned_data and self.cleaned_data['documento_foto']:
