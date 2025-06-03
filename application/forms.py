@@ -14,8 +14,8 @@ from django.conf import settings
 PASSWORD_ERROR_MESSAGES = {
     'password_too_short': 'La contraseña debe tener al menos 8 caracteres.',
     'password_too_similar': 'La contraseña es demasiado similar a tu información personal.',
-    'password_too_common': 'La contraseña es demasiado común.',
-    'password_entirely_numeric': 'La contraseña es demasiado numérica.',
+    'password_too_common': 'Esta contraseña es demasiado común.',
+    'password_entirely_numeric': 'Esta contraseña es completamente numérica.',
     'password_mismatch': 'Las dos contraseñas no coinciden.',
     'required': 'Este campo es obligatorio.',
     'password_same_as_old': 'La nueva contraseña no puede ser igual a la contraseña actual.',
