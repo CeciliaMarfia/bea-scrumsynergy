@@ -176,7 +176,8 @@ def signup(request):
             token = str(uuid.uuid4())
             user.perfil.token_verificacion = token
             # Establecer la expiración del token a 5 minutos desde ahora
-            user.perfil.token_verificacion_expira = timezone.now() + timezone.timedelta(minutes=5)
+            user.perfil.token_verificacion_expira = timezone.now() + \
+                timezone.timedelta(minutes=5)
             user.perfil.save()
 
             # Obtener el dominio actual
@@ -231,15 +232,16 @@ def signup(request):
 def verificar_email(request, token):
     try:
         perfil = Perfil.objects.get(token_verificacion=token)
-        
+
         # Verificar si el token ha expirado
         if perfil.token_verificacion_expira and timezone.now() > perfil.token_verificacion_expira:
-            messages.error(request, 'El enlace de verificación ha expirado. Por favor, solicita uno nuevo.')
+            messages.error(
+                request, 'El enlace de verificación ha expirado. Por favor, solicita uno nuevo.')
             return render(request, 'login.html', {
                 'show_verification_resend': True,
                 'unverified_email': perfil.usuario.email
             })
-            
+
         if not perfil.email_verificado:
             perfil.email_verificado = True
             perfil.token_verificacion = None  # Invalidar el token después de usarlo
@@ -321,7 +323,8 @@ def registrar_maquinaria(request):
         if form.is_valid():
             maquina = form.save()
             messages.success(request, 'Maquinaria registrada exitosamente.')
-        return redirect('home')
+            return redirect('home')
+        # Si no es válido, sigue y renderiza el formulario con errores
     else:
         form = AltaMaquinariaForm()
     return render(request, 'templatesMachine/machinery_registration.html', {'form': form})
@@ -550,7 +553,8 @@ def reenviar_verificacion(request):
                 token = str(uuid.uuid4())
                 user.perfil.token_verificacion = token
                 # Establecer la expiración del token a 5 minutos desde ahora
-                user.perfil.token_verificacion_expira = timezone.now() + timezone.timedelta(minutes=5)
+                user.perfil.token_verificacion_expira = timezone.now() + \
+                    timezone.timedelta(minutes=5)
                 user.perfil.save()
 
                 # Obtener el dominio actual
