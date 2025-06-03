@@ -193,7 +193,7 @@ class Maquina(models.Model):
             fecha_fin__gte=hoy
         ).exclude(
             estado='cancelada'
-        ).order_by('fecha_fin')  # Ordenar por fecha_fin para obtener la última
+        ).order_by('fecha_inicio')  # Ordenar por fecha_inicio para encontrar el primer hueco disponible
 
         if not reservas_futuras.exists():
             # Si no hay reservas futuras y la máquina está en mantenimiento
@@ -201,11 +201,17 @@ class Maquina(models.Model):
                 return None
             return hoy
 
-        # Obtener la última reserva (la que termina más tarde)
-        ultima_reserva = reservas_futuras.last()
-        # La máquina estará disponible 3 días después de la fecha de fin
-        # (el día siguiente después de los 2 días de mantenimiento)
-        return ultima_reserva.fecha_fin + timezone.timedelta(days=3)
+        # Buscar el primer hueco disponible entre las reservas
+        fecha_disponible = hoy
+        for reserva in reservas_futuras:
+            # Si hay un hueco de al menos 3 días entre la fecha disponible y la próxima reserva
+            if (reserva.fecha_inicio - fecha_disponible).days >= 3:
+                return fecha_disponible
+            # Si no hay hueco suficiente, la próxima fecha disponible será 3 días después del fin de esta reserva
+            fecha_disponible = reserva.fecha_fin + timezone.timedelta(days=3)
+
+        # Si no encontramos huecos, la fecha disponible será 3 días después de la última reserva
+        return fecha_disponible
 
     def get_imagen_principal(self):
         return self.imagenes.filter(es_principal=True).first()

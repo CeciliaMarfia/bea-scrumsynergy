@@ -117,6 +117,26 @@
     background-color: white;
 }
 
+.btn-danger {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 0.4rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-danger:hover {
+    background-color: #c82333;
+    transform: translateY(-2px);
+}
+
+.btn-sm {
+    font-size: 0.875rem;
+    padding: 0.25rem 0.5rem;
+}
+
 @media (max-width: 768px) {
     .container {
         padding: 1rem;
@@ -166,6 +186,7 @@
                             <th>Estado</th>
                             <th>Monto Total</th>
                             <th>Fecha de Reserva</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -183,6 +204,16 @@
                                 </td>
                                 <td>${{ reserva.monto_total }}</td>
                                 <td>{{ reserva.fecha_reserva|date:"d/m/Y H:i" }}</td>
+                                <td>
+                                    {% if reserva.estado != 'cancelada' and reserva.estado != 'finalizada' %}
+                                        <form method="post" action="{% url 'cancelar_reserva' reserva.numero_reserva %}" style="display: inline;">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('¿Estás seguro de que deseas cancelar esta reserva?')">
+                                                <i class="fas fa-times-circle"></i> Cancelar
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                </td>
                             </tr>
                         {% endfor %}
                     </tbody>

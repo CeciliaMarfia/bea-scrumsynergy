@@ -710,8 +710,12 @@ def detalle_maquinaria(request, maquina_id):
 
 @login_required
 def cancelar_reserva(request, numero_reserva):
-    reserva = get_object_or_404(
-        Reserva, numero_reserva=numero_reserva, cliente=request.user)
+    # Si es empleado o dueño, puede cancelar cualquier reserva
+    if is_owner_or_employee(request.user):
+        reserva = get_object_or_404(Reserva, numero_reserva=numero_reserva)
+    else:
+        # Si es cliente, solo puede cancelar sus propias reservas
+        reserva = get_object_or_404(Reserva, numero_reserva=numero_reserva, cliente=request.user)
 
     if request.method == 'POST':
         if reserva.estado not in ['cancelada', 'finalizada']:
@@ -734,7 +738,11 @@ def cancelar_reserva(request, numero_reserva):
         else:
             messages.error(request, 'Esta reserva no puede ser cancelada.')
 
-    return redirect('mis_reservas')
+    # Redirigir a la página apropiada según el tipo de usuario
+    if is_owner_or_employee(request.user):
+        return redirect('historial_reservas')
+    else:
+        return redirect('mis_reservas')
 
 
 @login_required
