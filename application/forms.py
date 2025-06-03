@@ -74,10 +74,10 @@ class RegistroUsuarioForm(UserCreationForm):
 
         # Personalizar mensajes de ayuda de la contraseña
         self.fields['password1'].help_text = _(
-            'Tu contraseña debe cumplir con los siguientes requisitos:\\n\\n'
-            '• Tener al menos 8 caracteres\\n'
-            '• No puede ser demasiado similar a tu información personal\\n'
-            '• No puede ser una contraseña común\\n'
+            'Tu contraseña debe cumplir con los siguientes requisitos:\n'
+            '• Tener al menos 8 caracteres\n'
+            '• No puede ser demasiado similar a tu información personal\n'
+            '• No puede ser una contraseña común\n'
             '• No puede ser completamente numérica'
         )
         self.fields['password2'].help_text = _(
