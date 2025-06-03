@@ -721,6 +721,9 @@ def cancelar_reserva(request, numero_reserva):
         if reserva.estado not in ['cancelada', 'finalizada']:
             try:
                 with transaction.atomic():
+                    # Guardar el estado anterior para saber si estaba pagada
+                    estaba_pagada = reserva.estado == 'pagada'
+                    
                     # Actualizar el estado de la reserva
                     reserva.estado = 'cancelada'
                     reserva.save()
@@ -729,6 +732,36 @@ def cancelar_reserva(request, numero_reserva):
                     maquina = reserva.maquina
                     maquina.estado = 'disponible'
                     maquina.save()
+
+                    # Preparar y enviar el correo electrónico
+                    subject = 'Cancelación de Reserva - Bob el Alquilador'
+                    
+                    # Determinar quién canceló la reserva
+                    cancelador = "usted mismo"
+                    if is_owner_or_employee(request.user) and request.user != reserva.cliente:
+                        cancelador = "un representante de Bob el Alquilador"
+
+                    context = {
+                        'cliente': reserva.cliente,
+                        'numero_reserva': reserva.numero_reserva,
+                        'maquina': reserva.maquina.nombre,
+                        'fecha_inicio': reserva.fecha_inicio,
+                        'fecha_fin': reserva.fecha_fin,
+                        'estaba_pagada': estaba_pagada,
+                        'cancelador': cancelador
+                    }
+
+                    html_message = render_to_string('emails/cancelacion_reserva.html', context)
+                    plain_message = strip_tags(html_message)
+
+                    send_mail(
+                        subject,
+                        plain_message,
+                        settings.EMAIL_HOST_USER,
+                        [reserva.cliente.email],
+                        html_message=html_message,
+                        fail_silently=False,
+                    )
 
                     messages.success(
                         request, f'Se canceló el alquiler con código de reserva {numero_reserva} exitosamente.')
