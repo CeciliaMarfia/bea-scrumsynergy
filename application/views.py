@@ -934,9 +934,9 @@ def crear_preference(request, reserva_id):
             }
         ],
         "back_urls": {
-            "success": f"https://77a3-2800-810-5f4-47-a56b-1c6e-4cc1-48d5.ngrok-free.app{reverse('payment_success')}",
-            "failure": f"https://77a3-2800-810-5f4-47-a56b-1c6e-4cc1-48d5.ngrok-free.app{reverse('payment_failure')}",
-            "pending": f"https://77a3-2800-810-5f4-47-a56b-1c6e-4cc1-48d5.ngrok-free.app{reverse('payment_pending')}"
+            "success": request.build_absolute_uri(reverse('payment_success')),
+            "failure": request.build_absolute_uri(reverse('payment_failure')),
+            "pending": request.build_absolute_uri(reverse('payment_pending'))
         },
         "auto_return": "approved",
     }
