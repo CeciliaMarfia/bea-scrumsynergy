@@ -444,7 +444,7 @@ class TarjetaCreditoForm(forms.ModelForm):
             # Validar que el año sea 2025 o posterior
             if anio < 2025:
                 raise ValidationError(
-                    'La tarjeta está vencida. El año debe ser 2025 o posterior.')
+                    'La tarjeta está vencida. Por favor ingrese otra fecha.')
 
             # Crear una fecha con el último día del mes
             if mes == 12:
@@ -460,7 +460,7 @@ class TarjetaCreditoForm(forms.ModelForm):
             # La tarjeta vence el último día del mes
             if fecha < timezone.now().date():
                 raise ValidationError(
-                    'La tarjeta está vencida. El año debe ser 2025 o posterior')
+                    'La tarjeta está vencida. Por favor ingrese otra fecha')
 
             return fecha
 

@@ -240,12 +240,15 @@
               <a href="{% url 'ver_perfil_empleado' empleado.id %}" class="btn-ver-perfil">
                 <i class="fas fa-user"></i> Ver Perfil
               </a>
+
+              <!-- 
               <form method="post" action="{% url 'eliminar_empleado' empleado.id %}" class="d-inline" onsubmit="return confirm('¿Estás seguro de que deseas eliminar este empleado?');">
                 {% csrf_token %}
                 <button type="submit" class="btn-eliminar">
                   <i class="fas fa-trash"></i> Eliminar
                 </button>
               </form>
+               -->
             </td>
           </tr>
           {% endfor %}
