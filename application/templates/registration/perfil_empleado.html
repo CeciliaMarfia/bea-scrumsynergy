@@ -298,5 +298,54 @@
             {% endfor %}
         </div>
     </div>
+
+    <!-- Sección de Reservas Gestionadas -->
+    <div class="profile-header" style="margin-top: 2rem;">
+        <h2 style="color: #546469; margin-bottom: 1.5rem;">Historial de Reservas</h2>
+        {% if reservas_gestionadas %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Número de Reserva</th>
+                        <th>Cliente</th>
+                        <th>Maquinaria</th>
+                        <th>Fecha Inicio</th>
+                        <th>Fecha Fin</th>
+                        <th>Estado</th>
+                        <th>Monto Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for reserva in reservas_gestionadas %}
+                    <tr>
+                        <td>{{ reserva.numero_reserva }}</td>
+                        <td>{{ reserva.cliente.get_full_name }}</td>
+                        <td>{{ reserva.maquina.nombre }}</td>
+                        <td>{{ reserva.fecha_inicio|date:"d/m/Y" }}</td>
+                        <td>{{ reserva.fecha_fin|date:"d/m/Y" }}</td>
+                        <td>
+                            {% if reserva.estado == 'cancelada' %}
+                            <span style="color: #dc3545;">Cancelada</span>
+                            {% elif reserva.estado == 'pagada' %}
+                            <span style="color: #28a745;">Pagada</span>
+                            {% elif reserva.estado == 'pendiente_pago' %}
+                            <span style="color: #ffc107;">Pendiente de Pago</span>
+                            {% else %}
+                            {{ reserva.get_estado_display }}
+                            {% endif %}
+                        </td>
+                        <td>${{ reserva.monto_total|floatformat:2 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert-info" style="background-color: rgba(84, 100, 105, 0.1); border: 1px solid rgba(84, 100, 105, 0.2); color: #546469; padding: 1rem; border-radius: 0.6rem; text-align: center;">
+            <i class="fas fa-info-circle"></i> Este empleado aún no ha gestionado reservas.
+        </div>
+        {% endif %}
+    </div>
 </div>
 {% endblock %} 

@@ -260,6 +260,13 @@ class PermisoEspecial(models.Model):
     descripcion = models.TextField()
     archivo = models.FileField(upload_to='permisos/')
     fecha_creacion = models.DateTimeField(auto_now_add=True)
+    usuario = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='permisos_especiales',
+        null=True,  # Temporalmente permitimos nulos
+        blank=True  # Temporalmente permitimos blancos
+    )
 
     def __str__(self):
         return self.nombre
@@ -278,6 +285,13 @@ class Reserva(models.Model):
         Maquina, on_delete=models.CASCADE, related_name='reservas')
     cliente = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name='reservas')
+    empleado_gestor = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='reservas_gestionadas'
+    )
     fecha_inicio = models.DateField()
     fecha_fin = models.DateField()
     fecha_reserva = models.DateTimeField(auto_now_add=True)
@@ -348,8 +362,10 @@ class Reserva(models.Model):
                     (self.fecha_inicio <= reserva.fecha_inicio and self.fecha_fin >=
                      reserva.fecha_fin)  # Engloba otra reserva
                 ):
+                    fin_mantenimiento = reserva.fecha_fin + \
+                        timezone.timedelta(days=2)
                     raise ValidationError({
-                        'fecha_inicio': f'La máquina está reservada del {reserva.fecha_inicio.strftime("%d/%m/%Y")} al {reserva.fecha_fin.strftime("%d/%m/%Y")}.'
+                        'fecha_inicio': f'La máquina está reservada del {reserva.fecha_inicio.strftime("%d/%m/%Y")} al {reserva.fecha_fin.strftime("%d/%m/%Y")} y estará en mantenimiento hasta el {fin_mantenimiento.strftime("%d/%m/%Y")}.'
                     })
 
                 # Verificar período de mantenimiento
