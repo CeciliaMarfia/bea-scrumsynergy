@@ -867,11 +867,39 @@ def pagar_reserva(request, reserva_id):
         if 'agregar_tarjeta' in request.POST:
             form = TarjetaCreditoForm(request.POST)
             if form.is_valid():
+                # Verificar si ya existe una tarjeta con los mismos últimos 4 dígitos y titular
+                numero_tarjeta = form.cleaned_data.get('numero_tarjeta')
+                nombre_titular = form.cleaned_data.get('nombre_titular')
+                ultimos_digitos = numero_tarjeta[-4:]
+
+                tarjeta_existente = TarjetaCredito.objects.filter(
+                    usuario=request.user,
+                    ultimos_digitos=ultimos_digitos,
+                    nombre_titular=nombre_titular
+                ).exists()
+
+                if tarjeta_existente:
+                    form.add_error(None, 'Ya tienes registrada esta tarjeta.')
+                    context = {
+                        'reserva': reserva,
+                        'tarjetas': tarjetas,
+                        'form': form,
+                        'preference_id': generar_preference_mercadopago(request, reserva_id)["id"],
+                        'show_card_form': True  # Para mantener el formulario visible
+                    }
+                    return render(request, 'reservas/pagar_reserva.html', context)
+
                 tarjeta = form.save(commit=False)
                 tarjeta.usuario = request.user
                 tarjeta.save()
-                messages.success(request, 'Tarjeta agregada exitosamente')
-                return redirect('pagar_reserva', reserva_id=reserva.id)
+                context = {
+                    'reserva': reserva,
+                    'tarjetas': TarjetaCredito.objects.filter(usuario=request.user).order_by('-es_predeterminada', '-fecha_creacion'),
+                    'form': TarjetaCreditoForm(),
+                    'preference_id': generar_preference_mercadopago(request, reserva_id)["id"],
+                    'success_message': 'Tarjeta agregada exitosamente.'
+                }
+                return render(request, 'reservas/pagar_reserva.html', context)
         elif 'usar_tarjeta' in request.POST:
             tarjeta_id = request.POST.get('tarjeta_id')
             if tarjeta_id:
@@ -946,16 +974,11 @@ def crear_preference(request, reserva_id):
 
 
 def generar_preference_mercadopago(request, reserva_id):
-    if request.method == 'GET':
-        # Aquí va tu lógica actual de crear preference
-        # Tu función que crea la preferencia
-        preference = crear_preference(request, reserva_id)
-        print(preference)
-        print("hola")
-      #  return JsonResponse({
-       #     'preference_id': preference['id']
-        # })
-        return preference
+    # Tu función que crea la preferencia
+    preference = crear_preference(request, reserva_id)
+    print(preference)
+    print("hola")
+    return preference
 
 
 @login_required

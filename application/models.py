@@ -468,6 +468,8 @@ class TarjetaCredito(models.Model):
     class Meta:
         verbose_name = 'Tarjeta de Crédito'
         verbose_name_plural = 'Tarjetas de Crédito'
+        unique_together = ['usuario', 'ultimos_digitos',
+                           'nombre_titular']  # Evita tarjetas duplicadas
 
     def __str__(self):
         return f'Tarjeta terminada en {self.ultimos_digitos} - {self.nombre_titular}'

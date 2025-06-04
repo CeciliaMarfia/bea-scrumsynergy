@@ -9,6 +9,7 @@ from django.utils import timezone
 from django.db import transaction
 from django.contrib.auth import password_validation
 from django.conf import settings
+import re
 
 # Diccionario global de mensajes de error en español
 PASSWORD_ERROR_MESSAGES = {
@@ -394,12 +395,20 @@ class TarjetaCreditoForm(forms.ModelForm):
             'type': 'password'
         })
     )
-    fecha_vencimiento = forms.DateField(
-        label='Fecha de Vencimiento',
-        widget=forms.DateInput(attrs={
+    fecha_vencimiento = forms.CharField(
+        label='Fecha de Vencimiento (MM/YYYY)',
+        widget=forms.TextInput(attrs={
             'class': 'form-control',
-            'type': 'date'
-        })
+            'placeholder': 'MM/YYYY',
+            # Acepta cualquier año de 4 dígitos
+            'pattern': '(0[1-9]|1[0-2])\/[0-9]{4}',
+            # Elimina el margen inferior para que el error aparezca más cerca
+            'style': 'margin-bottom: 0;'
+        }),
+        error_messages={
+            'required': 'La fecha de vencimiento es requerida',
+            'invalid': 'El formato debe ser MM/YYYY (ejemplo: 05/2025)'
+        }
     )
     nombre_titular = forms.CharField(
         label='Nombre del Titular',
@@ -420,10 +429,43 @@ class TarjetaCreditoForm(forms.ModelForm):
         fields = ['nombre_titular', 'fecha_vencimiento', 'es_predeterminada']
 
     def clean_fecha_vencimiento(self):
-        fecha = self.cleaned_data.get('fecha_vencimiento')
-        if fecha and fecha < timezone.now().date():
-            raise ValidationError('La tarjeta está vencida')
-        return fecha
+        fecha_str = self.cleaned_data.get('fecha_vencimiento')
+        if not fecha_str:
+            raise ValidationError('La fecha de vencimiento es requerida')
+
+        try:
+            # Validar el formato básico MM/YYYY
+            if not re.match(r'^(0[1-9]|1[0-2])\/[0-9]{4}$', fecha_str):
+                raise ValidationError(
+                    'El formato debe ser MM/YYYY (ejemplo: 05/2025)')
+
+            mes, anio = map(int, fecha_str.split('/'))
+
+            # Validar que el año sea 2025 o posterior
+            if anio < 2025:
+                raise ValidationError(
+                    'La tarjeta está vencida. El año debe ser 2025 o posterior.')
+
+            # Crear una fecha con el último día del mes
+            if mes == 12:
+                fecha = timezone.datetime(
+                    anio + 1, 1, 1) - timezone.timedelta(days=1)
+            else:
+                fecha = timezone.datetime(
+                    anio, mes + 1, 1) - timezone.timedelta(days=1)
+
+            # Convertir a date para comparar
+            fecha = fecha.date()
+
+            # La tarjeta vence el último día del mes
+            if fecha < timezone.now().date():
+                raise ValidationError(
+                    'La tarjeta está vencida. El año debe ser 2025 o posterior')
+
+            return fecha
+
+        except ValueError:
+            raise ValidationError('Fecha de vencimiento inválida')
 
     def clean_numero_tarjeta(self):
         numero = self.cleaned_data.get('numero_tarjeta')
@@ -441,6 +483,25 @@ class TarjetaCreditoForm(forms.ModelForm):
             raise ValidationError(
                 'El código de seguridad debe tener 3 o 4 dígitos')
         return codigo
+
+    def clean(self):
+        cleaned_data = super().clean()
+        numero_tarjeta = cleaned_data.get('numero_tarjeta')
+        nombre_titular = cleaned_data.get('nombre_titular')
+
+        if numero_tarjeta and nombre_titular and hasattr(self, 'instance') and hasattr(self.instance, 'usuario'):
+            # Verificar si ya existe una tarjeta con los mismos últimos 4 dígitos y titular
+            ultimos_digitos = numero_tarjeta[-4:]
+            tarjeta_existente = TarjetaCredito.objects.filter(
+                usuario=self.instance.usuario,
+                ultimos_digitos=ultimos_digitos,
+                nombre_titular=nombre_titular
+            ).exists()
+
+            if tarjeta_existente:
+                raise ValidationError('Ya tienes registrada esta tarjeta.')
+
+        return cleaned_data
 
     def save(self, commit=True):
         tarjeta = super().save(commit=False)
