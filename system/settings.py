@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -52,6 +53,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'application.middleware.TimezoneMiddleware',
 ]
 
 ROOT_URLCONF = 'system.urls'
@@ -118,13 +120,17 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'es'
 
-TIME_ZONE = 'UTC'
+# Configuración de zona horaria
+TIME_ZONE = 'America/Argentina/Buenos_Aires'
 
 USE_I18N = True
 
 USE_L10N = True
 
 USE_TZ = True
+
+# Forzar el uso de la zona horaria configurada
+os.environ['TZ'] = 'America/Argentina/Buenos_Aires'
 
 
 # Static files (CSS, JavaScript, Images)

@@ -167,10 +167,37 @@
     padding: 1rem;
     width: 100%;
 }
+
+.header {
+    display: flex;
+    justify-content: flex-start;
+    margin-bottom: 2rem;
+}
+
+.btn-volver {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 0.8rem 2rem;
+    border-radius: 0.8rem;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    font-size: 1.1rem;
+}
+
+.btn-volver:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+}
 {% endblock %}
 
 {% block content %}
 <div class="container">
+    <div class="header">
+        <a href="{% url 'home' %}" class="btn-volver">
+            <i class="fas fa-arrow-left"></i> Volver al Inicio
+        </a>
+    </div>
+
     <h1 class="page-title">Reservar Maquinaria</h1>
 
     <div class="reserva-container">
