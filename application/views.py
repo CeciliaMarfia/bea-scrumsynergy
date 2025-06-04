@@ -380,9 +380,12 @@ def ver_perfil_cliente(request, cliente_id):
         User, id=cliente_id, perfil__role__name=Role.CLIENTE)
     # Get all reservations ordered by date using the correct related name
     reservas = cliente.reservas.all().order_by('-fecha_reserva')
+    # Get all permisos especiales for the client
+    permisos = cliente.permisos_especiales.all().order_by('-fecha_creacion')
     return render(request, 'registration/ver_perfil_cliente.html', {
         'cliente': cliente,
-        'reservas': reservas
+        'reservas': reservas,
+        'permisos': permisos
     })
 
 # -- fin codigo --
@@ -400,7 +403,9 @@ def agregar_permiso(request):
     if request.method == 'POST':
         form = PermisoEspecialForm(request.POST, request.FILES)
         if form.is_valid():
-            permiso = form.save()
+            permiso = form.save(commit=False)
+            permiso.usuario = request.user
+            permiso.save()
             messages.success(request, 'Permiso agregado exitosamente.')
             return redirect('perfil')
     else:
@@ -609,6 +614,10 @@ def reservar_maquinaria(request, maquina_id):
             reserva = form.save(commit=False)
             reserva.cliente = request.user
             reserva.maquina = maquina
+
+            # Si quien crea la reserva es un empleado, registrarlo como gestor
+            if request.user.perfil.is_empleado:
+                reserva.empleado_gestor = request.user
 
             # Calcular el monto total
             dias = (form.cleaned_data['fecha_fin'] -
@@ -902,8 +911,11 @@ def detalle_reserva(request, reserva_id):
 def ver_perfil_empleado(request, empleado_id):
     empleado = get_object_or_404(
         User, id=empleado_id, perfil__role__name=Role.EMPLEADO)
+    # Obtener todas las reservas gestionadas por el empleado
+    reservas_gestionadas = empleado.reservas_gestionadas.all().order_by('-fecha_reserva')
     return render(request, 'registration/perfil_empleado.html', {
-        'empleado': empleado
+        'empleado': empleado,
+        'reservas_gestionadas': reservas_gestionadas
     })
 
 

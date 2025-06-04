@@ -102,9 +102,65 @@
   border: 1px solid #f5c6cb;
 }
 
+/* Estilos para la sección de permisos */
+.permisos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.permiso-card {
+  background: rgba(84, 100, 105, 0.05);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  border: 1px solid rgba(84, 100, 105, 0.1);
+}
+
+.permiso-card h3 {
+  color: #546469;
+  margin-bottom: 0.5rem;
+  font-size: 1.2rem;
+}
+
+.permiso-card p {
+  color: #666;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.permiso-card .fecha {
+  color: #888;
+  font-size: 0.8rem;
+  margin-bottom: 1rem;
+}
+
+.btn-download {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #546469;
+  color: white;
+  padding: 0.6rem 1rem;
+  border-radius: 0.5rem;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.btn-download:hover {
+  background-color: #3d484c;
+  color: white;
+  transform: translateY(-2px);
+}
+
 @media (max-width: 1024px) {
   .profile-info {
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  }
+  
+  .permisos-grid {
+    grid-template-columns: 1fr;
   }
 }
 {% endblock %}
@@ -217,6 +273,31 @@
       {% else %}
       <div class="alert-info" style="background-color: rgba(84, 100, 105, 0.1); border: 1px solid rgba(84, 100, 105, 0.2); color: #546469; padding: 1rem; border-radius: 0.6rem; text-align: center;">
         <i class="fas fa-info-circle"></i> Este cliente aún no tiene reservas registradas.
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Sección de Permisos Especiales -->
+    <div class="profile-header" style="margin-top: 2rem;">
+      <h2 style="color: #546469; margin-bottom: 1.5rem;">Permisos Especiales</h2>
+      {% if cliente.permisos_especiales.all %}
+      <div class="permisos-grid">
+        {% for permiso in cliente.permisos_especiales.all %}
+        <div class="permiso-card">
+          <h3>{{ permiso.nombre }}</h3>
+          <p>{{ permiso.descripcion }}</p>
+          <div class="fecha">Agregado el {{ permiso.fecha_creacion|date:"d/m/Y H:i" }}</div>
+          <div class="card-actions">
+            <a href="{{ permiso.archivo.url }}" class="btn-download" target="_blank">
+              <i class="fas fa-download"></i> Ver Documento
+            </a>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="alert-info" style="background-color: rgba(84, 100, 105, 0.1); border: 1px solid rgba(84, 100, 105, 0.2); color: #546469; padding: 1rem; border-radius: 0.6rem; text-align: center;">
+        <i class="fas fa-info-circle"></i> Este cliente no tiene permisos especiales registrados.
       </div>
       {% endif %}
     </div>

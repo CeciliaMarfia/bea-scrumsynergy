@@ -260,6 +260,13 @@ class PermisoEspecial(models.Model):
     descripcion = models.TextField()
     archivo = models.FileField(upload_to='permisos/')
     fecha_creacion = models.DateTimeField(auto_now_add=True)
+    usuario = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='permisos_especiales',
+        null=True,  # Temporalmente permitimos nulos
+        blank=True  # Temporalmente permitimos blancos
+    )
 
     def __str__(self):
         return self.nombre
@@ -278,6 +285,13 @@ class Reserva(models.Model):
         Maquina, on_delete=models.CASCADE, related_name='reservas')
     cliente = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name='reservas')
+    empleado_gestor = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='reservas_gestionadas'
+    )
     fecha_inicio = models.DateField()
     fecha_fin = models.DateField()
     fecha_reserva = models.DateTimeField(auto_now_add=True)
