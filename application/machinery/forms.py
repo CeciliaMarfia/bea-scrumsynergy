@@ -169,6 +169,37 @@ class AltaMaquinariaForm(forms.ModelForm):
         self.fields['anio'].label = "Año"
         self.fields['permisos_requeridos'].label = "Permisos requeridos"
         self.fields['permisos_requeridos'].required = False
+        
+        # Configurar el campo de porcentaje personalizado
+        self.fields['porcentaje_personalizado'] = forms.IntegerField(
+            required=False,
+            min_value=10,
+            max_value=90,
+            widget=forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ingrese un valor entre 10 y 90',
+                'type': 'number',
+                'min': '10',
+                'max': '90',
+                'step': '1',
+                'id': 'id_porcentaje_personalizado',
+                'style': 'cursor: text; background-color: #ffffff;',
+                'tabindex': '0',
+                'autocomplete': 'off'
+            }),
+            help_text='Campo opcional, completar en caso de reembolso parcial',
+            error_messages={
+                'min_value': 'El valor debe ser mayor o igual a 10.',
+                'max_value': 'El valor debe ser menor o igual a 90.',
+                'invalid': 'Por favor ingrese un número válido.'
+            }
+        )
+        self.fields['porcentaje_personalizado'].label = "Porcentaje personalizado (%)"
+        
+        # Asegurarse de que el campo de política de cancelación tenga el ID correcto
+        self.fields['politica_cancelacion'].widget.attrs.update({
+            'id': 'id_politica_cancelacion'
+        })
 
     def clean_codigo(self):
         codigo = self.cleaned_data.get('codigo')
@@ -192,18 +223,15 @@ class AltaMaquinariaForm(forms.ModelForm):
         cleaned_data = super().clean()
         tipo_cancelacion = cleaned_data.get('tipo_cancelacion')
         politica_cancelacion = cleaned_data.get('politica_cancelacion')
+        porcentaje_personalizado = cleaned_data.get('porcentaje_personalizado')
 
         if tipo_cancelacion == 'total':
             cleaned_data['politica_cancelacion'] = 100
         elif tipo_cancelacion == 'sin_reembolso':
             cleaned_data['politica_cancelacion'] = 0
         elif tipo_cancelacion == 'parcial':
-            if politica_cancelacion is None:
-                raise forms.ValidationError(
-                    "Debe ingresar un porcentaje para reembolso parcial")
-            if politica_cancelacion < 10 or politica_cancelacion > 90:
-                raise forms.ValidationError(
-                    "El porcentaje de reembolso parcial debe estar entre 10% y 90%")
+            if porcentaje_personalizado is not None:
+                cleaned_data['politica_cancelacion'] = porcentaje_personalizado
 
         return cleaned_data
 

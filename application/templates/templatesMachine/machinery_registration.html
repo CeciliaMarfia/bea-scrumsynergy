@@ -24,40 +24,116 @@
 
     <form method="post" enctype="multipart/form-data" accept-charset="utf-8" id="maquinariaForm" novalidate>
       {% csrf_token %}
+      
+      <!-- Campos en orden específico -->
+      {% with ordered_fields='codigo,nombre,marca,modelo,anio,ubicacion,tipo,descripcion,precio_por_dia' %}
       {% for field in form %}
-        <div class="form-group {% if field.errors %}has-error{% endif %}" {% if field.name == 'politica_cancelacion' %}data-field="politica_cancelacion" style="display:none;"{% endif %}>
-          {% if field.name == 'imagenes' %}
-            <label for="id_imagenes">Imágenes:</label>
-            <div class="file-input-container {% if field.errors %}is-invalid{% endif %}">
-              <div class="custom-file-upload" id="drop-zone">
-                <input type="file" name="imagenes" multiple accept="image/*" class="form-control {% if field.errors %}is-invalid{% endif %}" id="id_imagenes">
-                <p class="upload-text">Arrastra las imágenes aquí o haz clic para seleccionar</p>
-                <div id="file-counter">0 imágenes seleccionadas</div>
-              </div>
-            </div>
-            <div class="image-preview-wrapper">
-              <button type="button" class="nav-button prev" onclick="prevImage()" style="display: none;">&lt;</button>
-              <div id="preview-container" class="preview-container"></div>
-              <button type="button" class="nav-button next" onclick="nextImage()" style="display: none;">&gt;</button>
-            </div>
-          {% else %}
+        {% if field.name == 'codigo' or field.name == 'nombre' or field.name == 'marca' or field.name == 'modelo' or field.name == 'anio' or field.name == 'ubicacion' or field.name == 'tipo' or field.name == 'descripcion' or field.name == 'precio_por_dia' %}
+          <div class="form-group {% if field.errors %}has-error{% endif %}">
             {{ field.label_tag }}
             {{ field }}
-          {% endif %}
-          {% if field.help_text %}
-            <small class="form-text text-muted">{{ field.help_text }}</small>
-          {% endif %}
-          {% if field.errors %}
-            <div class="invalid-feedback d-block">
-              {% for error in field.errors %}
-                <div class="error-message">
-                  <i class="fas fa-exclamation-circle"></i> {{ error }}
-                </div>
-              {% endfor %}
-            </div>
-          {% endif %}
-        </div>
+            {% if field.help_text %}
+              <small class="form-text text-muted">{{ field.help_text }}</small>
+            {% endif %}
+            {% if field.errors %}
+              <div class="invalid-feedback d-block">
+                {% for error in field.errors %}
+                  <div class="error-message">
+                    <i class="fas fa-exclamation-circle"></i> {{ error }}
+                  </div>
+                {% endfor %}
+              </div>
+            {% endif %}
+          </div>
+        {% endif %}
       {% endfor %}
+      {% endwith %}
+
+      <!-- Tipo de cancelación y porcentaje personalizado agrupados -->
+      <div class="form-group">
+        <label for="id_tipo_cancelacion">{{ form.tipo_cancelacion.label }}</label>
+        {{ form.tipo_cancelacion }}
+        {% if form.tipo_cancelacion.errors %}
+          <div class="invalid-feedback d-block">
+            {% for error in form.tipo_cancelacion.errors %}
+              <div class="error-message">
+                <i class="fas fa-exclamation-circle"></i> {{ error }}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Campo visible de porcentaje personalizado -->
+      <div class="form-group" data-field="porcentaje_personalizado" style="display:none;">
+        <label for="id_porcentaje_personalizado">Porcentaje de cancelación (%):</label>
+        {{ form.porcentaje_personalizado }}
+        {% if form.porcentaje_personalizado.help_text %}
+          <small class="form-text text-muted">{{ form.porcentaje_personalizado.help_text }}</small>
+        {% endif %}
+        {% if form.porcentaje_personalizado.errors %}
+          <div class="invalid-feedback d-block">
+            {% for error in form.porcentaje_personalizado.errors %}
+              <div class="error-message">
+                <i class="fas fa-exclamation-circle"></i> {{ error }}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Campo oculto para política de cancelación -->
+      <div style="display: none;">
+        {{ form.politica_cancelacion }}
+      </div>
+
+      <!-- Campo de permisos -->
+      <div class="form-group {% if form.permisos_requeridos.errors %}has-error{% endif %}">
+        {{ form.permisos_requeridos.label_tag }}
+        {{ form.permisos_requeridos }}
+        {% if form.permisos_requeridos.help_text %}
+          <small class="form-text text-muted">{{ form.permisos_requeridos.help_text }}</small>
+        {% endif %}
+        {% if form.permisos_requeridos.errors %}
+          <div class="invalid-feedback d-block">
+            {% for error in form.permisos_requeridos.errors %}
+              <div class="error-message">
+                <i class="fas fa-exclamation-circle"></i> {{ error }}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Campo de imágenes al final -->
+      <div class="form-group {% if form.imagenes.errors %}has-error{% endif %}">
+        <label for="id_imagenes">Imágenes:</label>
+        <div class="file-input-container {% if form.imagenes.errors %}is-invalid{% endif %}">
+          <div class="custom-file-upload" id="drop-zone">
+            <input type="file" name="imagenes" multiple accept="image/*" class="form-control {% if form.imagenes.errors %}is-invalid{% endif %}" id="id_imagenes">
+            <p class="upload-text">Arrastra las imágenes aquí o haz clic para seleccionar</p>
+            <div id="file-counter">0 imágenes seleccionadas</div>
+          </div>
+        </div>
+        <div class="image-preview-wrapper">
+          <button type="button" class="nav-button prev" onclick="prevImage()" style="display: none;">&lt;</button>
+          <div id="preview-container" class="preview-container"></div>
+          <button type="button" class="nav-button next" onclick="nextImage()" style="display: none;">&gt;</button>
+        </div>
+        {% if form.imagenes.help_text %}
+          <small class="form-text text-muted">{{ form.imagenes.help_text }}</small>
+        {% endif %}
+        {% if form.imagenes.errors %}
+          <div class="invalid-feedback d-block">
+            {% for error in form.imagenes.errors %}
+              <div class="error-message">
+                <i class="fas fa-exclamation-circle"></i> {{ error }}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
+
       <button type="submit" class="submit-btn">
         <i class="fas fa-save"></i> Registrar Maquinaria
       </button>
@@ -510,20 +586,17 @@ form p {
   background-color: rgba(209, 108, 68, 0.1);
 }
 
-/* Ocultar el campo de porcentaje de cancelación por defecto */
-/*
-#id_politica_cancelacion {
-    display: none;
+/* Eliminar estilos que puedan interferir */
+.form-group[data-field="politica_cancelacion"],
+.form-group[data-field="porcentaje_personalizado"] {
+    margin-bottom: 1.5rem;
 }
 
-#id_politica_cancelacion:not(:required) {
-    display: none;
+#id_politica_cancelacion,
+#id_porcentaje_personalizado {
+    display: block;
+    width: 100%;
 }
-
-.form-group[data-field="politica_cancelacion"] {
-    display: none;
-}
-*/
 
 .has-error input,
 .has-error select,
@@ -745,6 +818,65 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
   });
+});
+</script>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tipoCancelacionSelect = document.getElementById('id_tipo_cancelacion');
+    const porcentajePersonalizadoDiv = document.querySelector('[data-field="porcentaje_personalizado"]');
+    const politicaCancelacionInput = document.getElementById('id_politica_cancelacion');
+    const porcentajePersonalizadoInput = document.getElementById('id_porcentaje_personalizado');
+
+    function updateFields() {
+        const selectedValue = tipoCancelacionSelect.value;
+        console.log('Tipo de cancelación seleccionado:', selectedValue);
+        
+        if (selectedValue === 'parcial') {
+            // Mostrar campo personalizado
+            porcentajePersonalizadoDiv.style.display = 'block';
+            
+            // Habilitar campo personalizado
+            porcentajePersonalizadoInput.disabled = false;
+            porcentajePersonalizadoInput.readOnly = false;
+            porcentajePersonalizadoInput.style.pointerEvents = 'auto';
+            porcentajePersonalizadoInput.style.backgroundColor = '#ffffff';
+            porcentajePersonalizadoInput.style.cursor = 'text';
+            
+            // Limpiar valores
+            politicaCancelacionInput.value = '';
+            porcentajePersonalizadoInput.value = '';
+        } else {
+            // Ocultar campo personalizado
+            porcentajePersonalizadoDiv.style.display = 'none';
+            
+            // Establecer valores según el tipo
+            if (selectedValue === 'total') {
+                politicaCancelacionInput.value = '100';
+            } else if (selectedValue === 'sin_reembolso') {
+                politicaCancelacionInput.value = '0';
+            }
+            
+            // Limpiar campo personalizado
+            porcentajePersonalizadoInput.value = '';
+        }
+    }
+
+    // Actualizar cuando cambia el porcentaje personalizado
+    porcentajePersonalizadoInput.addEventListener('input', function() {
+        if (this.value && !isNaN(this.value)) {
+            const valor = parseInt(this.value);
+            if (valor >= 10 && valor <= 90) {
+                politicaCancelacionInput.value = valor;
+            }
+        }
+    });
+
+    // Inicializar campos
+    tipoCancelacionSelect.addEventListener('change', updateFields);
+    updateFields();
 });
 </script>
 {% endblock %} 
