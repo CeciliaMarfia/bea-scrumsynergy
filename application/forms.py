@@ -295,7 +295,8 @@ class EditarPerfilForm(forms.ModelForm):
                 user.save()
                 perfil = user.perfil
                 perfil.dni = self.cleaned_data.get('dni')
-                perfil.fecha_nacimiento = self.cleaned_data.get('fecha_nacimiento')
+                perfil.fecha_nacimiento = self.cleaned_data.get(
+                    'fecha_nacimiento')
                 perfil.direccion = self.cleaned_data.get('direccion')
 
                 if 'documento_foto' in self.cleaned_data and self.cleaned_data['documento_foto']:
@@ -331,7 +332,7 @@ class ReservaMaquinariaForm(forms.ModelForm):
             # Validar que la fecha de inicio no sea anterior a la fecha actual
             if fecha_inicio < timezone.now().date():
                 raise forms.ValidationError(
-                    'La fecha de inicio no puede ser anterior a la fecha actual.')
+                    'La fecha de inicio debe ser igual o posterior a la fecha actual.')
 
             # Validar que la fecha de fin no sea anterior a la fecha de inicio
             if fecha_fin < fecha_inicio:
@@ -358,7 +359,7 @@ class ReservaMaquinariaForm(forms.ModelForm):
                 # Verificar solapamiento directo con la reserva
                 if (fecha_inicio <= reserva.fecha_fin and fecha_fin >= reserva.fecha_inicio):
                     raise forms.ValidationError(
-                        f'La máquina está reservada del {reserva.fecha_inicio.strftime("%d/%m/%Y")} al {reserva.fecha_fin.strftime("%d/%m/%Y")}.')
+                        f'La máquina está reservada del {reserva.fecha_inicio.strftime("%d/%m/%Y")} al {reserva.fecha_fin.strftime("%d/%m/%Y")} y estará en mantenimiento hasta el {(reserva.fecha_fin + timezone.timedelta(days=2)).strftime("%d/%m/%Y")}.')
 
                 # Verificar período de mantenimiento (2 días después de cada reserva)
                 # La nueva reserva debe comenzar al menos 3 días después de la fecha de fin

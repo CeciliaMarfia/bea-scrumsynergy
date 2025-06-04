@@ -348,8 +348,10 @@ class Reserva(models.Model):
                     (self.fecha_inicio <= reserva.fecha_inicio and self.fecha_fin >=
                      reserva.fecha_fin)  # Engloba otra reserva
                 ):
+                    fin_mantenimiento = reserva.fecha_fin + \
+                        timezone.timedelta(days=2)
                     raise ValidationError({
-                        'fecha_inicio': f'La máquina está reservada del {reserva.fecha_inicio.strftime("%d/%m/%Y")} al {reserva.fecha_fin.strftime("%d/%m/%Y")}.'
+                        'fecha_inicio': f'La máquina está reservada del {reserva.fecha_inicio.strftime("%d/%m/%Y")} al {reserva.fecha_fin.strftime("%d/%m/%Y")} y estará en mantenimiento hasta el {fin_mantenimiento.strftime("%d/%m/%Y")}.'
                     })
 
                 # Verificar período de mantenimiento
