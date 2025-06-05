@@ -180,6 +180,9 @@
         <a href="{% url 'home' %}" class="btn-volver">
           <i class="fas fa-arrow-left"></i> Volver al Inicio
         </a>
+        <a href="{% url 'lista_clientes' %}" class="btn-volver">
+          <i class="fas fa-users"></i> Volver al Listado de Clientes
+        </a>
         <h1>Perfil de {{ cliente.get_full_name }}</h1>
       </div>
       <div class="profile-info">
@@ -214,10 +217,10 @@
             <label>Dirección</label>
             <div class="value">{{ cliente.perfil.direccion|default:"No especificada" }}</div>
           </div>
-          <div class="info-group">
-            <label>Teléfono</label>
+          <!-- <div class="info-group">
+           <label>Teléfono</label>
             <div class="value">{{ cliente.perfil.celular|default:"No especificado" }}</div>
-          </div>
+          </div>-->
           <div class="info-group">
             <label>Documento</label>
             {% if cliente.perfil.documento_foto %}

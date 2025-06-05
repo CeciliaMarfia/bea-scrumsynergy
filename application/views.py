@@ -204,7 +204,7 @@ def signup(request):
                 )
                 messages.success(
                     request,
-                    'Tu cuenta ha sido creada. Por favor, revisa tu correo electrónico para verificar tu cuenta. El enlace expirará en 5 minutos.'
+                    'Tu cuenta ha sido creada. Por favor, revisa tu correo electrónico para verificar tu cuenta. El enlace expirará en 24 horas.'
                 )
                 return render(request, 'login.html', {
                     'show_verification_resend': True,
@@ -355,7 +355,7 @@ def registrar_cliente(request):
                 user.perfil.save()
 
                 messages.success(request, 'Cliente registrado exitosamente.')
-                return redirect('ver_perfil_cliente', cliente_id=user.id)
+                return redirect('lista_clientes')
     else:
         form = RegistroUsuarioForm()
 
@@ -586,7 +586,7 @@ def reenviar_verificacion(request):
                     )
                     messages.success(
                         request,
-                        'Hemos enviado un nuevo correo de verificación. Por favor, revisa tu bandeja de entrada. El enlace expirará en 5 minutos.'
+                        'Hemos enviado un nuevo correo de verificación. Por favor, revisa tu bandeja de entrada. El enlace expirará en 24 horas.'
                     )
                 except Exception as e:
                     print(f"Error al enviar correo de verificación: {str(e)}")
