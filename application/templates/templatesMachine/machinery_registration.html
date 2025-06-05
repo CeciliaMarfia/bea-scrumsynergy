@@ -105,24 +105,11 @@
         {% endif %}
       </div>
 
-      <!-- Campo de imágenes al final -->
+      <!-- Campo de imágenes -->
       <div class="form-group {% if form.imagenes.errors %}has-error{% endif %}">
         <label for="id_imagenes">Imágenes:</label>
-        <div class="file-input-container {% if form.imagenes.errors %}is-invalid{% endif %}">
-          <div class="custom-file-upload" id="drop-zone">
-            <input type="file" name="imagenes" multiple accept="image/*" class="form-control {% if form.imagenes.errors %}is-invalid{% endif %}" id="id_imagenes">
-            <p class="upload-text">Arrastra las imágenes aquí o haz clic para seleccionar</p>
-            <div id="file-counter">0 imágenes seleccionadas</div>
-          </div>
-        </div>
-        <div class="image-preview-wrapper">
-          <button type="button" class="nav-button prev" onclick="prevImage()" style="display: none;">&lt;</button>
-          <div id="preview-container" class="preview-container"></div>
-          <button type="button" class="nav-button next" onclick="nextImage()" style="display: none;">&gt;</button>
-        </div>
-        {% if form.imagenes.help_text %}
-          <small class="form-text text-muted">{{ form.imagenes.help_text }}</small>
-        {% endif %}
+        {{ form.imagenes }}
+        <div id="fileNames" class="file-list"></div>
         {% if form.imagenes.errors %}
           <div class="invalid-feedback d-block">
             {% for error in form.imagenes.errors %}
@@ -409,11 +396,20 @@ form p {
 }
 
 .image-name {
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   margin-top: 0.5rem;
+  color: #546469;
+  text-align: center;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  padding: 0.3rem;
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 4px;
+  position: absolute;
+  bottom: 5px;
+  left: 5px;
+  right: 5px;
 }
 
 .principal-badge {
@@ -517,44 +513,68 @@ form p {
 .preview-item {
   flex: 0 0 auto;
   position: relative;
-  width: 150px;
-  margin-right: 10px;
+  width: 180px;
+  margin-right: 15px;
+  margin-bottom: 15px;
 }
 
 .preview-item img {
   width: 100%;
-  height: 150px;
+  height: 180px;
   object-fit: cover;
   border-radius: 8px;
   border: 2px solid #d16c44;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: transform 0.2s ease;
+}
+
+.preview-item img:hover {
+  transform: scale(1.05);
+}
+
+.preview-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  padding: 15px 0;
+  min-height: 180px;
+  align-items: flex-start;
 }
 
 .remove-btn {
   position: absolute;
-  top: 5px;
-  right: 5px;
+  top: 10px;
+  right: 10px;
   background: rgba(220, 53, 69, 0.9);
   color: white;
   border: none;
   border-radius: 50%;
-  width: 24px;
-  height: 24px;
+  width: 30px;
+  height: 30px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 18px;
+  transition: background-color 0.2s ease;
+  z-index: 2;
+}
+
+.remove-btn:hover {
+  background: rgba(220, 53, 69, 1);
 }
 
 .principal-badge {
   position: absolute;
-  top: 5px;
-  left: 5px;
+  top: 10px;
+  left: 10px;
   background: rgba(209, 108, 68, 0.9);
   color: white;
-  padding: 4px 8px;
+  padding: 5px 10px;
   border-radius: 4px;
   font-size: 12px;
+  font-weight: 500;
+  z-index: 2;
 }
 
 .nav-button {
@@ -660,164 +680,37 @@ form p {
 .btn-close:hover {
   opacity: 1;
 }
+
+.upload-container {
+  border: 2px dashed #ccc;
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.file-list {
+  margin-top: 10px;
+}
 </style>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-  const form = document.querySelector('form');
-  const dropZone = document.getElementById('drop-zone');
-    const imageInput = document.getElementById('id_imagenes');
-  const previewContainer = document.getElementById('preview-container');
-  const fileCounter = document.getElementById('file-counter');
-  const prevButton = document.querySelector('.nav-button.prev');
-  const nextButton = document.querySelector('.nav-button.next');
-  let currentIndex = 0;
-  let previews = [];
+document.addEventListener('DOMContentLoaded', () => {
+    const input = document.querySelector('input[type="file"]');
+    const output = document.getElementById('fileNames');
 
-    // Manejo de la política de cancelación
-    const tipoCancelacionSelect = document.getElementById('id_tipo_cancelacion');
-    const politicaCancelacionInput = document.getElementById('id_politica_cancelacion');
-    const politicaCancelacionGroup = politicaCancelacionInput.closest('.form-group');
-
-    function actualizarCampoPolitica() {
-        const seleccion = tipoCancelacionSelect.value;
-        if (seleccion === 'parcial') {
-      politicaCancelacionGroup.style.display = 'block';
-            politicaCancelacionInput.value = '';
-            politicaCancelacionInput.readOnly = false;
-            politicaCancelacionInput.required = true;
-    } else {
-      politicaCancelacionGroup.style.display = 'none';
-            politicaCancelacionInput.required = false;
-            politicaCancelacionInput.value = seleccion === 'total' ? '100' : '0';
+    input.addEventListener('change', () => {
+        const files = Array.from(input.files);
+        if (files.length === 0) {
+            output.innerText = '0 imágenes seleccionadas';
+        } else {
+            const nombres = files.map(f => `• ${f.name}`).join('<br>');
+            output.innerHTML = `${files.length} imagen${files.length > 1 ? 'es' : ''} seleccionada${files.length > 1 ? 's' : ''}:<br>${nombres}`;
         }
-    }
-
-    actualizarCampoPolitica();
-    tipoCancelacionSelect.addEventListener('change', actualizarCampoPolitica);
-
-    // Manejo de imágenes
-  function handleFiles(files) {
-    if (!files || files.length === 0) {
-      fileCounter.textContent = '0 imágenes seleccionadas';
-      previewContainer.innerHTML = '';
-      previews = [];
-      currentIndex = 0;
-      updateNavigationButtons();
-      return;
-    }
-
-        const totalFiles = files.length;
-        fileCounter.textContent = `${totalFiles} ${totalFiles === 1 ? 'imagen seleccionada' : 'imágenes seleccionadas'}`;
-
-    previewContainer.innerHTML = '';
-    previews = [];
-    currentIndex = 0;
-    
-        Array.from(files).forEach((file, index) => {
-            if (!file.type.startsWith('image/')) return;
-    
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          const preview = document.createElement('div');
-          preview.className = 'preview-item';
-          preview.innerHTML = `
-            <img src="${e.target.result}" alt="${file.name}" title="${file.name}">
-                    <button type="button" class="remove-btn" data-index="${index}">×</button>
-            ${index === 0 ? '<span class="principal-badge">Principal</span>' : ''}
-            <div class="image-name">${file.name}</div>
-          `;
-
-                preview.querySelector('.remove-btn').addEventListener('click', function() {
-                    removeImage(this.dataset.index);
-                });
-
-          previewContainer.appendChild(preview);
-          previews.push(preview);
-          updateNavigationButtons();
-        };
-        reader.readAsDataURL(file);
-        });
-    }
-
-    function removeImage(index) {
-    const dt = new DataTransfer();
-    const files = Array.from(imageInput.files);
-    
-    files.forEach((file, i) => {
-            if(i !== parseInt(index)) {
-        dt.items.add(file);
-      }
     });
-    
-    imageInput.files = dt.files;
-    handleFiles(imageInput.files);
-    }
-
-    function updateNavigationButtons() {
-        const hasMultipleImages = previews.length > 1;
-        prevButton.style.display = hasMultipleImages ? 'flex' : 'none';
-        nextButton.style.display = hasMultipleImages ? 'flex' : 'none';
-    }
-
-    // Event Listeners para el manejo de archivos
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-        dropZone.addEventListener(eventName, preventDefaults, false);
-        document.body.addEventListener(eventName, preventDefaults, false);
-    });
-
-    function preventDefaults(e) {
-        e.preventDefault();
-        e.stopPropagation();
-    }
-
-    ['dragenter', 'dragover'].forEach(eventName => {
-        dropZone.addEventListener(eventName, () => dropZone.classList.add('highlight'), false);
-    });
-
-    ['dragleave', 'drop'].forEach(eventName => {
-        dropZone.addEventListener(eventName, () => dropZone.classList.remove('highlight'), false);
-    });
-
-    dropZone.addEventListener('drop', function(e) {
-        const dt = e.dataTransfer;
-        handleFiles(dt.files);
-    });
-
-    imageInput.addEventListener('change', function() {
-        handleFiles(this.files);
-    });
-
-  window.prevImage = function() {
-    if (currentIndex > 0) {
-            previewContainer.scrollLeft -= 170;
-      currentIndex--;
-    }
-  };
-
-  window.nextImage = function() {
-    if (currentIndex < previews.length - 1) {
-            previewContainer.scrollLeft += 170;
-      currentIndex++;
-    }
-  };
-
-  // Validación del formulario
-  form.addEventListener('submit', function(e) {
-        if (imageInput.files.length === 0) {
-      e.preventDefault();
-            dropZone.classList.add('is-invalid');
-            const formGroup = dropZone.closest('.form-group');
-            if (!formGroup.querySelector('.invalid-feedback')) {
-                const feedback = document.createElement('div');
-                feedback.className = 'invalid-feedback d-block';
-                feedback.innerHTML = `<div class="error-message"><i class="fas fa-exclamation-circle"></i> Debe seleccionar al menos una imagen</div>`;
-                formGroup.appendChild(feedback);
-      }
-    }
-  });
 });
 </script>
 {% endblock %}
