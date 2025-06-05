@@ -44,18 +44,38 @@ password_validation.NumericPasswordValidator.message = PASSWORD_ERROR_MESSAGES[
 
 
 class RegistroUsuarioForm(UserCreationForm):
-    first_name = forms.CharField(required=True, label='Nombre')
-    last_name = forms.CharField(required=True, label='Apellido')
-    email = forms.EmailField(required=True)
+    first_name = forms.CharField(
+        required=True,
+        label='Nombre',
+        widget=forms.TextInput(attrs={'placeholder': 'Ej: María'})
+    )
+    last_name = forms.CharField(
+        required=True,
+        label='Apellido',
+        widget=forms.TextInput(attrs={'placeholder': 'Ej: González'})
+    )
+    email = forms.EmailField(
+        required=True,
+        widget=forms.EmailInput(attrs={'placeholder': 'Ej: maria@ejemplo.com'})
+    )
     fecha_nacimiento = forms.DateField(
         required=True,
         label='Fecha de nacimiento',
         widget=forms.DateInput(attrs={'type': 'date'})
     )
-    dni = forms.CharField(required=True, label='DNI')
-    localidad = forms.CharField(required=True)
+    dni = forms.CharField(
+        required=True,
+        label='DNI',
+        widget=forms.TextInput(attrs={'placeholder': 'Ej: 12345678'})
+    )
+    localidad = forms.CharField(
+        required=True,
+        widget=forms.TextInput(attrs={'placeholder': 'Ej: Tu Ciudad'})
+    )
     documento_foto = forms.ImageField(
-        required=True, label='Foto del documento')
+        required=True,
+        label='Foto del documento'
+    )
 
     error_messages = {
         'password_mismatch': 'Las contraseñas no coinciden.',
