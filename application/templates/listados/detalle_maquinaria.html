@@ -418,9 +418,15 @@
 
             <h2 class="info-title" style="margin-top: 2rem;">Permisos Requeridos</h2>
             <div class="info-grid">
-            <div class="info-item">
-                    <span class="info-label">Requiere permiso especial de gran porte</span>
-                    <span class="info-value">{% if maquina.requiere_permiso_especial %}Sí{% else %}No{% endif %}</span>
+                <div class="info-item">
+                    <span class="info-label">Permisos especiales</span>
+                    <span class="info-value">
+                        {% if maquina.permisos_requeridos %}
+                            {{ maquina.permisos_requeridos }}
+                        {% else %}
+                            No requiere ningún permiso especial
+                        {% endif %}
+                    </span>
                 </div>
             </div>
         </div>
