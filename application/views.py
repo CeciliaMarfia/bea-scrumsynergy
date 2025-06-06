@@ -1031,7 +1031,7 @@ def payment_pending(request):
 
 def limpiar_datos(request):
     """
-    Vista para eliminar todas las tarjetas y reservas del sistema.
+    Vista para eliminar todas las tarjetas, reservas, maquinarias y perfiles del sistema.
     """
     # Eliminar todas las tarjetas
     TarjetaCredito.objects.all().delete()
@@ -1039,6 +1039,13 @@ def limpiar_datos(request):
     # Eliminar todas las reservas
     Reserva.objects.all().delete()
 
+    # Eliminar todas las maquinarias y sus imágenes asociadas
+    Maquina.objects.all().delete()
+
+    # Eliminar todos los usuarios (empleados y clientes) excepto el dueño
+    User.objects.filter(perfil__role__name__in=[
+                        Role.EMPLEADO, Role.CLIENTE]).delete()
+
     messages.success(
-        request, 'Se han eliminado todas las tarjetas y reservas exitosamente.')
+        request, 'Se han eliminado todas las tarjetas, reservas, maquinarias y perfiles de usuarios exitosamente.')
     return redirect('home')
