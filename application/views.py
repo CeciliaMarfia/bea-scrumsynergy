@@ -797,19 +797,16 @@ def cancelar_reserva(request, numero_reserva):
                         fail_silently=False,
                     )
 
-                    messages.success(
-                        request, f'Se canceló la reserva con código de reserva {numero_reserva} exitosamente.')
+                    messages.error(
+                        request, f'La reserva con código {numero_reserva} ha sido cancelada.')
             except Exception as e:
                 messages.error(
                     request, 'Hubo un error al cancelar la reserva. Por favor, intente nuevamente.')
         else:
             messages.error(request, 'Esta reserva no puede ser cancelada.')
 
-    # Redirigir a la página apropiada según el tipo de usuario
-    if is_owner_or_employee(request.user):
-        return redirect('historial_reservas')
-    else:
-        return redirect('mis_reservas')
+    # Siempre redirigir a mis_reservas, independientemente del tipo de usuario
+    return redirect('mis_reservas')
 
 
 @login_required
@@ -1030,3 +1027,18 @@ def payment_failure(request):
 def payment_pending(request):
     messages.warning(request, 'Tu pago está pendiente de confirmación.')
     return redirect('mis_reservas')
+
+
+def limpiar_datos(request):
+    """
+    Vista para eliminar todas las tarjetas y reservas del sistema.
+    """
+    # Eliminar todas las tarjetas
+    TarjetaCredito.objects.all().delete()
+
+    # Eliminar todas las reservas
+    Reserva.objects.all().delete()
+
+    messages.success(
+        request, 'Se han eliminado todas las tarjetas y reservas exitosamente.')
+    return redirect('home')
