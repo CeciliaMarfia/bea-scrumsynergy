@@ -283,10 +283,45 @@ def registrar_empleado(request):
                 # Asegurarnos de que el rol de empleado se asigne correctamente
                 role, _ = Role.objects.get_or_create(name=Role.EMPLEADO)
                 user.perfil.role = role
-                user.perfil.email_verificado = True
+
+                # Generar token de verificación
+                token = str(uuid.uuid4())
+                user.perfil.token_verificacion = token
+                user.perfil.token_verificacion_expira = timezone.now() + \
+                    timezone.timedelta(minutes=5)
                 user.perfil.save()
-            messages.success(request, 'Empleado registrado exitosamente.')
-            return redirect('lista_empleados')
+
+                # Obtener el dominio actual y construir la URL de verificación
+                current_site = get_current_site(request)
+                verification_url = f"http://{current_site.domain}{reverse('verificar_email', args=[token])}"
+
+                # Enviar correo de verificación
+                subject = 'Verifica tu cuenta - Bob el Alquilador'
+                html_message = render_to_string('emails/verificacion.html', {
+                    'user': user,
+                    'verification_url': verification_url,
+                })
+                plain_message = strip_tags(html_message)
+
+                try:
+                    send_mail(
+                        subject,
+                        plain_message,
+                        settings.EMAIL_HOST_USER,
+                        [user.email],
+                        html_message=html_message,
+                        fail_silently=False,
+                    )
+                    messages.success(
+                        request,
+                        'Empleado registrado exitosamente. Se ha enviado un correo de verificación.'
+                    )
+                except Exception as e:
+                    messages.warning(
+                        request,
+                        'Empleado registrado, pero hubo un problema al enviar el correo de verificación.'
+                    )
+                return redirect('lista_empleados')
     else:
         form = RegistroUsuarioForm(is_employee=True)
 
