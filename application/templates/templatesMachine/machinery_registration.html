@@ -3,9 +3,11 @@
 
 {% block content %}
 <div class="container">
-  <a href="{% url 'home' %}" class="back-link">
-    <i class="fas fa-arrow-left"></i> Volver al inicio
-  </a>
+  <div class="top-links">
+    <a href="{% url 'home' %}" class="back-link">
+      <i class="fas fa-arrow-left"></i> Volver al inicio
+    </a>
+  </div>
   <div class="form-card">
     <h2>Registrar Maquinaria</h2>
 
@@ -149,6 +151,12 @@ body {
   margin: 0 auto;
   position: relative;
   padding-top: 60px;
+}
+
+.top-links {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
 }
 
 .back-link {

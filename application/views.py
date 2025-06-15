@@ -6,13 +6,13 @@ from django.contrib.auth.forms import UserCreationForm
 import os
 from django.conf import settings
 from .machinery.forms import AltaMaquinariaForm
-from .models import Maquina, HomeVideo, PermisoEspecial, Perfil, Reserva, ImagenMaquina, Pago, TarjetaCredito, Role
+from .models import Maquina, HomeVideo, PermisoEspecial, Perfil, Reserva, ImagenMaquina, Pago, TarjetaCredito, Role, Sucursal
 from django.core.mail import send_mail, EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from .forms import RegistroUsuarioForm, PermisoEspecialForm, EditarPerfilForm, ReservaMaquinariaForm, TarjetaCreditoForm, CambiarPasswordForm
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.contrib.auth.views import PasswordResetView, PasswordResetDoneView
+from django.contrib.auth.views import PasswordResetView, PasswordResetDoneView, PasswordResetConfirmView, PasswordResetCompleteView
 from django.contrib.auth.models import User
 from django.urls import reverse_lazy
 from django.contrib.auth.tokens import default_token_generator
@@ -26,6 +26,15 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 from .services import BancoService
 from django.http import HttpResponse, JsonResponse
+from django.core.paginator import Paginator
+from django.db.models import Q
+from datetime import datetime, timedelta
+import json
+import stripe
+import requests
+import folium
+from geopy.geocoders import Nominatim
+from geopy.exc import GeocoderTimedOut
 
 import os
 
@@ -583,6 +592,15 @@ class CustomPasswordResetDoneView(PasswordResetDoneView):
     template_name = 'registration/password_reset_done.html'
 
 
+class CustomPasswordResetConfirmView(PasswordResetConfirmView):
+    template_name = 'registration/password_reset_confirm.html'
+    success_url = reverse_lazy('password_reset_complete')
+
+
+class CustomPasswordResetCompleteView(PasswordResetCompleteView):
+    template_name = 'registration/password_reset_complete.html'
+
+
 def reenviar_verificacion(request):
     if request.method == 'POST':
         email = request.POST.get('email')
@@ -1116,3 +1134,210 @@ def sobre_nosotros(request):
     Vista para mostrar la página Sobre Nosotros.
     """
     return render(request, 'sobre_nosotros.html')
+
+
+def lista_ubicaciones(request):
+    sucursales = Sucursal.objects.all()
+
+    # Crear el mapa centrado en Argentina
+    m = folium.Map(location=[-34.6037, -58.3816], zoom_start=5)
+
+    # Agregar marcadores para cada sucursal
+    for sucursal in sucursales:
+        if sucursal.latitud and sucursal.longitud:
+            # Crear el popup con la información de la sucursal
+            popup_html = f"""
+                <div style='width: 200px;'>
+                    <h4 style='margin-bottom: 10px;'>{sucursal.get_direccion_completa()}</h4>
+                    <p style='margin: 5px 0;'>
+                        <strong>Estado:</strong> {'Activa' if sucursal.activa else 'Inactiva'}
+                    </p>
+                </div>
+            """
+
+            # Agregar el marcador al mapa
+            folium.Marker(
+                location=[sucursal.latitud, sucursal.longitud],
+                popup=folium.Popup(popup_html, max_width=300),
+                tooltip=sucursal.get_direccion_completa(),
+                icon=folium.Icon(
+                    color='green' if sucursal.activa else 'red',
+                    icon='info-sign'
+                )
+            ).add_to(m)
+
+    # Convertir el mapa a HTML
+    m = m._repr_html_()
+
+    return render(request, 'listados/lista_ubicaciones.html', {
+        'sucursales': sucursales,
+        'map': m
+    })
+
+
+@login_required
+def administrar_sucursales(request):
+    """
+    Vista para que Roberto y María administren las sucursales.
+    """
+    # Verificar si el usuario es Roberto o María
+    if not (request.user.first_name == 'Roberto' or request.user.first_name == 'María'):
+        messages.error(
+            request, 'No tienes permiso para acceder a esta página.')
+        return redirect('home')
+
+    sucursales = Sucursal.objects.all().order_by('numero')
+    return render(request, 'admin/administrar_sucursales.html', {
+        'sucursales': sucursales
+    })
+
+
+@login_required
+def agregar_sucursal(request):
+    if request.method == 'POST':
+        direccion_completa = request.POST.get('direccion_completa')
+
+        try:
+            # Separar la dirección en sus componentes
+            # Formato esperado: "Calle Número, Localidad, Provincia"
+            partes = [part.strip() for part in direccion_completa.split(',')]
+
+            if len(partes) < 3:
+                messages.error(
+                    request, 'Por favor, ingrese la dirección en el formato: "Calle Número, Localidad, Provincia"')
+                return render(request, 'admin/agregar_sucursal.html', {
+                    'direccion_completa': direccion_completa
+                })
+
+            # Separar calle y número
+            calle_numero = partes[0].strip()
+            calle_parts = calle_numero.rsplit(' ', 1)
+
+            if len(calle_parts) != 2:
+                messages.error(
+                    request, 'Por favor, ingrese la calle y número en el formato: "Calle Número"')
+                return render(request, 'admin/agregar_sucursal.html', {
+                    'direccion_completa': direccion_completa
+                })
+
+            calle = calle_parts[0].strip()
+            numero = calle_parts[1].strip()
+            localidad = partes[1].strip()
+            provincia = partes[2].strip()
+
+            # Verificar si ya existe una sucursal con la misma dirección
+            if Sucursal.objects.filter(
+                calle=calle,
+                numero=numero,
+                localidad=localidad,
+                provincia=provincia
+            ).exists():
+                messages.error(
+                    request, 'Ya existe una sucursal con esta dirección. Por favor, verifique los datos.')
+                return render(request, 'admin/agregar_sucursal.html', {
+                    'direccion_completa': direccion_completa
+                })
+
+            # Geocodificar la dirección usando Nominatim
+            direccion_geocodificar = f"{calle} {numero}, {localidad}, {provincia}, Argentina"
+            geolocator = Nominatim(user_agent="bea_scrumsynergy")
+
+            try:
+                location = geolocator.geocode(direccion_geocodificar)
+                if location:
+                    # Crear la sucursal con las coordenadas
+                    sucursal = Sucursal.objects.create(
+                        calle=calle,
+                        numero=numero,
+                        localidad=localidad,
+                        provincia=provincia,
+                        latitud=location.latitude,
+                        longitud=location.longitude
+                    )
+                    messages.success(
+                        request, 'Sucursal agregada exitosamente.')
+                    return redirect('administrar_sucursales')
+                else:
+                    messages.error(
+                        request, 'No se pudo encontrar la ubicación. Por favor, verifique los datos.')
+                    return render(request, 'admin/agregar_sucursal.html', {
+                        'direccion_completa': direccion_completa
+                    })
+            except GeocoderTimedOut:
+                messages.error(
+                    request, 'El servicio de geocodificación está temporalmente no disponible. Por favor, intente nuevamente.')
+                return render(request, 'admin/agregar_sucursal.html', {
+                    'direccion_completa': direccion_completa
+                })
+
+        except Exception as e:
+            messages.error(
+                request, 'Ocurrió un error al agregar la sucursal. Por favor, intente nuevamente.')
+            return render(request, 'admin/agregar_sucursal.html', {
+                'direccion_completa': direccion_completa
+            })
+
+    return render(request, 'admin/agregar_sucursal.html')
+
+
+@login_required
+def editar_sucursal(request, sucursal_id):
+    """
+    Vista para editar una sucursal existente.
+    """
+    if not (request.user.first_name == 'Roberto' or request.user.first_name == 'María'):
+        messages.error(request, 'No tienes permiso para realizar esta acción.')
+        return redirect('home')
+
+    sucursal = get_object_or_404(Sucursal, id=sucursal_id)
+
+    if request.method == 'POST':
+        sucursal.numero = request.POST.get('numero')
+        sucursal.localidad = request.POST.get('localidad')
+        sucursal.direccion = request.POST.get('direccion')
+        sucursal.activa = request.POST.get('activa') == 'on'
+
+        try:
+            sucursal.save()
+            messages.success(request, 'Sucursal actualizada exitosamente.')
+            return redirect('administrar_sucursales')
+        except Exception as e:
+            messages.error(
+                request, f'Error al actualizar la sucursal: {str(e)}')
+
+    return render(request, 'admin/editar_sucursal.html', {
+        'sucursal': sucursal
+    })
+
+
+@login_required
+def eliminar_sucursal(request, sucursal_id):
+    if not (request.user.first_name == 'Roberto' or request.user.first_name == 'María'):
+        messages.error(request, 'No tienes permiso para realizar esta acción.')
+        return redirect('home')
+
+    try:
+        sucursal = Sucursal.objects.get(id=sucursal_id)
+        sucursal.delete()
+        messages.success(request, 'Sucursal eliminada exitosamente.')
+    except Sucursal.DoesNotExist:
+        messages.error(request, 'La sucursal no existe.')
+    except Exception as e:
+        messages.error(request, 'Ocurrió un error al eliminar la sucursal.')
+
+    return redirect('administrar_sucursales')
+
+
+@login_required
+def cambiar_password(request):
+    if request.method == 'POST':
+        form = CambiarPasswordForm(request.user, request.POST)
+        if form.is_valid():
+            user = form.save()
+            auth_login(request, user)
+            messages.success(
+                request, 'Tu contraseña ha sido cambiada exitosamente.')
+            return redirect('perfil')
+    else:
+        form = CambiarPasswordForm(request.user)
+    return render(request, 'registration/cambiar_password.html', {'form': form})

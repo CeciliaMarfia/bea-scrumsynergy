@@ -162,3 +162,7 @@ EMAIL_HOST_PASSWORD = 'hwob mkok ymfm jhum'
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = 'home'
+
+# Google Maps API Key
+# Reemplazar con tu clave de API de Google Maps
+GOOGLE_MAPS_API_KEY = 'TU_CLAVE_API_AQUI'

@@ -57,4 +57,12 @@ urlpatterns = [
     path('payment/pending/', views.payment_pending, name='payment_pending'),
     path('limpiar-datos/', views.limpiar_datos, name='limpiar_datos'),
     path('sobre-nosotros/', views.sobre_nosotros, name='sobre_nosotros'),
+    path('ubicaciones/', views.lista_ubicaciones, name='lista_ubicaciones'),
+    path('sucursales/', views.administrar_sucursales,
+         name='administrar_sucursales'),
+    path('sucursales/agregar/', views.agregar_sucursal, name='agregar_sucursal'),
+    path('sucursales/<int:sucursal_id>/editar/',
+         views.editar_sucursal, name='editar_sucursal'),
+    path('sucursales/<int:sucursal_id>/eliminar/',
+         views.eliminar_sucursal, name='eliminar_sucursal'),
 ]

@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container">
+    <div class="top-links">
+        <a href="{% url 'home' %}" class="back-link">
+            <i class="fas fa-arrow-left"></i> Volver al inicio
+        </a>
+    </div>
+
+    <div class="locations-container">
+        <div class="map-container">
+            {{ map|safe }}
+        </div>
+        <div class="locations-grid">
+            {% for sucursal in sucursales %}
+            <div class="location-card">
+                <div class="location-info">
+                    <h3>{{ sucursal.get_direccion_completa }}</h3>
+                    <p class="status {% if sucursal.activa %}active{% else %}inactive{% endif %}">
+                        {{ sucursal.activa|yesno:"Activa,Inactiva" }}
+                    </p>
+                </div>
+            </div>
+            {% empty %}
+            <div class="no-locations">
+                <i class="fas fa-building"></i>
+                <p>No hay sucursales registradas</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<style>
+.container {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.top-links {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.back-link {
+    color: #fff;
+    text-decoration: none;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    background-color: rgba(209, 108, 68, 0.9);
+    padding: 12px 20px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.back-link:hover {
+    transform: translateX(-5px);
+    background-color: #d16c44;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    color: #fff;
+    text-decoration: none;
+}
+
+.locations-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.map-container {
+    position: sticky;
+    top: 2rem;
+    height: calc(100vh - 4rem);
+    background-color: #f8f9fa;
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.map-container iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+.locations-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+    align-content: start;
+}
+
+.location-card {
+    background-color: #ffffff;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.location-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.location-info h3 {
+    color: #2c3e50;
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.status {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    border-radius: 2rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.status.active {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.status.inactive {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.no-locations {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 3rem;
+    color: #6c757d;
+}
+
+.no-locations i {
+    font-size: 3rem;
+    color: #d16c44;
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 992px) {
+    .locations-container {
+        grid-template-columns: 1fr;
+    }
+
+    .map-container {
+        position: relative;
+        top: 0;
+        height: 400px;
+        margin-bottom: 2rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 1rem;
+    }
+
+    .locations-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %} 

@@ -481,3 +481,26 @@ class TarjetaCredito(models.Model):
                 usuario=self.usuario
             ).exclude(id=self.id).update(es_predeterminada=False)
         super().save(*args, **kwargs)
+
+
+class Sucursal(models.Model):
+    calle = models.CharField(max_length=100)
+    numero = models.CharField(max_length=10)
+    localidad = models.CharField(max_length=100)
+    provincia = models.CharField(max_length=100)
+    latitud = models.FloatField(null=True, blank=True)
+    longitud = models.FloatField(null=True, blank=True)
+    activa = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ['calle', 'numero', 'localidad', 'provincia']
+        verbose_name = 'Sucursal'
+        verbose_name_plural = 'Sucursales'
+
+    def __str__(self):
+        return f"{self.calle} {self.numero}, {self.localidad}, {self.provincia}"
+
+    def get_direccion_completa(self):
+        return f"{self.calle} {self.numero}, {self.localidad}, {self.provincia}"

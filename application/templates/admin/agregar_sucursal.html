@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="mb-0">Agregar Nueva Sucursal</h3>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-{{ message.tags }}{% endif %} alert-dismissible fade show text-start d-flex align-items-center" role="alert">
+                                <i class="fa fa-info-circle me-2" aria-hidden="true"></i>
+                                <span>{{ message }}</span>
+                                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="direccion_completa" class="form-label">Dirección Completa</label>
+                            <input type="text" class="form-control" id="direccion_completa" name="direccion_completa" 
+                                   value="{{ direccion_completa }}" 
+                                   placeholder="Ej: Calle Ficticia, 123, Localidad, Provincia"
+                                   required>
+                            <div class="form-text">
+                                Ingrese la dirección en el formato: "Calle Número, Localidad, Provincia"
+                            </div>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Agregar Sucursal</button>
+                            <a href="{% url 'administrar_sucursales' %}" class="btn btn-secondary">Cancelar</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    border: none;
+    border-radius: 1rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    border-radius: 1rem 1rem 0 0 !important;
+}
+
+.form-control {
+    border-radius: 0.5rem;
+    border: 1px solid #dee2e6;
+    padding: 0.75rem;
+}
+
+.form-control:focus {
+    border-color: #d16c44;
+    box-shadow: 0 0 0 0.2rem rgba(209, 108, 68, 0.25);
+}
+
+.btn {
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background-color: #d16c44;
+    border: none;
+}
+
+.btn-primary:hover {
+    background-color: #b85a3a;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    border: none;
+}
+
+.btn-secondary:hover {
+    background-color: #5a6268;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.alert {
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+    text-align: left !important;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.alert-success {
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+    color: #155724;
+}
+
+.alert-danger {
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+    color: #721c24;
+}
+
+.alert .fa-info-circle {
+    font-size: 1.5rem;
+    color: #155724;
+    margin-right: 0.75rem;
+}
+
+.form-text {
+    color: #6c757d;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+</style>
+{% endblock %} 
