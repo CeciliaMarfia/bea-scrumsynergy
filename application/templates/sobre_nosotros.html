@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Sobre Nosotros - Bob el Alquilador{% endblock %}
+
+{% block styles %}
+<style>
+.sobre-nosotros-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.titulo {
+    color: #d16c44;
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.subtitulo {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+}
+
+.contenido {
+    background-color: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 1.5rem;
+    padding: 2rem;
+    color: white;
+}
+
+.seccion {
+    margin-bottom: 2rem;
+}
+
+.seccion h2 {
+    color: #d16c44;
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    padding-bottom: 0.5rem;
+}
+
+.seccion p {
+    line-height: 1.6;
+    margin-bottom: 1rem;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.valores {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.valor-card {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.valor-card i {
+    font-size: 2rem;
+    color: #d16c44;
+    margin-bottom: 1rem;
+}
+
+.valor-card h3 {
+    color: #d16c44;
+    margin-bottom: 0.5rem;
+}
+
+.valor-card p {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.9rem;
+}
+
+.btn-volver {
+    display: inline-block;
+    background-color: #546469;
+    color: white;
+    padding: 0.8rem 1.5rem;
+    border-radius: 0.6rem;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    margin-top: 2rem;
+}
+
+.btn-volver:hover {
+    background-color: #3d484c;
+    transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+    .sobre-nosotros-container {
+        padding: 1rem;
+    }
+    
+    .titulo {
+        font-size: 2rem;
+    }
+    
+    .contenido {
+        padding: 1.5rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="sobre-nosotros-container">
+    <div class="header">
+        <h1 class="titulo">Sobre Bob el Alquilador</h1>
+    </div>
+
+    <div class="contenido">
+        <div class="seccion">
+            <h2>Nuestra Historia</h2>
+            <p>Bob el Alquilador nació con la visión de proporcionar soluciones confiables y accesibles en el sector de la maquinaria pesada. Desde nuestros inicios, nos hemos comprometido a ofrecer un servicio excepcional y equipos de la más alta calidad para satisfacer las necesidades de nuestros clientes.</p>
+        </div>
+
+        <div class="seccion">
+            <h2>Nuestra Misión</h2>
+            <p>Proporcionar soluciones integrales en maquinaria pesada, garantizando la satisfacción de nuestros clientes a través de un servicio personalizado, equipos de calidad y un compromiso inquebrantable con la excelencia.</p>
+        </div>
+
+        <div class="seccion">
+            <h2>Nuestros Valores</h2>
+            <div class="valores">
+                <div class="valor-card">
+                    <i class="fas fa-handshake"></i>
+                    <h3>Confianza</h3>
+                    <p>Construimos relaciones duraderas basadas en la transparencia y la honestidad.</p>
+                </div>
+                <div class="valor-card">
+                    <i class="fas fa-tools"></i>
+                    <h3>Calidad</h3>
+                    <p>Mantenemos los más altos estándares en nuestros equipos y servicios.</p>
+                </div>
+                <div class="valor-card">
+                    <i class="fas fa-users"></i>
+                    <h3>Compromiso</h3>
+                    <p>Nos dedicamos a satisfacer las necesidades específicas de cada cliente.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="seccion">
+            <h2>¿Por qué elegirnos?</h2>
+            <p>En Bob el Alquilador, nos distinguimos por:</p>
+            <ul style="list-style: none; padding-left: 0;">
+                <li>✓ Amplia flota de maquinaria moderna y bien mantenida</li>
+                <li>✓ Personal altamente capacitado y profesional</li>
+                <li>✓ Servicio al cliente excepcional</li>
+                <li>✓ Precios competitivos y transparentes</li>
+            </ul>
+        </div>
+    </div>
+
+    <div style="text-align: center;">
+        <a href="{% url 'home' %}" class="btn-volver">
+            <i class="fas fa-arrow-left"></i> Volver al Inicio
+        </a>
+    </div>
+</div>
+{% endblock %} 

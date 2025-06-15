@@ -687,6 +687,16 @@ def lista_maquinaria(request):
     # Obtener todas las máquinas (no solo las disponibles)
     maquinas = Maquina.objects.all()
 
+    # Nueva funcionalidad: búsqueda por nombre
+    busqueda_nombre = request.GET.get('busqueda_nombre', '').strip()
+    resultados_busqueda = None
+    mensaje_busqueda = None
+    if busqueda_nombre:
+        resultados_busqueda = Maquina.objects.filter(
+            nombre__icontains=busqueda_nombre)
+        if not resultados_busqueda.exists():
+            mensaje_busqueda = f"No hay resultados para '{busqueda_nombre}'"
+
     # Aplicar filtros si se proporcionan
     tipo = request.GET.get('tipo')
     precio_min = request.GET.get('precio_min')
@@ -732,6 +742,18 @@ def lista_maquinaria(request):
             'proxima_disponibilidad': proxima_disponibilidad
         })
 
+    # Para los resultados de búsqueda, armar la misma estructura que maquinas_info
+    resultados_info = []
+    if resultados_busqueda is not None:
+        for maquina in resultados_busqueda:
+            proxima_disponibilidad = None
+            if not maquina.esta_disponible():
+                proxima_disponibilidad = maquina.get_proxima_disponibilidad()
+            resultados_info.append({
+                'maquina': maquina,
+                'proxima_disponibilidad': proxima_disponibilidad
+            })
+
     context = {
         'maquinas_info': maquinas_info,
         'tipos': tipos,
@@ -744,7 +766,10 @@ def lista_maquinaria(request):
             'precio_max': precio_max,
             'ubicacion': ubicacion,
         },
-        'user_authenticated': request.user.is_authenticated
+        'user_authenticated': request.user.is_authenticated,
+        'busqueda_nombre': busqueda_nombre,
+        'resultados_info': resultados_info,
+        'mensaje_busqueda': mensaje_busqueda,
     }
 
     return render(request, 'listados/lista_maquinaria.html', context)
@@ -1084,3 +1109,10 @@ def limpiar_datos(request):
     messages.success(
         request, 'Se han eliminado todas las tarjetas, reservas, maquinarias y perfiles de usuarios exitosamente.')
     return redirect('home')
+
+
+def sobre_nosotros(request):
+    """
+    Vista para mostrar la página Sobre Nosotros.
+    """
+    return render(request, 'sobre_nosotros.html')

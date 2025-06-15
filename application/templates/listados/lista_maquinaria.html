@@ -423,6 +423,125 @@
     color: rgba(255, 255, 255, 0.8);
     margin-bottom: 0.5rem;
 }
+.btn-buscar-maquinaria {
+    min-width: 140px;
+    max-width: 200px;
+    height: 48px;
+    padding: 0 1.2rem;
+    font-size: 1.05rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    background-color: #e25c2e;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.btn-buscar-maquinaria svg {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+.btn-buscar-maquinaria:hover {
+    background-color: #c94e28;
+}
+
+.btn-buscar-maquinaria:focus {
+    outline: 2px solid #ffffff88;
+    outline-offset: 2px;
+}
+
+@media (max-width: 768px) {
+    .btn-buscar-maquinaria {
+        width: 100%;
+        min-width: unset;
+        height: 44px;
+        font-size: 1rem;
+        padding: 0 1rem;
+    }
+}
+
+.form-control::placeholder {
+    color: #fff;
+    opacity: 0.8;
+    font-weight: 400;
+}
+
+.col-md-4.busqueda-col {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-end;
+}
+
+@media (max-width: 991px) {
+    .col-md-4.busqueda-col {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+    }
+}
+
+.filtros-row-1 {
+    display: flex;
+    gap: 0.7rem;
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+.filtros-row-1 .form-control {
+    min-width: 120px;
+    max-width: 200px;
+}
+.input-busqueda-maquinaria {
+    min-width: 90px;
+    max-width: 140px;
+}
+.btn-buscar-maquinaria {
+    min-width: 120px;
+    max-width: 170px;
+    height: 44px;
+    padding: 0 1rem;
+    font-size: 1rem;
+    margin-left: 0.2rem;
+}
+.filtros-row-2 {
+    display: flex;
+    gap: 0.7rem;
+    margin-top: 1.2rem;
+    width: 100%;
+}
+.filtros-row-2 .btn-filter {
+    flex: 1 1 0;
+    width: 100%;
+    height: 44px;
+    font-size: 1rem;
+}
+@media (max-width: 991px) {
+    .filtros-row-1 {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.7rem;
+    }
+    .filtros-row-1 .form-control,
+    .input-busqueda-maquinaria,
+    .btn-buscar-maquinaria {
+        max-width: 100%;
+        min-width: unset;
+        width: 100%;
+    }
+    .filtros-row-2 {
+        flex-direction: column;
+        gap: 0.7rem;
+    }
+}
+
 {% endblock %}
 
 {% block content %}
@@ -442,8 +561,8 @@
         <!-- Filtros -->
         <div class="filters">
             <form method="get" class="filter-form">
-                <div class="row">
-                    <div class="col-md-3">
+                <div class="filtros-row-1">
+                    <div style="flex:1; min-width:120px;">
                         <label for="tipo">Tipo</label>
                         <select name="tipo" id="tipo" class="form-control">
                             <option value="">Todos</option>
@@ -454,7 +573,7 @@
                             {% endfor %}
                         </select>
                     </div>
-                    <div class="col-md-3">
+                    <div style="flex:1; min-width:120px;">
                         <label for="ubicacion">Ubicación</label>
                         <select name="ubicacion" id="ubicacion" class="form-control">
                             <option value="">Todas</option>
@@ -465,19 +584,75 @@
                             {% endfor %}
                         </select>
                     </div>
-                </div>
-                <div class="row mt-3">
-                    <div class="col-12">
-                        <button type="submit" class="btn-filter btn-apply">
-                            <i class="fas fa-filter"></i> Filtrar
+                    <div style="display:flex; align-items:flex-end; gap:0.5rem;">
+                        <input type="text" name="busqueda_nombre" class="form-control input-busqueda-maquinaria" placeholder="Buscar maquinaria..." value="{{ busqueda_nombre }}">
+                        <button type="submit" class="btn-filter btn-apply btn-buscar-maquinaria">
+                            <i class="fas fa-search"></i> Buscar maquinaria
                         </button>
-                        <a href="{% url 'lista_maquinaria' %}" class="btn-filter btn-clear">
-                            <i class="fas fa-sync"></i> Limpiar filtros
-                        </a>
                     </div>
+                </div>
+                <div class="filtros-row-2">
+                    <button type="submit" class="btn-filter btn-apply">
+                        <i class="fas fa-filter"></i> Filtrar
+                    </button>
+                    <a href="{% url 'lista_maquinaria' %}" class="btn-filter btn-clear">
+                        <i class="fas fa-sync"></i> Limpiar filtros
+                    </a>
                 </div>
             </form>
         </div>
+
+        {% if busqueda_nombre %}
+            {% if resultados_info %}
+                <div class="maquinarias-grid">
+                    {% for info in resultados_info %}
+                    <div class="maquinaria-card">
+                        {% if info.maquina.imagenes.exists %}
+                            <img src="{{ info.maquina.get_imagen_principal.imagen.url }}" alt="{{ info.maquina.nombre }}" class="card-img-top">
+                        {% else %}
+                            <div class="no-image">Sin imagen</div>
+                        {% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title">{{ info.maquina.nombre }}</h5>
+                            <p class="card-text">
+                                <strong>Marca:</strong> {{ info.maquina.marca }}<br>
+                                <strong>Modelo:</strong> {{ info.maquina.modelo }}<br>
+                                <strong>Ubicación:</strong> {{ info.maquina.ubicacion }}<br>
+                                <strong>Precio por día:</strong> ${{ info.maquina.precio_por_dia }}
+                            </p>
+                            {% if info.maquina.esta_disponible %}
+                                <div class="estado-badge disponible">
+                                    <i class="fas fa-check-circle"></i> Disponible
+                                </div>
+                            {% else %}
+                                {% if info.proxima_disponibilidad %}
+                                    <div class="proxima-disponibilidad">
+                                        Disponible a partir del {{ info.proxima_disponibilidad|date:"d/m/Y" }}
+                                    </div>
+                                {% endif %}
+                            {% endif %}
+                            <a href="{% url 'detalle_maquinaria' info.maquina.id %}" class="btn-ver-detalle">
+                                <i class="fas fa-info-circle"></i> Ver Detalle
+                            </a>
+                            {% if user.is_authenticated and user.perfil.is_cliente %}
+                                {% if info.maquina.esta_disponible %}
+                                    <a href="{% url 'reservar_maquinaria' info.maquina.id %}" class="btn-reservar">
+                                        <i class="fas fa-calendar-plus"></i> Reservar
+                                    </a>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="no-maquinarias">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <h3>{{ mensaje_busqueda }}</h3>
+                </div>
+            {% endif %}
+            <hr style="margin: 2rem 0; border-color: rgba(255,255,255,0.1);">
+        {% endif %}
 
         {% if maquinas_info %}
             <div class="maquinarias-grid">

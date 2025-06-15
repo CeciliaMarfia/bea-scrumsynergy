@@ -240,14 +240,20 @@
   <img src="{% static 'images/logoCompleto.png' %}" alt="Bob el Alquilador" class="brand-logo">
   
   <div class="hero-section">
-  {% if video %}
-    <video autoplay loop muted playsinline class="hero-video">
-      <source src="{{ video.video.url }}" type="video/mp4">
-      Tu navegador no soporta el elemento de video.
-    </video>
+    {% if video %}
+      <video autoplay loop muted playsinline class="hero-video">
+        <source src="{{ video.video.url }}" type="video/mp4">
+        Tu navegador no soporta el elemento de video.
+      </video>
     {% endif %}
   </div>
   
+  <div class="cta-buttons" style="text-align: center; margin-top: 2rem;">
+    <a href="{% url 'sobre_nosotros' %}" class="cta-sobre-nosotros">
+      <i class="fas fa-info-circle"></i> Sobre Nosotros
+    </a>
+  </div>
+
   <div class="btn-container">
     <a href="{% url 'lista_maquinaria' %}" class="btn-home">Ver Catálogo de Maquinarias</a>
     {% if user.is_authenticated %}
@@ -408,6 +414,35 @@
 .signup-btn:hover {
   background: rgba(255, 255, 255, 0.1);
   color: white;
+}
+
+.cta-sobre-nosotros {
+  color: #fff;
+  font-size: 1.4rem;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 2px solid #fff;
+  border-radius: 0.6rem;
+  padding: 0.7rem 2rem;
+  background: transparent;
+  transition: background 0.3s, color 0.3s;
+  font-weight: 600;
+}
+
+.cta-sobre-nosotros:hover {
+  background: #fff;
+  color: #546469;
+}
+
+.cta-sobre-nosotros:hover i {
+  color: #546469;
+}
+
+.cta-sobre-nosotros i {
+  color: #fff;
+  transition: color 0.3s;
 }
 
 @media (max-width: 768px) {
