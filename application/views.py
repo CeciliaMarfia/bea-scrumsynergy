@@ -1139,12 +1139,18 @@ def sobre_nosotros(request):
 def lista_ubicaciones(request):
     sucursales = Sucursal.objects.all()
 
-    # Crear el mapa centrado en Argentina
+    # Crear el mapa (inicialmente centrado en Argentina, pero lo ajustaremos después)
     m = folium.Map(location=[-34.6037, -58.3816], zoom_start=5)
+
+    # Lista para almacenar las coordenadas de las sucursales con latitud y longitud
+    locations = []
 
     # Agregar marcadores para cada sucursal
     for sucursal in sucursales:
         if sucursal.latitud and sucursal.longitud:
+            # Añadir las coordenadas a la lista
+            locations.append([sucursal.latitud, sucursal.longitud])
+
             # Crear el popup con la información de la sucursal
             popup_html = f"""
                 <div style='width: 200px;'>
@@ -1165,6 +1171,10 @@ def lista_ubicaciones(request):
                     icon='info-sign'
                 )
             ).add_to(m)
+
+    # Si hay ubicaciones, ajustar los límites del mapa para que todas sean visibles
+    if locations:
+        m.fit_bounds(locations)
 
     # Convertir el mapa a HTML
     m = m._repr_html_()
