@@ -171,5 +171,34 @@
         grid-template-columns: 1fr;
     }
 }
+
+.map-container * {
+    width: 100% !important;
+    height: 100% !important;
+    box-sizing: border-box;
+}
+
+.map-container .folium-map {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.map-container > div {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* Específico para Leaflet */
+.map-container .leaflet-container {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* Asegurar que no haya márgenes o padding internos */
+.map-container iframe,
+.map-container > div:first-child {
+    margin: 0 !important;
+    padding: 0 !important;
+}
 </style>
 {% endblock %} 
