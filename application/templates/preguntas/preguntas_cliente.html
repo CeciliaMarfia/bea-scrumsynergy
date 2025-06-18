@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Preguntas Frecuentes - Cliente{% endblock %}
+
+{% block styles %}
+.btn-volver {
+  display: inline-block;
+  background-color: #546469;
+  color: white !important;
+  padding: 0.8rem 1.2rem;
+  border-radius: 0.6rem;
+  text-decoration: none;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  margin-bottom: 1rem;
+}
+.btn-volver:hover {
+  background-color: #3d484c;
+  color: white !important;
+  transform: translateY(-2px);
+  text-decoration: none;
+}
+.preguntas-box {
+  background: white;
+  border-radius: 1.5rem;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  padding: 2.5rem 2rem;
+  max-width: 1100px;
+  margin: 2rem auto;
+}
+.preguntas-box h2, .preguntas-box h4, .preguntas-box label {
+  color: #222;
+}
+.preguntas-box .form-control, .preguntas-box .list-group-item {
+  font-size: 1.1rem;
+}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <div class="preguntas-box">
+    <div class="mb-3">
+        <a href="{% url 'home' %}" class="btn-volver">
+            <i class="fas fa-home"></i> Volver al Inicio
+        </a>
+    </div>
+    <h2>Preguntas Frecuentes</h2>
+    <form method="post" class="mb-4">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="texto">Escribe tu pregunta:</label>
+            <textarea name="texto" id="texto" class="form-control" rows="3" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary mt-2">Enviar</button>
+    </form>
+    {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+    <h4>Mis preguntas enviadas</h4>
+    <ul class="list-group mt-3">
+        {% for pregunta in preguntas %}
+            <li class="list-group-item">
+                <strong>{{ pregunta.texto }}</strong><br>
+                <small>Enviada el {{ pregunta.fecha_creacion|date:"d/m/Y H:i" }}</small>
+                {% if not pregunta.respuesta %}
+                    <a href="{% url 'editar_pregunta' pregunta.id %}" class="btn btn-sm btn-secondary ms-2">Editar</a>
+                    <form action="{% url 'eliminar_pregunta' pregunta.id %}" method="post" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-danger ms-2" onclick="return confirm('¿Seguro que deseas eliminar esta pregunta?');">Eliminar</button>
+                    </form>
+                {% endif %}
+                {% if pregunta.respuesta %}
+                    <div class="mt-2 alert alert-info"><strong>Respuesta:</strong> {{ pregunta.respuesta }}</div>
+                {% endif %}
+            </li>
+        {% empty %}
+            <li class="list-group-item">Aún no has enviado preguntas.</li>
+        {% endfor %}
+    </ul>
+  </div>
+</div>
+{% endblock %} 

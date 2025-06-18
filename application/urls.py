@@ -1,5 +1,7 @@
 from django.urls import path
 from . import views
+# from .views import preguntas_cliente
+from .views import CustomPasswordResetView, CustomPasswordResetDoneView, CustomPasswordResetConfirmView, CustomPasswordResetCompleteView
 
 urlpatterns = [
     path('', views.home, name='home'),
@@ -57,6 +59,7 @@ urlpatterns = [
     path('payment/pending/', views.payment_pending, name='payment_pending'),
     path('limpiar-datos/', views.limpiar_datos, name='limpiar_datos'),
     path('sobre-nosotros/', views.sobre_nosotros, name='sobre_nosotros'),
+    path('politicas-privacidad/', views.politicas_privacidad, name='politicas_privacidad'),
     path('ubicaciones/', views.lista_ubicaciones, name='lista_ubicaciones'),
     path('sucursales/', views.administrar_sucursales,
          name='administrar_sucursales'),
@@ -65,4 +68,12 @@ urlpatterns = [
          views.editar_sucursal, name='editar_sucursal'),
     path('sucursales/<int:sucursal_id>/eliminar/',
          views.eliminar_sucursal, name='eliminar_sucursal'),
+    path('preguntas/', views.preguntas_cliente, name='preguntas_cliente'),
+    path('preguntas/<int:pregunta_id>/editar/', views.editar_pregunta, name='editar_pregunta'),
+    path('preguntas/<int:pregunta_id>/eliminar/', views.eliminar_pregunta, name='eliminar_pregunta'),
+    path('password-reset/', CustomPasswordResetView.as_view(), name='password_reset'),
+    path('password-reset/done/', CustomPasswordResetDoneView.as_view(), name='password_reset_done'),
+    path('reset/<uidb64>/<token>/', CustomPasswordResetConfirmView.as_view(), name='password_reset_confirm'),
+    path('reset/done/', CustomPasswordResetCompleteView.as_view(), name='password_reset_complete'),
+    path('gestionar-preguntas/', views.gestionar_preguntas, name='gestionar_preguntas'),
 ]

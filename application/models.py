@@ -504,3 +504,13 @@ class Sucursal(models.Model):
 
     def get_direccion_completa(self):
         return f"{self.calle} {self.numero}, {self.localidad}, {self.provincia}"
+
+
+class Pregunta(models.Model):
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='preguntas')
+    texto = models.TextField()
+    respuesta = models.TextField(blank=True, null=True)
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Pregunta de {self.usuario.username}: {self.texto[:30]}..."

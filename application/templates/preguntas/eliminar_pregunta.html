@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Eliminar Pregunta{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Eliminar Pregunta</h2>
+    <div class="alert alert-warning">
+        ¿Estás seguro que deseas eliminar la siguiente pregunta?
+        <br><br>
+        <strong>{{ pregunta.texto }}</strong>
+    </div>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Eliminar</button>
+        <a href="{% url 'preguntas_cliente' %}" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
+{% endblock %} 

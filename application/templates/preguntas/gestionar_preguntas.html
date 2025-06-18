@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gestionar Preguntas{% endblock %}
+
+{% block styles %}
+.preguntas-box {
+  background: white;
+  border-radius: 1.5rem;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  padding: 2.5rem 2rem;
+  max-width: 1100px;
+  margin: 2rem auto;
+}
+.btn-volver {
+  display: inline-block;
+  background-color: #546469;
+  color: white !important;
+  padding: 0.8rem 1.2rem;
+  border-radius: 0.6rem;
+  text-decoration: none;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  margin-bottom: 1rem;
+}
+.btn-volver:hover {
+  background-color: #3d484c;
+  color: white !important;
+  transform: translateY(-2px);
+  text-decoration: none;
+}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <div class="preguntas-box">
+    <div class="mb-3">
+      <a href="{% url 'home' %}" class="btn-volver">
+        <i class="fas fa-home"></i> Volver al Inicio
+      </a>
+    </div>
+    <h2>Gestionar Preguntas</h2>
+    <ul class="list-group mt-3">
+      {% for pregunta in preguntas %}
+        <li class="list-group-item">
+          <strong>{{ pregunta.texto }}</strong><br>
+          <small>Cliente: {{ pregunta.usuario.email }} | Enviada el {{ pregunta.fecha_creacion|date:"d/m/Y H:i" }}</small>
+          {% if pregunta.respuesta %}
+            <div class="mt-2 alert alert-info"><strong>Respuesta:</strong> {{ pregunta.respuesta }}</div>
+          {% endif %}
+          <form action="{% url 'eliminar_pregunta' pregunta.id %}" method="post" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-danger ms-2" onclick="return confirm('¿Seguro que deseas eliminar esta consulta?');">Eliminar</button>
+          </form>
+        </li>
+      {% empty %}
+        <li class="list-group-item">No hay preguntas registradas.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+{% endblock %} 

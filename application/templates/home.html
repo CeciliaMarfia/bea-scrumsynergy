@@ -221,6 +221,10 @@
           <i class="fas fa-map-marker-alt"></i>
           <span>Gestionar Ubicaciones</span>
         </a>
+        <a href="{% url 'gestionar_preguntas' %}" class="admin-btn">
+          <i class="fas fa-question-circle"></i>
+          <span>Gestionar Preguntas</span>
+        </a>
       </div>
     </div>
     {% elif user.perfil.is_empleado %}
@@ -234,6 +238,10 @@
         <a href="{% url 'historial_reservas' %}" class="admin-btn">
           <i class="fas fa-calendar-alt"></i>
           <span>Reservas Activas</span>
+        </a>
+        <a href="{% url 'gestionar_preguntas' %}" class="admin-btn">
+          <i class="fas fa-question-circle"></i>
+          <span>Gestionar Preguntas</span>
         </a>
       </div>
     </div>
@@ -259,6 +267,9 @@
     {% if user.is_authenticated %}
       <a href="{% url 'perfil' %}" class="btn-home">Mi Perfil</a>
       <a href="{% url 'mis_reservas' %}" class="btn-home"> <i class="fas fa-calendar-check"></i> Mis Reservas</a>
+      {% if user.perfil.is_cliente %}
+        <a href="{% url 'preguntas_cliente' %}" class="btn-home"><i class="fas fa-question-circle"></i> Preguntas Frecuentes</a>
+      {% endif %}
       <a href="{% url 'logout' %}" class="btn-home btn-logout">
         <i class="fas fa-sign-out-alt"></i> Cerrar sesión
       </a>

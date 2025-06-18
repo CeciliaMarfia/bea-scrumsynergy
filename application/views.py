@@ -6,7 +6,7 @@ from django.contrib.auth.forms import UserCreationForm
 import os
 from django.conf import settings
 from .machinery.forms import AltaMaquinariaForm
-from .models import Maquina, HomeVideo, PermisoEspecial, Perfil, Reserva, ImagenMaquina, Pago, TarjetaCredito, Role, Sucursal
+from .models import Maquina, HomeVideo, PermisoEspecial, Perfil, Reserva, ImagenMaquina, Pago, TarjetaCredito, Role, Sucursal, Pregunta
 from django.core.mail import send_mail, EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
@@ -36,6 +36,7 @@ import folium
 from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderTimedOut
 from dotenv import load_dotenv
+from django.utils.http import urlencode
 
 import os
 load_dotenv
@@ -47,6 +48,9 @@ sdk = mercadopago.SDK(MP_ACCESS_TOKEN)
 
 
 def home(request):
+    # Limpiar mensajes solo si es una petición GET directa (no redirección)
+    if request.method == 'GET' and not request.META.get('HTTP_REFERER'):
+        list(request._messages)
     video_activo = HomeVideo.objects.filter(activo=True).first()
     return render(request, 'home.html', {'video': video_activo})
 
@@ -1359,3 +1363,77 @@ def politicas_privacidad(request):
     Vista para mostrar la página de políticas de privacidad.
     """
     return render(request, 'politicas_privacidad.html')
+
+
+@login_required
+def preguntas_cliente(request):
+    if not request.user.perfil.is_cliente:
+        messages.error(request, 'Solo los clientes pueden acceder a esta sección.')
+        return redirect('home')
+
+    if request.method == 'POST':
+        texto = request.POST.get('texto', '').strip()
+        if not texto:
+            messages.error(request, 'El campo de pregunta no puede estar vacío.')
+        else:
+            Pregunta.objects.create(usuario=request.user, texto=texto)
+            messages.success(request, '¡Pregunta añadida correctamente!')
+            return redirect('preguntas_cliente')
+
+    # Mostrar mensaje de éxito si viene por GET
+    msg = request.GET.get('msg')
+    if msg:
+        messages.success(request, msg)
+
+    preguntas = Pregunta.objects.filter(usuario=request.user).order_by('-fecha_creacion')
+    return render(request, 'preguntas/preguntas_cliente.html', {'preguntas': preguntas})
+
+
+@login_required
+def editar_pregunta(request, pregunta_id):
+    pregunta = get_object_or_404(Pregunta, id=pregunta_id, usuario=request.user)
+    if pregunta.respuesta:
+        messages.error(request, 'No puedes editar una pregunta que ya tiene respuesta.')
+        return redirect('preguntas_cliente')
+    if request.method == 'POST':
+        texto = request.POST.get('texto', '').strip()
+        if not texto:
+            messages.error(request, 'El campo de pregunta no puede estar vacío.')
+        else:
+            pregunta.texto = texto
+            pregunta.save()
+            messages.success(request, 'Pregunta actualizada correctamente.')
+            return redirect('preguntas_cliente')
+    return render(request, 'preguntas/editar_pregunta.html', {'pregunta': pregunta})
+
+
+@login_required
+def eliminar_pregunta(request, pregunta_id):
+    pregunta = get_object_or_404(Pregunta, id=pregunta_id)
+    puede_eliminar = (
+        (pregunta.usuario == request.user and not pregunta.respuesta) or
+        (request.user.perfil.is_empleado or request.user.perfil.is_dueno)
+    )
+    if not puede_eliminar:
+        messages.error(request, 'No tienes permiso para eliminar esta consulta.')
+        return redirect('preguntas_cliente')
+    if request.method == 'POST':
+        pregunta.delete()
+        params = urlencode({'msg': 'Pregunta eliminada correctamente.'})
+        if request.user.perfil.is_empleado or request.user.perfil.is_dueno:
+            return redirect(f"{reverse('gestionar_preguntas')}?{params}")
+        return redirect(f"{reverse('preguntas_cliente')}?{params}")
+    return render(request, 'preguntas/eliminar_pregunta.html', {'pregunta': pregunta})
+
+
+@login_required
+def gestionar_preguntas(request):
+    if not (request.user.perfil.is_empleado or request.user.perfil.is_dueno):
+        messages.error(request, 'No tienes permiso para acceder a esta sección.')
+        return redirect('home')
+    # Mostrar mensaje de éxito si viene por GET
+    msg = request.GET.get('msg')
+    if msg:
+        messages.success(request, msg)
+    preguntas = Pregunta.objects.all().order_by('-fecha_creacion')
+    return render(request, 'preguntas/gestionar_preguntas.html', {'preguntas': preguntas})
