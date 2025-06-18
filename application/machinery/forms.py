@@ -274,3 +274,8 @@ class AltaMaquinariaForm(forms.ModelForm):
                 return maquina
         except Exception as e:
             raise ValidationError(f"Error al guardar la maquinaria: {str(e)}")
+
+
+class RegistrarDevolucionForm(forms.Form):
+    codigo = forms.CharField(label='ID de la máquina', max_length=100)
+    fecha_devolucion = forms.DateField(label='Fecha de devolución', widget=forms.DateInput(attrs={'type': 'date'}))

@@ -5,7 +5,7 @@ from django.contrib import messages
 from django.contrib.auth.forms import UserCreationForm
 import os
 from django.conf import settings
-from .machinery.forms import AltaMaquinariaForm
+from .machinery.forms import AltaMaquinariaForm, RegistrarDevolucionForm
 from .models import Maquina, HomeVideo, PermisoEspecial, Perfil, Reserva, ImagenMaquina, Pago, TarjetaCredito, Role, Sucursal, Pregunta
 from django.core.mail import send_mail, EmailMultiAlternatives
 from django.template.loader import render_to_string
@@ -37,6 +37,8 @@ from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderTimedOut
 from dotenv import load_dotenv
 from django.utils.http import urlencode
+from decimal import Decimal
+from django.core.exceptions import PermissionDenied
 
 import os
 load_dotenv
@@ -894,8 +896,14 @@ def cancelar_reserva(request, numero_reserva):
 
 @login_required
 def eliminar_perfil(request):
+    from application.models import Reserva
     if request.method == 'POST':
         user = request.user
+        # Verificar reservas pendientes o activas
+        reservas_pendientes = Reserva.objects.filter(cliente=user, estado__in=['pendiente_pago', 'pagada'])
+        if reservas_pendientes.exists():
+            messages.error(request, 'No puedes eliminar tu perfil porque tienes reservas o alquileres pendientes.')
+            return redirect('perfil')
         auth_logout(request)
         user.delete()
         messages.success(request, 'Tu cuenta ha sido eliminada exitosamente.')
@@ -1437,3 +1445,54 @@ def gestionar_preguntas(request):
         messages.success(request, msg)
     preguntas = Pregunta.objects.all().order_by('-fecha_creacion')
     return render(request, 'preguntas/gestionar_preguntas.html', {'preguntas': preguntas})
+
+
+@login_required
+def registrar_devolucion(request):
+    # Verificar que el usuario sea empleado o dueño
+    if not (request.user.perfil.is_empleado or request.user.perfil.is_dueno):
+        raise PermissionDenied("No tienes permisos para acceder a esta página.")
+    
+    if request.method == 'POST':
+        form = RegistrarDevolucionForm(request.POST)
+        if form.is_valid():
+            codigo = form.cleaned_data['codigo']
+            fecha_devolucion = form.cleaned_data['fecha_devolucion']
+            try:
+                maquina = Maquina.objects.get(codigo=codigo)
+            except Maquina.DoesNotExist:
+                messages.error(request, 'Máquina no encontrada.')
+                return render(request, 'registrar_devolucion.html', {'form': form})
+
+            if maquina.estado != 'alquilado':
+                messages.error(request, 'La máquina no se encuentra en estado "alquilada".')
+                return render(request, 'registrar_devolucion.html', {'form': form})
+
+            # Buscar la reserva activa
+            reserva = Reserva.objects.filter(maquina=maquina, estado='pagada').order_by('-fecha_fin').first()
+            if not reserva:
+                messages.error(request, 'No se encontró una reserva activa para esta máquina.')
+                return render(request, 'registrar_devolucion.html', {'form': form})
+
+            # Verificar si la devolución es en término
+            if fecha_devolucion <= reserva.fecha_fin:
+                # Escenario 1: Devolución en término
+                maquina.estado = 'en_revision'
+                maquina.save()
+                reserva.estado = 'finalizada'
+                reserva.save()
+                messages.success(request, 'Devolución registrada con éxito. La maquinaria pasa a estado de revisión.')
+            else:
+                # Escenario 2: Devolución fuera de término
+                maquina.estado = 'en_revision'
+                maquina.save()
+                reserva.estado = 'finalizada'
+                reserva.save()
+                # Aplica recargo (ejemplo: 10% del monto total por día de retraso)
+                dias_retraso = (fecha_devolucion - reserva.fecha_fin).days
+                recargo = Decimal('0.10') * reserva.monto_total * dias_retraso
+                messages.warning(request, f'Devolución fuera de término. Se aplica un recargo de ${recargo:.2f} por {dias_retraso} días de retraso.')
+            return redirect('registrar_devolucion')
+    else:
+        form = RegistrarDevolucionForm()
+    return render(request, 'registrar_devolucion.html', {'form': form})

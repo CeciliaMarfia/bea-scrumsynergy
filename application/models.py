@@ -117,6 +117,7 @@ class Maquina(models.Model):
         ('disponible', 'Disponible'),
         ('reservado', 'Reservado'),
         ('alquilado', 'Alquilado'),
+        ('en_revision', 'En Revisión'),
         ('mantenimiento', 'En Mantenimiento'),
     ]
 

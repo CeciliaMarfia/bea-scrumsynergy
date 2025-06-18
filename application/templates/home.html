@@ -225,6 +225,10 @@
           <i class="fas fa-question-circle"></i>
           <span>Gestionar Preguntas</span>
         </a>
+        <a href="{% url 'registrar_devolucion' %}" class="admin-btn">
+          <i class="fas fa-undo"></i>
+          <span>Registrar Devolución</span>
+        </a>
       </div>
     </div>
     {% elif user.perfil.is_empleado %}
@@ -242,6 +246,10 @@
         <a href="{% url 'gestionar_preguntas' %}" class="admin-btn">
           <i class="fas fa-question-circle"></i>
           <span>Gestionar Preguntas</span>
+        </a>
+        <a href="{% url 'registrar_devolucion' %}" class="admin-btn">
+          <i class="fas fa-undo"></i>
+          <span>Registrar Devolución</span>
         </a>
       </div>
     </div>

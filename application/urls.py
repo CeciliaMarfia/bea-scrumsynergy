@@ -2,6 +2,7 @@ from django.urls import path
 from . import views
 # from .views import preguntas_cliente
 from .views import CustomPasswordResetView, CustomPasswordResetDoneView, CustomPasswordResetConfirmView, CustomPasswordResetCompleteView
+from application.views import registrar_devolucion
 
 urlpatterns = [
     path('', views.home, name='home'),
@@ -76,4 +77,5 @@ urlpatterns = [
     path('reset/<uidb64>/<token>/', CustomPasswordResetConfirmView.as_view(), name='password_reset_confirm'),
     path('reset/done/', CustomPasswordResetCompleteView.as_view(), name='password_reset_complete'),
     path('gestionar-preguntas/', views.gestionar_preguntas, name='gestionar_preguntas'),
+    path('registrar-devolucion/', registrar_devolucion, name='registrar_devolucion'),
 ]
