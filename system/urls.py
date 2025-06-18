@@ -94,4 +94,5 @@ urlpatterns = [
          views.editar_sucursal, name='editar_sucursal'),
     path('sucursales/eliminar/<int:sucursal_id>/',
          views.eliminar_sucursal, name='eliminar_sucursal'),
+    path('politicas-privacidad/', views.politicas_privacidad, name='politicas_privacidad'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

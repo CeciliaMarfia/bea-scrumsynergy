@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Políticas de Privacidad - Bob el Alquilador{% endblock %}
+
+{% block styles %}
+.privacy-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2rem;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 1rem;
+    color: white;
+}
+
+.privacy-container h1 {
+    color: #d16c44;
+    margin-bottom: 2rem;
+    font-size: 2.5rem;
+    text-align: center;
+}
+
+.privacy-section {
+    margin-bottom: 2.5rem;
+}
+
+.privacy-section h2 {
+    color: #d16c44;
+    margin-bottom: 1rem;
+    font-size: 1.8rem;
+}
+
+.privacy-section p {
+    margin-bottom: 1rem;
+    line-height: 1.6;
+}
+
+.privacy-section ul {
+    margin-bottom: 1rem;
+    padding-left: 2rem;
+}
+
+.privacy-section li {
+    margin-bottom: 0.5rem;
+}
+
+@media (max-width: 768px) {
+    .privacy-container {
+        padding: 1rem;
+    }
+}
+{% endblock %}
+
+{% block content %}
+<div class="privacy-container">
+    <h1>Políticas de Privacidad</h1>
+
+    <div class="privacy-section">
+        <h2>1. Información que Recopilamos</h2>
+        <p>En Bob el Alquilador, recopilamos la siguiente información para brindarle el mejor servicio de alquiler de maquinarias:</p>
+        <ul>
+            <li>Información personal: nombre, dirección, número de teléfono y correo electrónico</li>
+            <li>Documentos de identidad para verificar su identidad</li>
+            <li>Información de pago para procesar las transacciones de alquiler</li>
+            <li>Historial de alquileres y reservas</li>
+            <li>Preferencias de maquinaria y ubicación</li>
+        </ul>
+    </div>
+
+    <div class="privacy-section">
+        <h2>2. Uso de la Información</h2>
+        <p>Utilizamos su información para:</p>
+        <ul>
+            <li>Procesar y gestionar sus reservas de maquinaria</li>
+            <li>Verificar su identidad y prevenir fraudes</li>
+            <li>Mejorar nuestros servicios y experiencia del usuario</li>
+            <li>Enviar notificaciones importantes sobre sus reservas</li>
+            <li>Mantenerlo informado sobre promociones y nuevas maquinarias disponibles</li>
+        </ul>
+    </div>
+
+    <div class="privacy-section">
+        <h2>3. Protección de Datos</h2>
+        <p>Implementamos medidas de seguridad técnicas y organizativas para proteger su información personal, incluyendo:</p>
+        <ul>
+            <li>Encriptación de datos sensibles</li>
+            <li>Acceso restringido a información personal</li>
+            <li>Monitoreo regular de nuestros sistemas de seguridad</li>
+            <li>Capacitación de nuestro personal en prácticas de privacidad</li>
+        </ul>
+    </div>
+
+    <div class="privacy-section">
+        <h2>4. Compartir Información</h2>
+        <p>Podemos compartir su información con:</p>
+        <ul>
+            <li>Nuestras sucursales para gestionar la entrega y recogida de maquinaria</li>
+            <li>Proveedores de servicios de pago para procesar transacciones</li>
+            <li>Autoridades competentes cuando sea requerido por ley</li>
+        </ul>
+        <p>No vendemos ni compartimos su información personal con terceros para fines comerciales.</p>
+    </div>
+
+    <div class="privacy-section">
+        <h2>5. Sus Derechos</h2>
+        <p>Usted tiene derecho a:</p>
+        <ul>
+            <li>Acceder a su información personal</li>
+            <li>Corregir datos inexactos</li>
+            <li>Solicitar la eliminación de sus datos</li>
+            <li>Oponerse al procesamiento de su información</li>
+            <li>Recibir una copia de sus datos en formato electrónico</li>
+        </ul>
+    </div>
+
+    <div class="privacy-section">
+        <h2>6. Cookies y Tecnologías de Seguimiento</h2>
+        <p>Utilizamos cookies y tecnologías similares para:</p>
+        <ul>
+            <li>Mantener su sesión activa</li>
+            <li>Recordar sus preferencias de búsqueda de maquinaria</li>
+            <li>Mejorar la velocidad y seguridad del sitio</li>
+            <li>Analizar el uso del sitio para mejorar nuestros servicios</li>
+        </ul>
+    </div>
+
+    <div class="privacy-section">
+        <h2>7. Contacto</h2>
+        <p>Si tiene preguntas sobre nuestras políticas de privacidad o desea ejercer sus derechos, puede contactarnos a través de:</p>
+        <ul>
+            <li>Correo electrónico: privacidad@bobelalquilador.com</li>
+            <li>Teléfono: (0351) 123-4567</li>
+            <li>Dirección: Av. Principal 123, Córdoba, Argentina</li>
+        </ul>
+    </div>
+
+    <div class="privacy-section">
+        <h2>8. Actualizaciones de la Política</h2>
+        <p>Podemos actualizar esta política de privacidad periódicamente. La última actualización fue realizada el 1 de marzo de 2024. Los cambios importantes serán notificados a través de nuestro sitio web o por correo electrónico.</p>
+    </div>
+</div>
+{% endblock %} 

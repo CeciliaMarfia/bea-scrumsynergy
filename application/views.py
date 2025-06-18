@@ -35,9 +35,10 @@ import requests
 import folium
 from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderTimedOut
+from dotenv import load_dotenv
 
 import os
-
+load_dotenv
 MP_ACCESS_TOKEN = os.getenv('MP_ACCESS_TOKEN')
 
 # SDK de Mercado Pago
@@ -1351,3 +1352,10 @@ def cambiar_password(request):
     else:
         form = CambiarPasswordForm(request.user)
     return render(request, 'registration/cambiar_password.html', {'form': form})
+
+
+def politicas_privacidad(request):
+    """
+    Vista para mostrar la página de políticas de privacidad.
+    """
+    return render(request, 'politicas_privacidad.html')
