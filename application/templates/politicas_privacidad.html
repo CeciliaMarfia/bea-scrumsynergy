@@ -45,6 +45,23 @@
     margin-bottom: 0.5rem;
 }
 
+.btn-volver {
+    display: inline-block;
+    background-color: #546469;
+    color: white;
+    padding: 0.8rem 1.5rem;
+    border-radius: 0.6rem;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    margin-top: 2rem;
+}
+
+.btn-volver:hover {
+    background-color: #3d484c;
+    transform: translateY(-2px);
+}
+
 @media (max-width: 768px) {
     .privacy-container {
         padding: 1rem;
@@ -138,6 +155,12 @@
     <div class="privacy-section">
         <h2>8. Actualizaciones de la Política</h2>
         <p>Podemos actualizar esta política de privacidad periódicamente. La última actualización fue realizada el 1 de marzo de 2024. Los cambios importantes serán notificados a través de nuestro sitio web o por correo electrónico.</p>
+    </div>
+
+    <div style="text-align: center;">
+        <a href="{% url 'home' %}" class="btn-volver">
+            <i class="fas fa-arrow-left"></i> Volver al Inicio
+        </a>
     </div>
 </div>
 {% endblock %} 
