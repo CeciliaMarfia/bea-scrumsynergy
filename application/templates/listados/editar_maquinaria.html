@@ -243,19 +243,6 @@
       </div>
 
       <div class="form-group">
-        <label for="estado">Estado</label>
-        <select class="form-control" id="estado" name="estado" required>
-          {% for value, label in maquina.ESTADO_CHOICES %}
-          <option value="{{ value }}" {% if maquina.estado == value %}selected{% endif %}>{{ label }}</option>
-          {% endfor %}
-        </select>
-        <div class="error-message">
-          <i class="fas fa-exclamation-circle"></i>
-          El estado de la máquina es obligatorio.
-        </div>
-      </div>
-
-      <div class="form-group">
         <label for="descripcion">Descripción</label>
         <textarea class="form-control" id="descripcion" name="descripcion" rows="4" required>{{ maquina.descripcion|default:'' }}</textarea>
         <div class="error-message">
