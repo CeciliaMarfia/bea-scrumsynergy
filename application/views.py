@@ -1715,3 +1715,44 @@ def alquilar_maquinaria_detalle(request, id_maquina):
         'maquina': maquina,
         'proxima_disponibilidad': proxima_disponibilidad
     })
+
+
+def preguntas_frecuentes(request):
+    preguntas = [
+        {
+            'icono': '📅',
+            'pregunta': '¿Cómo reservo una máquina?',
+            'respuesta': 'Podés hacer tu reserva directamente desde nuestra web o llamando al número publicado. Indicá la máquina que necesitás y el tiempo de alquiler.'
+        },
+        {
+            'icono': '⏳',
+            'pregunta': '¿Cuál es el período Maximo de alquiler?',
+            'respuesta': 'El período mínimo de alquiler es de 7 días.'
+        },
+        {
+            'icono': '🚚',
+            'pregunta': '¿Realizan envíos a domicilio?',
+            'respuesta': '¡No!, por el momento no contamos con envios.'
+        },
+        {
+            'icono': '💳',
+            'pregunta': '¿Qué formas de pago aceptan?',
+            'respuesta': 'Aceptamos pagos en efectivo, Mercado pago, tarjetas de crédito.'
+        },
+        {
+            'icono': '🛠️',
+            'pregunta': '¿Qué pasa si la máquina se rompe durante el uso?',
+            'respuesta': 'Todas nuestras máquinas están revisadas antes del alquiler. Si surge un problema, comunicate con nosotros y lo resolveremos lo antes posible.'
+        },
+        {
+            'icono': '🪪',
+            'pregunta': '¿Qué documentación necesito para alquilar?',
+            'respuesta': 'Solo necesitás presentar tu DNI y en caso de requerir permiso especial, el permiso debe estar cargad en tu perfil o llevarlo impreso cuando retires tu maquinaria.'
+        },
+        {
+            'icono': '🛠️',
+            'pregunta': '¿Puedo operar la maquinaria sin licencia?',
+            'respuesta': 'Depende del tipo de equipo. Para maquinaria pesada como Pala hidráulica, se requiere una licencia especial. Para herramientas más simples, no es necesario.'
+        },
+    ]
+    return render(request, 'preguntas/preguntas_frecuentes.html', {'preguntas': preguntas})

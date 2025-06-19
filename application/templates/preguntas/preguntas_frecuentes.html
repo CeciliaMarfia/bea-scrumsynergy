@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% block styles %}
+.faq-container {
+    background: rgba(255,255,255,0.07);
+    border-radius: 1rem;
+    padding: 2.5rem 2rem;
+    margin: 2rem auto 1.5rem auto;
+    max-width: 700px;
+    color: white;
+    box-shadow: 0 2px 16px 0 rgba(0,0,0,0.08);
+}
+.faq-title {
+    text-align: center;
+    font-size: 2.2rem;
+    font-weight: bold;
+    margin-bottom: 2.5rem;
+    color: #fff;
+}
+.faq-item {
+    margin-bottom: 2.2rem;
+    padding-bottom: 1.2rem;
+    border-bottom: 1px solid rgba(255,255,255,0.13);
+}
+.faq-item:last-child {
+    border-bottom: none;
+}
+.faq-question {
+    font-size: 1.25rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+}
+.faq-icon {
+    font-size: 1.5rem;
+}
+.faq-answer {
+    font-size: 1.08rem;
+    color: #e0e0e0;
+    margin-left: 2.2rem;
+}
+.btn-volver-faq {
+    background: rgba(120,120,120,0.18);
+    color: #fff;
+    border: none;
+    padding: 0.8rem 2rem;
+    border-radius: 0.8rem;
+    text-decoration: none;
+    font-size: 1.1rem;
+    font-weight: 500;
+    transition: all 0.3s;
+    box-shadow: 0 2px 8px 0 rgba(0,0,0,0.04);
+    display: inline-block;
+}
+.btn-volver-faq:hover {
+    background: rgba(120,120,120,0.32);
+    color: #fff;
+    transform: translateY(-2px);
+}
+{% endblock %}
+{% block content %}
+<div style="width: 100%; text-align: left; margin-bottom: 2rem;">
+    <a href="{% url 'home' %}" class="btn-volver-faq">
+        <i class="fas fa-home"></i> Volver al Inicio
+    </a>
+</div>
+<div class="faq-container">
+    <div class="faq-title">Preguntas Frecuentes</div>
+    {% for pregunta in preguntas %}
+    <div class="faq-item">
+        <div class="faq-question"><span class="faq-icon">{{ pregunta.icono }}</span> {{ pregunta.pregunta }}</div>
+        <div class="faq-answer">{{ pregunta.respuesta }}</div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %} 

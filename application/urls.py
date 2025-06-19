@@ -87,4 +87,5 @@ urlpatterns = [
     path('mis-alquileres/', views.mis_alquileres, name='mis_alquileres'),
     path('alquilar/', views.alquilar_maquinaria, name='alquilar_maquinaria'),
     path('alquilar/<int:id_maquina>/', views.alquilar_maquinaria_detalle, name='alquilar_maquinaria_detalle'),
+    path('preguntas-frecuentes/', views.preguntas_frecuentes, name='preguntas_frecuentes'),
 ]
