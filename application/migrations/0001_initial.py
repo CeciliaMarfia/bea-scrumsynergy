@@ -137,4 +137,15 @@ class Migration(migrations.Migration):
                 'verbose_name_plural': 'Tarjetas de Crédito',
             },
         ),
+        migrations.CreateModel(
+            name='Pregunta',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('pregunta', models.TextField()),
+                ('respuesta', models.TextField(blank=True, null=True)),
+                ('fecha_creacion', models.DateTimeField(auto_now_add=True)),
+                ('usuario', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='preguntas', to=settings.AUTH_USER_MODEL)),
+                ('maquina', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='preguntas', to='application.maquina', null=True, blank=True)),
+            ],
+        ),
     ]

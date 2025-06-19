@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm, PasswordChangeForm
 from django.contrib.auth.models import User
 from datetime import date
-from .models import Perfil, PermisoEspecial, Reserva, TarjetaCredito, Maquina
+from .models import Perfil, PermisoEspecial, Reserva, TarjetaCredito, Maquina, Pregunta
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
@@ -671,3 +671,15 @@ class CambiarPasswordForm(PasswordChangeForm):
                     raise ValidationError(error_messages)
 
         return password2
+
+
+class ResponderPreguntaForm(forms.ModelForm):
+    class Meta:
+        model = Pregunta
+        fields = ['respuesta']
+        widgets = {
+            'respuesta': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Escribe la respuesta aquí...'}),
+        }
+        labels = {
+            'respuesta': 'Respuesta',
+        }

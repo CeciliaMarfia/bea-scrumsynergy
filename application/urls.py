@@ -2,7 +2,7 @@ from django.urls import path
 from . import views
 # from .views import preguntas_cliente
 from .views import CustomPasswordResetView, CustomPasswordResetDoneView, CustomPasswordResetConfirmView, CustomPasswordResetCompleteView
-from application.views import registrar_devolucion
+from application.views import registrar_devolucion, responder_pregunta
 
 urlpatterns = [
     path('', views.home, name='home'),
@@ -72,6 +72,7 @@ urlpatterns = [
     path('preguntas/', views.preguntas_cliente, name='preguntas_cliente'),
     path('preguntas/<int:pregunta_id>/editar/', views.editar_pregunta, name='editar_pregunta'),
     path('preguntas/<int:pregunta_id>/eliminar/', views.eliminar_pregunta, name='eliminar_pregunta'),
+    path('preguntas/<int:pregunta_id>/responder/', responder_pregunta, name='responder_pregunta'),
     path('password-reset/', CustomPasswordResetView.as_view(), name='password_reset'),
     path('password-reset/done/', CustomPasswordResetDoneView.as_view(), name='password_reset_done'),
     path('reset/<uidb64>/<token>/', CustomPasswordResetConfirmView.as_view(), name='password_reset_confirm'),

@@ -509,6 +509,7 @@ class Sucursal(models.Model):
 
 class Pregunta(models.Model):
     usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='preguntas')
+    maquina = models.ForeignKey('Maquina', on_delete=models.CASCADE, related_name='preguntas', null=True, blank=True)
     texto = models.TextField()
     respuesta = models.TextField(blank=True, null=True)
     fecha_creacion = models.DateTimeField(auto_now_add=True)

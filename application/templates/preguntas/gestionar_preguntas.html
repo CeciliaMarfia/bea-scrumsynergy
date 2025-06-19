@@ -48,6 +48,9 @@
           {% if pregunta.respuesta %}
             <div class="mt-2 alert alert-info"><strong>Respuesta:</strong> {{ pregunta.respuesta }}</div>
           {% endif %}
+          {% if not pregunta.respuesta %}
+            <a href="{% url 'responder_pregunta' pregunta.id %}" class="btn btn-sm btn-success ms-2">Responder</a>
+          {% endif %}
           <form action="{% url 'eliminar_pregunta' pregunta.id %}" method="post" style="display:inline;">
             {% csrf_token %}
             <button type="submit" class="btn btn-sm btn-danger ms-2" onclick="return confirm('¿Seguro que deseas eliminar esta consulta?');">Eliminar</button>

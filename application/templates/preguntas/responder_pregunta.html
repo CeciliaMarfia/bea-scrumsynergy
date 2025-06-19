@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Responder Pregunta{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="top-links">
+    <a href="{% url 'gestionar_preguntas' %}" class="back-link">
+      <i class="fas fa-arrow-left"></i> Volver a la gestión
+    </a>
+  </div>
+  <div class="form-card">
+    <h2>Responder Pregunta</h2>
+    <div class="mb-3">
+      <strong>Consulta:</strong> {{ pregunta.texto }}<br>
+      <small>
+        Cliente: {{ pregunta.usuario.email }}
+        {% if pregunta.maquina %}| Máquina: {{ pregunta.maquina.codigo }}{% endif %}
+        | Enviada el {{ pregunta.fecha_creacion|date:"d/m/Y H:i" }}
+      </small>
+    </div>
+    <form method="post" id="respuestaForm" novalidate>
+      {% csrf_token %}
+      <div class="form-group {% if form.respuesta.errors %}has-error{% endif %}">
+        {{ form.respuesta.label_tag }}
+        {{ form.respuesta }}
+        {% if form.respuesta.errors %}
+          <div class="invalid-feedback d-block">
+            {% for error in form.respuesta.errors %}
+              <div class="error-message">
+                <i class="fas fa-exclamation-circle"></i> {{ error }}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
+      <button type="submit" class="submit-btn">
+        <i class="fas fa-paper-plane"></i> Enviar Respuesta
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: linear-gradient(135deg, #546469, #0c0f10);
+  min-height: 100vh;
+  padding: 2rem 1rem;
+}
+
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+  position: relative;
+  padding-top: 60px;
+}
+
+.top-links {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.back-link {
+  position: absolute;
+  top: 0;
+  left: 0;
+  color: #fff;
+  text-decoration: none;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  background-color: rgba(209, 108, 68, 0.9);
+  padding: 12px 20px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.back-link:hover {
+  transform: translateX(-5px);
+  background-color: #d16c44;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.back-link i {
+  font-size: 18px;
+}
+
+.form-card {
+  background-color: #fff;
+  padding: 3rem;
+  border-radius: 1.5rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  transition: 0.3s ease-in-out;
+  margin-top: 20px;
+}
+
+.form-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+}
+
+.form-card h2 {
+  text-align: center;
+  margin-bottom: 2rem;
+  color: #546469;
+  font-size: 2rem;
+  font-weight: 600;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #546469;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.form-group textarea {
+  width: 100%;
+  padding: 0.8rem;
+  border: 2px solid #e9ecef;
+  border-radius: 0.6rem;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background-color: #fff;
+  min-height: 100px;
+}
+
+.form-group textarea:focus {
+  border-color: #d16c44;
+  outline: none;
+  box-shadow: 0 0 0 0.2rem rgba(209, 108, 68, 0.25);
+}
+
+.form-group.has-error textarea {
+  border-color: #dc3545;
+}
+
+.form-text {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+  color: #6c757d;
+}
+
+.error-message {
+  color: #dc3545;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.error-message i {
+  font-size: 1rem;
+}
+
+.submit-btn {
+  background-color: #28a745;
+  color: white;
+  padding: 1rem 2rem;
+  border: none;
+  border-radius: 0.6rem;
+  width: 100%;
+  font-weight: 600;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 2rem;
+}
+
+.submit-btn:hover {
+  background-color: #218838;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.submit-btn:active {
+  transform: translateY(0);
+}
+</style>
+{% endblock %} 

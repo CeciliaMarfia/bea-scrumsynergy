@@ -10,7 +10,7 @@ from .models import Maquina, HomeVideo, PermisoEspecial, Perfil, Reserva, Imagen
 from django.core.mail import send_mail, EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
-from .forms import RegistroUsuarioForm, PermisoEspecialForm, EditarPerfilForm, ReservaMaquinariaForm, TarjetaCreditoForm, CambiarPasswordForm
+from .forms import RegistroUsuarioForm, PermisoEspecialForm, EditarPerfilForm, ReservaMaquinariaForm, TarjetaCreditoForm, CambiarPasswordForm, ResponderPreguntaForm
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.views import PasswordResetView, PasswordResetDoneView, PasswordResetConfirmView, PasswordResetCompleteView
 from django.contrib.auth.models import User
@@ -1496,3 +1496,23 @@ def registrar_devolucion(request):
     else:
         form = RegistrarDevolucionForm()
     return render(request, 'registrar_devolucion.html', {'form': form})
+
+
+@login_required
+def responder_pregunta(request, pregunta_id):
+    if not (request.user.perfil.is_empleado or request.user.perfil.is_dueno):
+        messages.error(request, 'No tienes permiso para responder preguntas.')
+        return redirect('gestionar_preguntas')
+    pregunta = get_object_or_404(Pregunta, id=pregunta_id)
+    if pregunta.respuesta:
+        messages.info(request, 'Esta pregunta ya fue respondida.')
+        return redirect('gestionar_preguntas')
+    if request.method == 'POST':
+        form = ResponderPreguntaForm(request.POST, instance=pregunta)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Respuesta registrada con éxito.')
+            return redirect('gestionar_preguntas')
+    else:
+        form = ResponderPreguntaForm(instance=pregunta)
+    return render(request, 'preguntas/responder_pregunta.html', {'form': form, 'pregunta': pregunta})
