@@ -109,11 +109,14 @@
 
 {% block content %}
 <div class="container">
-    <div class="header-container">
+    <div class="header-container" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
         <a href="{% url 'home' %}" class="btn-volver">
             <i class="fas fa-home"></i> Volver al Inicio
         </a>
-        <h1 class="page-title">Mis Alquileres</h1>
+        <h1 class="page-title" style="margin-bottom: 0;">Mis Alquileres</h1>
+        <a href="{% url 'alquilar_maquinaria' %}" class="btn-alquilar" style="max-width: 220px; background-color: #546469;">
+            <i class="fas fa-clipboard-list"></i> Alquilar maquinaria
+        </a>
     </div>
     {% if reservas %}
     <div class="reservas-container">

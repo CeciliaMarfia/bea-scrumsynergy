@@ -434,7 +434,10 @@
 
     {% if user.is_authenticated %}
     <a href="{% url 'reservar_maquinaria' maquina.id %}" class="btn-reservar">
-            <i class="fas fa-calendar-plus"></i> Reservar Maquinaria
+        <i class="fas fa-calendar-plus"></i> Reservar Maquinaria
+    </a>
+    <a href="{% url 'alquilar_maquinaria_detalle' maquina.id %}" class="btn-reservar" style="margin-left: 1rem; background-color: #546469;">
+        <i class="fas fa-clipboard-list"></i> Alquilar Maquinaria
     </a>
     {% else %}
         <a href="{% url 'login' %}?next={% url 'reservar_maquinaria' maquina.id %}" class="btn-reservar">

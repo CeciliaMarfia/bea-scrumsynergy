@@ -1650,3 +1650,68 @@ def mis_alquileres(request):
         estado__in=['pendiente_pago', 'pagada']
     ).order_by('-fecha_inicio')
     return render(request, 'reservas/mis_alquileres.html', {'reservas': reservas})
+
+
+@login_required
+def alquilar_maquinaria(request):
+    if request.method == 'POST':
+        id_maquinaria = request.POST.get('id_maquinaria')
+        fecha_inicio = request.POST.get('fecha_inicio')
+        fecha_fin = request.POST.get('fecha_fin')
+        # Aquí irá la lógica de alquiler, por ahora solo mostramos los datos
+        messages.info(request, f'ID ingresado: {id_maquinaria}, Fecha inicio: {fecha_inicio}, Fecha fin: {fecha_fin}')
+        return redirect('alquilar_maquinaria')
+    return render(request, 'reservas/alquilar_maquinaria.html')
+
+
+@login_required
+def alquilar_maquinaria_detalle(request, id_maquina):
+    from .forms import ReservaMaquinariaForm
+    maquina = get_object_or_404(Maquina, id=id_maquina)
+    proxima_disponibilidad = maquina.get_proxima_disponibilidad()
+
+    if maquina.estado == 'en_revision' or maquina.estado == 'mantenimiento':
+        messages.error(request, 'La máquina está suspendida temporalmente y no puede ser alquilada.')
+        return redirect('detalle_maquinaria', maquina_id=maquina.id)
+
+    if request.method == 'POST':
+        # Creamos el formulario manualmente porque el template no lo renderiza como {{ form }}
+        fecha_inicio = request.POST.get('fecha_inicio')
+        fecha_fin = request.POST.get('fecha_fin')
+        data = {
+            'maquina': maquina.id,
+            'fecha_inicio': fecha_inicio,
+            'fecha_fin': fecha_fin
+        }
+        form = ReservaMaquinariaForm(data)
+        if form.is_valid():
+            reserva = form.save(commit=False)
+            reserva.cliente = request.user
+            reserva.maquina = maquina
+            if request.user.perfil.is_empleado:
+                reserva.empleado_gestor = request.user
+            dias = (form.cleaned_data['fecha_fin'] - form.cleaned_data['fecha_inicio']).days + 1
+            reserva.monto_total = maquina.precio_por_dia * dias
+            try:
+                with transaction.atomic():
+                    reserva.save()
+                    messages.success(request, f'Alquiler creado exitosamente. Número de reserva: {reserva.numero_reserva}')
+                    return redirect('mis_alquileres')
+            except Exception as e:
+                messages.error(request, 'Error al crear el alquiler. Por favor, intente nuevamente.')
+                return redirect('detalle_maquinaria', maquina_id=maquina.id)
+        else:
+            # Solo mostrar errores generales como mensajes
+            for error in form.non_field_errors():
+                messages.error(request, error)
+    else:
+        initial_data = {
+            'maquina': maquina.id,
+            'fecha_inicio': proxima_disponibilidad
+        }
+        form = ReservaMaquinariaForm(initial=initial_data)
+
+    return render(request, 'reservas/alquilar_maquinaria_detalle.html', {
+        'maquina': maquina,
+        'proxima_disponibilidad': proxima_disponibilidad
+    })
