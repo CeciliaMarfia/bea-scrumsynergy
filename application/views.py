@@ -39,6 +39,7 @@ from dotenv import load_dotenv
 from django.utils.http import urlencode
 from decimal import Decimal
 from django.core.exceptions import PermissionDenied
+from django.core.exceptions import ValidationError
 
 import os
 load_dotenv
@@ -1516,3 +1517,127 @@ def responder_pregunta(request, pregunta_id):
     else:
         form = ResponderPreguntaForm(instance=pregunta)
     return render(request, 'preguntas/responder_pregunta.html', {'form': form, 'pregunta': pregunta})
+
+
+@login_required
+@user_passes_test(is_owner)
+def lista_maquinaria_admin(request):
+    # Obtener todas las máquinas
+    maquinas = Maquina.objects.all().order_by('codigo')
+    return render(request, 'listados/lista_maquinaria_admin.html', {'maquinas': maquinas})
+
+
+@login_required
+@user_passes_test(is_owner)
+def editar_maquinaria(request, maquina_id):
+    maquina = get_object_or_404(Maquina, id=maquina_id)
+    
+    if request.method == 'POST':
+        # Actualizar los campos de la maquinaria
+        maquina.nombre = request.POST.get('nombre')
+        maquina.marca = request.POST.get('marca')
+        maquina.modelo = request.POST.get('modelo')
+        maquina.anio = request.POST.get('anio')
+        maquina.ubicacion = request.POST.get('ubicacion')
+        maquina.tipo = request.POST.get('tipo')
+        maquina.estado = request.POST.get('estado')
+        maquina.descripcion = request.POST.get('descripcion')
+        maquina.tipo_cancelacion = request.POST.get('tipo_cancelacion')
+        
+        # Manejar el porcentaje de reembolso según la política de cancelación
+        if maquina.tipo_cancelacion == 'parcial':
+            politica_cancelacion = request.POST.get('politica_cancelacion')
+            try:
+                porcentaje = float(politica_cancelacion)
+                if porcentaje < 10 or porcentaje > 90:
+                    messages.error(request, 'El porcentaje de reembolso debe estar entre 10% y 90%.')
+                    return render(request, 'listados/editar_maquinaria.html', {'maquina': maquina})
+                maquina.politica_cancelacion = porcentaje
+            except (ValueError, TypeError):
+                messages.error(request, 'Por favor ingrese un porcentaje válido para el reembolso.')
+                return render(request, 'listados/editar_maquinaria.html', {'maquina': maquina})
+        else:
+            maquina.politica_cancelacion = None
+        
+        # Convertir precio_por_dia a Decimal
+        try:
+            precio = request.POST.get('precio_por_dia')
+            if precio:
+                maquina.precio_por_dia = Decimal(precio)
+            else:
+                messages.error(request, 'El precio por día es requerido.')
+                return render(request, 'listados/editar_maquinaria.html', {'maquina': maquina})
+        except (ValueError, TypeError, InvalidOperation):
+            messages.error(request, 'Por favor ingrese un precio válido.')
+            return render(request, 'listados/editar_maquinaria.html', {'maquina': maquina})
+            
+        maquina.permisos_requeridos = request.POST.get('permisos_requeridos')
+        
+        try:
+            maquina.full_clean()  # Validar el modelo
+            maquina.save()
+
+            # Manejar imágenes nuevas
+            nuevas_imagenes = request.FILES.getlist('nuevas_imagenes')
+            for imagen in nuevas_imagenes:
+                ImagenMaquina.objects.create(
+                    maquina=maquina,
+                    imagen=imagen,
+                    es_principal=False  # Las nuevas imágenes nunca son principales por defecto
+                )
+
+            # Actualizar imagen principal si se seleccionó una
+            imagen_principal_id = request.POST.get('imagen_principal')
+            if imagen_principal_id:
+                # Primero quitamos el flag de principal de todas las imágenes
+                maquina.imagenes.all().update(es_principal=False)
+                # Luego marcamos la seleccionada como principal
+                ImagenMaquina.objects.filter(id=imagen_principal_id).update(es_principal=True)
+            
+            # Verificar que haya al menos una imagen
+            if not maquina.imagenes.exists() and not nuevas_imagenes:
+                messages.error(request, 'Debe subir al menos una imagen para la maquinaria.')
+                return render(request, 'listados/editar_maquinaria.html', {'maquina': maquina})
+
+            # Si no hay imagen principal seleccionada pero hay imágenes, hacer principal la primera
+            if not imagen_principal_id and maquina.imagenes.exists():
+                primera_imagen = maquina.imagenes.first()
+                primera_imagen.es_principal = True
+                primera_imagen.save()
+
+            messages.success(request, 'Maquinaria actualizada exitosamente.')
+            return redirect('lista_maquinaria_admin')
+        except ValidationError as e:
+            messages.error(request, 'Error al actualizar la maquinaria. Por favor, verifica los datos.')
+            return render(request, 'listados/editar_maquinaria.html', {'maquina': maquina})
+    
+    return render(request, 'listados/editar_maquinaria.html', {'maquina': maquina})
+
+
+@login_required
+@user_passes_test(is_owner)
+def eliminar_imagen(request, imagen_id):
+    if request.method == 'POST':
+        try:
+            imagen = ImagenMaquina.objects.get(id=imagen_id)
+            maquina = imagen.maquina
+            
+            # Si es la imagen principal y hay otras imágenes, hacer principal a otra
+            if imagen.es_principal and maquina.imagenes.count() > 1:
+                nueva_principal = maquina.imagenes.exclude(id=imagen_id).first()
+                nueva_principal.es_principal = True
+                nueva_principal.save()
+            
+            # Eliminar la imagen
+            imagen.delete()
+            
+            return JsonResponse({'success': True})
+        except ImagenMaquina.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'error': 'Imagen no encontrada'
+            })
+    return JsonResponse({
+        'success': False,
+        'error': 'Método no permitido'
+    })

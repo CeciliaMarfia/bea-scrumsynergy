@@ -1,0 +1,426 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Editar Maquinaria - Bob el Alquilador{% endblock %}
+
+{% block styles %}
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.form-card {
+  background: white;
+  border-radius: 1.5rem;
+  padding: 2rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-top: 2rem;
+}
+
+.header-container {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.btn-volver {
+  display: inline-block;
+  background-color: #546469;
+  color: white;
+  padding: 0.8rem 1.2rem;
+  border-radius: 0.6rem;
+  text-decoration: none;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.btn-volver:hover {
+  background-color: #3d484c;
+  color: white;
+  transform: translateY(-2px);
+}
+
+.form-card h2 {
+  color: #546469;
+  margin-bottom: 2rem;
+  text-align: center;
+  font-size: 2rem;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  color: #546469;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.form-control {
+  width: 100%;
+  padding: 0.8rem;
+  border: 1px solid #dee2e6;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  transition: border-color 0.3s;
+}
+
+.form-control:focus {
+  border-color: #546469;
+  outline: none;
+}
+
+.form-control:disabled {
+  background-color: #e9ecef;
+  cursor: not-allowed;
+}
+
+.form-control-file {
+  display: block;
+  margin-top: 0.5rem;
+}
+
+.btn-guardar {
+  background-color: #28a745;
+  color: white;
+  padding: 0.8rem 2rem;
+  border: none;
+  border-radius: 0.6rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-guardar:hover {
+  background-color: #218838;
+  transform: translateY(-2px);
+}
+
+.alert {
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+}
+
+.alert-danger {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.alert-success {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.form-text {
+  font-size: 0.875rem;
+  color: #6c757d;
+  margin-top: 0.25rem;
+}
+
+.error-message {
+  color: #dc3545;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+  display: none;
+}
+
+.form-control:invalid + .error-message {
+  display: block;
+}
+
+.error-message i {
+  margin-right: 0.25rem;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+  
+  .form-card {
+    padding: 1.5rem;
+  }
+}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="form-card">
+    <div class="header-container">
+      <a href="{% url 'lista_maquinaria_admin' %}" class="btn-volver">
+        <i class="fas fa-arrow-left"></i> Volver al listado
+      </a>
+      <h2>Editar Maquinaria</h2>
+    </div>
+
+    {% if messages %}
+    <div class="messages">
+      {% for message in messages %}
+      <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-{{ message.tags }}{% endif %}">
+        {{ message }}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      
+      <div class="form-group">
+        <label for="codigo">Código</label>
+        <input type="text" class="form-control" id="codigo" name="codigo" value="{{ maquina.codigo }}" disabled>
+        <small class="form-text">El código no puede ser modificado</small>
+      </div>
+
+      <div class="form-group">
+        <label for="nombre">Nombre</label>
+        <input type="text" class="form-control" id="nombre" name="nombre" value="{{ maquina.nombre }}" required>
+        <div class="error-message">
+          <i class="fas fa-exclamation-circle"></i>
+          El nombre de la máquina es obligatorio.
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="marca">Marca</label>
+        <input type="text" class="form-control" id="marca" name="marca" value="{{ maquina.marca }}" required>
+        <div class="error-message">
+          <i class="fas fa-exclamation-circle"></i>
+          La marca de la máquina es obligatoria.
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="modelo">Modelo</label>
+        <input type="text" class="form-control" id="modelo" name="modelo" value="{{ maquina.modelo }}" required>
+        <div class="error-message">
+          <i class="fas fa-exclamation-circle"></i>
+          El modelo de la máquina es obligatorio.
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="anio">Año</label>
+        <input type="number" class="form-control" id="anio" name="anio" value="{{ maquina.anio }}" required>
+        <div class="error-message">
+          <i class="fas fa-exclamation-circle"></i>
+          El año de la máquina es obligatorio.
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="ubicacion">Ubicación</label>
+        <input type="text" class="form-control" id="ubicacion" name="ubicacion" value="{{ maquina.ubicacion }}" required>
+        <div class="error-message">
+          <i class="fas fa-exclamation-circle"></i>
+          La ubicación de la máquina es obligatoria.
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="tipo">Tipo</label>
+        <select class="form-control" id="tipo" name="tipo" required>
+          {% for value, label in maquina.TIPO_CHOICES %}
+          <option value="{{ value }}" {% if maquina.tipo == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+        <div class="error-message">
+          <i class="fas fa-exclamation-circle"></i>
+          El tipo de máquina es obligatorio.
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="estado">Estado</label>
+        <select class="form-control" id="estado" name="estado" required>
+          {% for value, label in maquina.ESTADO_CHOICES %}
+          <option value="{{ value }}" {% if maquina.estado == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+        <div class="error-message">
+          <i class="fas fa-exclamation-circle"></i>
+          El estado de la máquina es obligatorio.
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="descripcion">Descripción</label>
+        <textarea class="form-control" id="descripcion" name="descripcion" rows="4" required>{{ maquina.descripcion|default:'' }}</textarea>
+        <div class="error-message">
+          <i class="fas fa-exclamation-circle"></i>
+          La descripción de la máquina es obligatoria.
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="tipo_cancelacion">Política de Cancelación</label>
+        <select class="form-control" id="tipo_cancelacion" name="tipo_cancelacion" required onchange="togglePorcentajeReembolso()">
+          {% for value, label in maquina.TIPO_CANCELACION_CHOICES %}
+          <option value="{{ value }}" {% if maquina.tipo_cancelacion == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+        <div class="error-message">
+          <i class="fas fa-exclamation-circle"></i>
+          La política de cancelación es obligatoria.
+        </div>
+      </div>
+
+      <div class="form-group" id="porcentaje_reembolso_group" style="display: {% if maquina.tipo_cancelacion == 'parcial' %}block{% else %}none{% endif %};">
+        <label for="politica_cancelacion">Porcentaje de Reembolso</label>
+        <input type="number" class="form-control" id="politica_cancelacion" name="politica_cancelacion" value="{{ maquina.politica_cancelacion|stringformat:'.2f'|cut:',' }}" min="10" max="90" step="0.01">
+        <small class="form-text">Ingrese el porcentaje de reembolso (entre 10% y 90%)</small>
+      </div>
+
+      <div class="form-group">
+        <label for="precio_por_dia">Precio por día</label>
+        <input type="number" class="form-control" id="precio_por_dia" name="precio_por_dia" value="{{ maquina.precio_por_dia|stringformat:'.2f'|cut:',' }}" required min="0" step="0.01">
+        <div class="error-message">
+          <i class="fas fa-exclamation-circle"></i>
+          El precio por día es obligatorio.
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="permisos_requeridos">Permisos Requeridos</label>
+        <textarea class="form-control" id="permisos_requeridos" name="permisos_requeridos" rows="3">{{ maquina.permisos_requeridos|default:'' }}</textarea>
+        <small class="form-text">Opcional. Especificar los permisos necesarios para operar esta maquinaria</small>
+      </div>
+
+      <div class="form-group">
+        <label>Imágenes Actuales</label>
+        <div class="row">
+          {% for imagen in maquina.imagenes.all %}
+          <div class="col-md-4 mb-3">
+            <div class="card">
+              <img src="{{ imagen.imagen.url }}" class="card-img-top" alt="Imagen de {{ maquina.nombre }}">
+              <div class="card-body">
+                <div class="form-check mb-2">
+                  <input type="radio" name="imagen_principal" value="{{ imagen.id }}" class="form-check-input" 
+                         {% if imagen.es_principal %}checked{% endif %}>
+                  <label class="form-check-label">Imagen principal</label>
+                </div>
+                <button type="button" class="btn btn-danger btn-sm" onclick="eliminarImagen({{ imagen.id }})">
+                  <i class="fas fa-trash"></i> Eliminar
+                </button>
+              </div>
+            </div>
+          </div>
+          {% empty %}
+          <div class="col-12">
+            <p class="text-muted">No hay imágenes cargadas</p>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="nuevas_imagenes">Agregar Nuevas Imágenes</label>
+        <input type="file" class="form-control" id="nuevas_imagenes" name="nuevas_imagenes" multiple accept="image/*">
+        <small class="form-text">Puede seleccionar múltiples imágenes. Formatos permitidos: JPG, PNG. Tamaño máximo por imagen: 5MB</small>
+      </div>
+
+      <div class="text-center">
+        <button type="submit" class="btn-guardar">
+          <i class="fas fa-save"></i> Guardar Cambios
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function togglePorcentajeReembolso() {
+    const tipoCancelacion = document.getElementById('tipo_cancelacion').value;
+    const porcentajeGroup = document.getElementById('porcentaje_reembolso_group');
+    const porcentajeInput = document.getElementById('politica_cancelacion');
+    
+    if (tipoCancelacion === 'parcial') {
+        porcentajeGroup.style.display = 'block';
+        porcentajeInput.required = true;
+    } else {
+        porcentajeGroup.style.display = 'none';
+        porcentajeInput.required = false;
+        porcentajeInput.value = '';  // Limpiar el valor si no es parcial
+    }
+}
+
+// Ejecutar al cargar la página
+document.addEventListener('DOMContentLoaded', togglePorcentajeReembolso);
+
+function eliminarImagen(imagenId) {
+  if (confirm('¿Está seguro que desea eliminar esta imagen?')) {
+    fetch(`/eliminar-imagen/${imagenId}/`, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // Recargar la página para mostrar los cambios
+        location.reload();
+      } else {
+        alert('Error al eliminar la imagen');
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('Error al eliminar la imagen');
+    });
+  }
+}
+
+// Validar tamaño y formato de imágenes antes de enviar
+document.querySelector('form').addEventListener('submit', function(e) {
+  const input = document.getElementById('nuevas_imagenes');
+  const files = input.files;
+  const maxSize = 5 * 1024 * 1024; // 5MB
+  const allowedTypes = ['image/jpeg', 'image/png'];
+
+  for (let i = 0; i < files.length; i++) {
+    if (files[i].size > maxSize) {
+      e.preventDefault();
+      alert(`La imagen ${files[i].name} excede el tamaño máximo permitido de 5MB`);
+      return;
+    }
+    if (!allowedTypes.includes(files[i].type)) {
+      e.preventDefault();
+      alert(`La imagen ${files[i].name} no tiene un formato válido. Use JPG o PNG`);
+      return;
+    }
+  }
+});
+
+// Validación de formulario
+document.querySelector('form').addEventListener('submit', function(e) {
+  let hasErrors = false;
+  const requiredFields = this.querySelectorAll('[required]');
+  
+  requiredFields.forEach(field => {
+    if (!field.value.trim()) {
+      field.classList.add('is-invalid');
+      hasErrors = true;
+    } else {
+      field.classList.remove('is-invalid');
+    }
+  });
+
+  if (hasErrors) {
+    e.preventDefault();
+  }
+});
+</script>
+{% endblock %} 

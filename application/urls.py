@@ -37,11 +37,16 @@ urlpatterns = [
     # Machinery management
     path('maquinaria/registrar/', views.registrar_maquinaria,
          name='registrar_maquinaria'),
+    path('maquinaria/admin/', views.lista_maquinaria_admin, name='lista_maquinaria_admin'),
+    path('maquinaria/editar/<int:maquina_id>/', views.editar_maquinaria, name='editar_maquinaria'),
     path('maquinaria/', views.lista_maquinaria, name='lista_maquinaria'),
     path('maquinaria/<int:maquina_id>/',
          views.detalle_maquinaria, name='detalle_maquinaria'),
     path('maquinaria/<int:maquina_id>/reservar/',
          views.reservar_maquinaria, name='reservar_maquinaria'),
+    path('lista-maquinaria-admin/', views.lista_maquinaria_admin, name='lista_maquinaria_admin'),
+    path('editar-maquinaria/<int:maquina_id>/', views.editar_maquinaria, name='editar_maquinaria'),
+    path('eliminar-imagen/<int:imagen_id>/', views.eliminar_imagen, name='eliminar_imagen'),
 
     # Reservations
     path('reservas/historial/', views.historial_reservas,
