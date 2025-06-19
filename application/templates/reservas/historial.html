@@ -150,6 +150,23 @@
     .table td {
         padding: 0.75rem;
     }
+    .no-reservas {
+        background-color: #e7f3fe;
+        color: #c94e28;;
+        border: 1px solid #bce8f1;
+        padding: 20px;
+        border-radius: 8px;
+        text-align: center;
+        margin-top: 20px;
+}
+
+.no-reservas i {
+  font-size: 30px;
+  margin-bottom: 10px;
+  display: block;
+  color: #c94e28;;
+}
+
 }
 {% endblock %}
 
@@ -220,9 +237,11 @@
                 </table>
             </div>
         {% else %}
-            <div class="alert-info">
-                <i class="fas fa-info-circle"></i> No hay reservas activas en este momento.
-            </div>
+            <div class="no-reservas">
+    <i class="fas fa-info-circle"></i>
+    <h3>No hay reservas activas</h3>
+    <p>Actualmente no tenés reservas activas registradas en el sistema.</p>
+  </div>
         {% endif %}
     </div>
 </div>

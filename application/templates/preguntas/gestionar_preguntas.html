@@ -29,6 +29,17 @@
   transform: translateY(-2px);
   text-decoration: none;
 }
+.no-preguntas {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+}
+
+.no-preguntas i {
+  font-size: 2rem;
+  color: #c94e28;
+}
+
 {% endblock %}
 
 {% block content %}
@@ -48,16 +59,22 @@
           {% if pregunta.respuesta %}
             <div class="mt-2 alert alert-info"><strong>Respuesta:</strong> {{ pregunta.respuesta }}</div>
           {% endif %}
-          {% if not pregunta.respuesta %}
-            <a href="{% url 'responder_pregunta' pregunta.id %}" class="btn btn-sm btn-success ms-2">Responder</a>
-          {% endif %}
           <form action="{% url 'eliminar_pregunta' pregunta.id %}" method="post" style="display:inline;">
             {% csrf_token %}
             <button type="submit" class="btn btn-sm btn-danger ms-2" onclick="return confirm('¿Seguro que deseas eliminar esta consulta?');">Eliminar</button>
           </form>
         </li>
       {% empty %}
-        <li class="list-group-item">No hay preguntas registradas.</li>
+        {% for pregunta in preguntas %}
+  <li class="list-group-item">...</li>
+{% empty %}
+  <div class="no-preguntas">
+    <i class="fas fa-exclamation-circle"></i>
+    <h3>No hay preguntas registradas</h3>
+    <p>No se encontraron preguntas en el sistema.</p>
+  </div>
+{% endfor %}
+
       {% endfor %}
     </ul>
   </div>
