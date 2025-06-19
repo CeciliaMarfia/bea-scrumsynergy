@@ -73,9 +73,15 @@ li {
     margin: 0 auto 2rem auto;
 }
 {% endblock %}
-
 {% block content %}
 <div class="container mt-5">
+  {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
   <div class="preguntas-box">
     <div class="mb-3">
         <a href="{% url 'home' %}" class="btn-volver">
@@ -91,13 +97,6 @@ li {
         </div>
         <button type="submit" class="btn btn-primary mt-2">Enviar</button>
     </form>
-    {% if messages %}
-        <ul class="messages">
-            {% for message in messages %}
-                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
     <h4>Mis preguntas enviadas</h4>
     <ul class="list-group mt-3">
         {% for pregunta in preguntas %}
