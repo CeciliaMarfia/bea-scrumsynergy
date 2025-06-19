@@ -1641,3 +1641,12 @@ def eliminar_imagen(request, imagen_id):
         'success': False,
         'error': 'Método no permitido'
     })
+
+
+@login_required
+def mis_alquileres(request):
+    reservas = Reserva.objects.filter(
+        cliente=request.user,
+        estado__in=['pendiente_pago', 'pagada']
+    ).order_by('-fecha_inicio')
+    return render(request, 'reservas/mis_alquileres.html', {'reservas': reservas})

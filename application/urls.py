@@ -84,4 +84,5 @@ urlpatterns = [
     path('reset/done/', CustomPasswordResetCompleteView.as_view(), name='password_reset_complete'),
     path('gestionar-preguntas/', views.gestionar_preguntas, name='gestionar_preguntas'),
     path('registrar-devolucion/', registrar_devolucion, name='registrar_devolucion'),
+    path('mis-alquileres/', views.mis_alquileres, name='mis_alquileres'),
 ]

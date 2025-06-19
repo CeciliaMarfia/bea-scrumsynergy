@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block styles %}
+.reservas-container {
+    background-color: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 1rem;
+    padding: 2rem;
+    margin-top: 2rem;
+}
+.page-title {
+    color: white;
+    text-align: center;
+    font-size: 2.5rem;
+    margin-bottom: 2rem;
+    font-weight: bold;
+}
+.reserva-card {
+    background-color: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 0.8rem;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    color: white;
+    transition: transform 0.3s ease;
+}
+.reserva-card:hover {
+    transform: translateY(-5px);
+}
+.reserva-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.maquina-nombre {
+    font-size: 1.5rem;
+    color: #d16c44;
+    font-weight: bold;
+}
+.estado-reserva {
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: bold;
+}
+.estado-activa {
+    background-color: rgba(40, 167, 69, 0.2);
+    border: 1px solid #28a745;
+}
+.reserva-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+.info-item {
+    display: flex;
+    flex-direction: column;
+}
+.info-label {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 0.3rem;
+}
+.info-value {
+    font-size: 1.1rem;
+}
+.no-reservas {
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 0.8rem;
+    padding: 3rem 2rem;
+    text-align: center;
+    color: white;
+}
+.no-reservas i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    color: #d16c44;
+}
+.no-reservas h3 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+.no-reservas p {
+    font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.8);
+}
+.btn-volver {
+    display: inline-block;
+    background-color: #546469;
+    color: white !important;
+    padding: 0.8rem 1.2rem;
+    border-radius: 0.6rem;
+    text-decoration: none !important;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+    margin-bottom: 1.5rem;
+}
+.btn-volver:hover {
+    background-color: #3d484c;
+    color: white !important;
+    text-decoration: none !important;
+}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="header-container">
+        <a href="{% url 'home' %}" class="btn-volver">
+            <i class="fas fa-home"></i> Volver al Inicio
+        </a>
+        <h1 class="page-title">Mis Alquileres</h1>
+    </div>
+    {% if reservas %}
+    <div class="reservas-container">
+        {% for reserva in reservas %}
+        <div class="reserva-card">
+            <div class="reserva-header">
+                <div class="maquina-nombre">{{ reserva.maquina.nombre }}</div>
+                <div class="estado-reserva estado-activa">
+                    {{ reserva.get_estado_display }}
+                </div>
+            </div>
+            <div class="reserva-info">
+                <div class="info-item">
+                    <span class="info-label">Número de alquiler</span>
+                    <span class="info-value">{{ reserva.numero_reserva }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Fecha de inicio</span>
+                    <span class="info-value">{{ reserva.fecha_inicio|date:"d/m/Y" }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Fecha de fin</span>
+                    <span class="info-value">{{ reserva.fecha_fin|date:"d/m/Y" }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Total</span>
+                    <span class="info-value">${{ reserva.monto_total }}</span>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="no-reservas">
+        <i class="fas fa-calendar-times"></i>
+        <h3>No tienes alquileres activos</h3>
+        <p>¡Comienza alquilando una máquina!</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://kit.fontawesome.com/a076d05399.js"></script>
+{% endblock %} 

@@ -424,34 +424,20 @@
     margin-bottom: 0.5rem;
 }
 .btn-buscar-maquinaria {
-    min-width: 140px;
-    max-width: 200px;
-    height: 48px;
-    padding: 0 1.2rem;
-    font-size: 1.05rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    background-color: #e25c2e;
-    color: white;
-    border: none;
-    border-radius: 10px;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.7rem !important;
+    white-space: nowrap !important;
+    font-size: 1.15rem;
+    height: 54px;
+    border-radius: 12px;
+    width: 100%;
     font-weight: 600;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    line-height: 1.2;
-    white-space: nowrap;
 }
-
-.btn-buscar-maquinaria svg {
-    width: 20px;
-    height: 20px;
-    flex-shrink: 0;
-}
-
-.btn-buscar-maquinaria:hover {
-    background-color: #c94e28;
+.btn-buscar-maquinaria i {
+    margin: 0 !important;
+    font-size: 1.2em;
 }
 
 .btn-buscar-maquinaria:focus {
@@ -500,16 +486,25 @@
     max-width: 200px;
 }
 .input-busqueda-maquinaria {
-    min-width: 90px;
-    max-width: 140px;
+    min-width: 400px;
+    max-width: 100%;
+    width: 100%;
+    height: 54px;
+    font-size: 1.2rem;
+    padding: 0 1.2rem;
+    border-radius: 12px;
 }
 .btn-buscar-maquinaria {
-    min-width: 120px;
-    max-width: 170px;
-    height: 44px;
-    padding: 0 1rem;
-    font-size: 1rem;
+    min-width: 140px;
+    max-width: 220px;
+    height: 48px;
+    font-size: 1.1rem;
     margin-left: 0.2rem;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
 }
 .filtros-row-2 {
     display: flex;
@@ -561,43 +556,49 @@
         <!-- Filtros -->
         <div class="filters">
             <form method="get" class="filter-form">
-                <div class="filtros-row-1">
-                    <div style="flex:1; min-width:120px;">
-                        <label for="tipo">Tipo</label>
-                        <select name="tipo" id="tipo" class="form-control">
-                            <option value="">Todos</option>
-                            {% for tipo_value, tipo_label in tipos %}
-                                <option value="{{ tipo_value }}" {% if filtros.tipo == tipo_value %}selected{% endif %}>
-                                    {{ tipo_label }} ({{ tipos_con_conteo|get_item:tipo_value }})
-                                </option>
-                            {% endfor %}
-                        </select>
+                <div class="filtros-grid">
+                    <!-- Columna de filtros -->
+                    <div class="filtros-col">
+                        <div class="filtros-row">
+                            <div class="form-group" style="flex:1; min-width:120px;">
+                                <label for="tipo">Tipo</label>
+                                <select name="tipo" id="tipo" class="form-control">
+                                    <option value="">Todos</option>
+                                    {% for tipo_value, tipo_label in tipos %}
+                                        <option value="{{ tipo_value }}" {% if filtros.tipo == tipo_value %}selected{% endif %}>
+                                            {{ tipo_label }} ({{ tipos_con_conteo|get_item:tipo_value }})
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-group" style="flex:1; min-width:120px;">
+                                <label for="ubicacion">Ubicación</label>
+                                <select name="ubicacion" id="ubicacion" class="form-control">
+                                    <option value="">Todas</option>
+                                    {% for ubicacion in ubicaciones %}
+                                        <option value="{{ ubicacion }}" {% if filtros.ubicacion == ubicacion %}selected{% endif %}>
+                                            {{ ubicacion }} ({{ ubicaciones_con_conteo|get_item:ubicacion }})
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="filtros-botones">
+                            <button type="submit" class="btn-filter btn-apply" style="margin-bottom:0.5rem;">
+                                <i class="fas fa-filter"></i> Filtrar
+                            </button>
+                            <a href="{% url 'lista_maquinaria' %}" class="btn-filter btn-clear">
+                                <i class="fas fa-sync"></i> Limpiar filtros
+                            </a>
+                        </div>
                     </div>
-                    <div style="flex:1; min-width:120px;">
-                        <label for="ubicacion">Ubicación</label>
-                        <select name="ubicacion" id="ubicacion" class="form-control">
-                            <option value="">Todas</option>
-                            {% for ubicacion in ubicaciones %}
-                                <option value="{{ ubicacion }}" {% if filtros.ubicacion == ubicacion %}selected{% endif %}>
-                                    {{ ubicacion }} ({{ ubicaciones_con_conteo|get_item:ubicacion }})
-                                </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div style="display:flex; align-items:flex-end; gap:0.5rem;">
-                        <input type="text" name="busqueda_nombre" class="form-control input-busqueda-maquinaria" placeholder="Buscar maquinaria..." value="{{ busqueda_nombre }}">
-                        <button type="submit" class="btn-filter btn-apply btn-buscar-maquinaria">
-                            <i class="fas fa-search"></i> Buscar maquinaria
+                    <!-- Columna de búsqueda -->
+                    <div class="busqueda-col">
+                        <input type="text" name="busqueda_nombre" class="form-control input-busqueda-maquinaria" placeholder="Buscar maquinaria..." value="{{ busqueda_nombre }}" style="margin-bottom:0.7rem;">
+                        <button type="submit" class="btn-filter btn-apply btn-buscar-maquinaria" style="width:100%; display:flex; align-items:center; justify-content:center;">
+                            <i class="fas fa-search" style="margin-right:0.5rem;"></i> Buscar maquinaria
                         </button>
                     </div>
-                </div>
-                <div class="filtros-row-2">
-                    <button type="submit" class="btn-filter btn-apply">
-                        <i class="fas fa-filter"></i> Filtrar
-                    </button>
-                    <a href="{% url 'lista_maquinaria' %}" class="btn-filter btn-clear">
-                        <i class="fas fa-sync"></i> Limpiar filtros
-                    </a>
                 </div>
             </form>
         </div>
@@ -1013,6 +1014,90 @@
 
     .maquinarias-grid {
         grid-template-columns: 1fr;
+    }
+}
+
+.filtros-grid {
+    display: flex;
+    gap: 2rem;
+    justify-content: space-between;
+}
+.filtros-col {
+    flex: 1;
+    min-width: 220px;
+    max-width: 350px;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+.filtros-row {
+    display: flex;
+    gap: 1rem;
+}
+.filtros-botones {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+.busqueda-col {
+    flex: 1;
+    min-width: 220px;
+    max-width: 500px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    gap: 0.5rem;
+    box-sizing: border-box;
+    padding-right: 0;
+}
+.input-busqueda-maquinaria {
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
+    height: 54px;
+    font-size: 1.2rem;
+    padding: 0 1.2rem;
+    border-radius: 12px;
+}
+.btn-buscar-maquinaria {
+    min-width: 140px;
+    max-width: 220px;
+    height: 48px;
+    font-size: 1.1rem;
+    margin-left: 0.2rem;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+.filtros-row-2 {
+    display: flex;
+    gap: 0.7rem;
+    margin-top: 1.2rem;
+    width: 100%;
+}
+.filtros-row-2 .btn-filter {
+    flex: 1 1 0;
+    width: 100%;
+    height: 44px;
+    font-size: 1rem;
+}
+@media (max-width: 900px) {
+    .filtros-grid {
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+    .filtros-col, .busqueda-col {
+        max-width: 100%;
+        min-width: unset;
+    }
+    .filtros-row, .busqueda-row {
+        flex-direction: column;
+        gap: 0.5rem;
     }
 }
 </style>
