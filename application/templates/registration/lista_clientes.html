@@ -191,7 +191,6 @@
             <th>Email</th>
             <th>DNI</th>
             <th>Dirección</th>
-            <th>Teléfono</th>
             <th>Acciones</th>
           </tr>
         </thead>
@@ -202,7 +201,6 @@
             <td>{{ cliente.email }}</td>
             <td>{{ cliente.perfil.dni }}</td>
             <td>{{ cliente.perfil.direccion }}</td>
-            <td>{{ cliente.perfil.celular|default:"-" }}</td>
             <td>
               <a href="{% url 'ver_perfil_cliente' cliente.id %}" class="btn-registrar" style="margin: 0; padding: 0.5rem 1rem; font-size: 0.9rem;">
                 <i class="fas fa-user"></i> Ver Perfil
