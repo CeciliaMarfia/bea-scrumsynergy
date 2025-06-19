@@ -276,7 +276,7 @@
     <a href="{% url 'lista_ubicaciones' %}" class="btn-home"><i class="fas fa-map-marker-alt"></i> Ver Sucursales</a>
     {% if user.is_authenticated %}
       {% if not user.perfil.is_dueno and not user.perfil.is_empleado %}
-        <a href="{% url 'preguntas_cliente' %}" class="btn-home"><i class="fas fa-question-circle"></i> Preguntas Frecuentes</a>
+        <a href="{% url 'preguntas_cliente' %}" class="btn-home"><i class="fas fa-question-circle"></i> Hacer Pregunta</a>
       {% endif %}
       <a href="{% url 'perfil' %}" class="btn-home">Mi Perfil</a>
       <a href="{% url 'mis_reservas' %}" class="btn-home"><i class="fas fa-calendar-check"></i> Mis Reservas</a>

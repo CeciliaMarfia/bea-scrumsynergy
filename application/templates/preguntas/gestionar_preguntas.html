@@ -68,18 +68,85 @@
   text-align: center;
 }
 
+.custom-messages {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+.custom-alert {
+  background: rgba(40, 167, 69, 0.7); /* verde por defecto, semitransparente */
+  color: #fff;
+  border-radius: 0.8rem;
+  padding: 1rem 2rem;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+  text-align: center;
+  font-size: 1.1rem;
+  max-width: 600px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.custom-success { background: rgba(40, 167, 69, 0.7); }
+.custom-danger { background: rgba(217, 83, 79, 0.7); }
+.custom-info { background: rgba(91, 192, 222, 0.7); }
+.comentario-respuesta {
+  background: #f1f3f4;
+  color: #222;
+  border-radius: 0.7rem;
+  padding: 0.7rem 1.2rem;
+  margin-top: 0.7rem;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  display: inline-block;
+}
+.respuesta-hilo {
+  display: flex;
+  flex-direction: column;
+  margin-top: 0.7rem;
+  margin-bottom: 0.5rem;
+  margin-left: 1.5rem;
+  border-left: 2px solid #e0e0e0;
+  padding-left: 1rem;
+}
+.respuesta-texto {
+  color: #6c757d;
+  font-size: 1.08rem;
+  margin-bottom: 0.2rem;
+}
+.respuesta-fecha {
+  color: #b0b0b0;
+  font-size: 0.95rem;
+  margin-bottom: 0.2rem;
+}
+.pregunta-flex {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.pregunta-info {
+  flex: 1 1 auto;
+}
+.form-eliminar {
+  margin: 0;
+  padding: 0;
+}
 {% endblock %}
 
 {% block content %}
+{% if messages %}
+  <div class="custom-messages">
+    {% for message in messages %}
+      <div class="custom-alert {% if message.tags == 'success' %}custom-success{% elif message.tags == 'error' %}custom-danger{% else %}custom-info{% endif %}">
+        {{ message }}
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
 <div class="container mt-5">
   <div class="preguntas-box">
-    {% if messages %}
-      {% for message in messages %}
-        <div class="alert {% if message.tags == 'success' %}alert-success{% elif message.tags == 'error' %}alert-danger{% else %}alert-info{% endif %}" style="margin-bottom: 1rem;">
-          {{ message }}
-        </div>
-      {% endfor %}
-    {% endif %}
     <div class="mb-3">
       <a href="{% url 'home' %}" class="btn-volver">
         <i class="fas fa-home"></i> Volver al Inicio
@@ -88,13 +155,24 @@
     <h2>Gestionar Preguntas</h2>
     <ul class="list-group mt-3">
       {% for pregunta in preguntas %}
-        <li class="list-group-item">
-          <strong>{{ pregunta.texto }}</strong><br>
-          <small>Cliente: {{ pregunta.usuario.email }} | Enviada el {{ pregunta.fecha_creacion|date:"d/m/Y H:i" }}</small>
-          {% if pregunta.respuesta %}
-            <div class="mt-2 alert alert-info"><strong>Respuesta:</strong> {{ pregunta.respuesta }}</div>
-          {% endif %}
-          <form action="{% url 'eliminar_pregunta' pregunta.id %}" method="post" style="display:inline;">
+        <li class="list-group-item pregunta-flex">
+          <div class="pregunta-info">
+            <strong>{{ pregunta.texto }}</strong><br>
+            <small>Cliente: {{ pregunta.usuario.email }} | Enviada el {{ pregunta.fecha_creacion|date:"d/m/Y H:i" }}</small>
+            {% if pregunta.respuesta %}
+              <div class="respuesta-hilo">
+                <div class="respuesta-texto">
+                  {{ pregunta.respuesta }}
+                </div>
+                <div class="respuesta-fecha">{{ pregunta.fecha_respuesta|date:"d/m/Y H:i" }}</div>
+              </div>
+            {% else %}
+              {% if request.user.perfil.is_empleado or request.user.perfil.is_dueno %}
+                <a href="{% url 'responder_pregunta' pregunta.id %}" class="btn btn-sm btn-success ms-2">Responder</a>
+              {% endif %}
+            {% endif %}
+          </div>
+          <form action="{% url 'eliminar_pregunta' pregunta.id %}" method="post" class="form-eliminar">
             {% csrf_token %}
             <button type="submit" class="btn btn-sm btn-danger ms-2" onclick="return confirm('¿Seguro que deseas eliminar esta consulta?');">Eliminar</button>
           </form>
