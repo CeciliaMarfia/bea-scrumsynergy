@@ -40,24 +40,52 @@
   color: #c94e28;
 }
 
+.alert-success {
+  background-color: #4BB543;
+  color: #fff;
+  border-radius: 0.6rem;
+  padding: 1rem 1.5rem;
+  margin-bottom: 1rem;
+  font-weight: bold;
+  text-align: center;
+}
+.alert-danger {
+  background-color: #d9534f;
+  color: #fff;
+  border-radius: 0.6rem;
+  padding: 1rem 1.5rem;
+  margin-bottom: 1rem;
+  font-weight: bold;
+  text-align: center;
+}
+.alert-info {
+  background-color: #5bc0de;
+  color: #fff;
+  border-radius: 0.6rem;
+  padding: 1rem 1.5rem;
+  margin-bottom: 1rem;
+  font-weight: bold;
+  text-align: center;
+}
+
 {% endblock %}
 
 {% block content %}
 <div class="container mt-5">
   <div class="preguntas-box">
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert {% if message.tags == 'success' %}alert-success{% elif message.tags == 'error' %}alert-danger{% else %}alert-info{% endif %}" style="margin-bottom: 1rem;">
+          {{ message }}
+        </div>
+      {% endfor %}
+    {% endif %}
     <div class="mb-3">
       <a href="{% url 'home' %}" class="btn-volver">
         <i class="fas fa-home"></i> Volver al Inicio
       </a>
     </div>
     <h2>Gestionar Preguntas</h2>
-    {% if messages %}
-      <ul class="messages">
-        {% for message in messages %}
-          <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-        {% endfor %}
-      </ul>
-    {% endif %}
     <ul class="list-group mt-3">
       {% for pregunta in preguntas %}
         <li class="list-group-item">
