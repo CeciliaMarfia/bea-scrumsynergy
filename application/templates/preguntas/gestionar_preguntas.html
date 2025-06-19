@@ -51,6 +51,13 @@
       </a>
     </div>
     <h2>Gestionar Preguntas</h2>
+    {% if messages %}
+      <ul class="messages">
+        {% for message in messages %}
+          <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
     <ul class="list-group mt-3">
       {% for pregunta in preguntas %}
         <li class="list-group-item">
@@ -65,16 +72,11 @@
           </form>
         </li>
       {% empty %}
-        {% for pregunta in preguntas %}
-  <li class="list-group-item">...</li>
-{% empty %}
-  <div class="no-preguntas">
-    <i class="fas fa-exclamation-circle"></i>
-    <h3>No hay preguntas registradas</h3>
-    <p>No se encontraron preguntas en el sistema.</p>
-  </div>
-{% endfor %}
-
+        <div class="no-preguntas">
+          <i class="fas fa-exclamation-circle"></i>
+          <h3>No hay preguntas registradas</h3>
+          <p>No se encontraron preguntas en el sistema.</p>
+        </div>
       {% endfor %}
     </ul>
   </div>

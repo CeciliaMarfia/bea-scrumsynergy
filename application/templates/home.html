@@ -198,71 +198,69 @@
 <div class="home-container">
   {% if user.is_authenticated %}
     {% if user.perfil.is_dueno %}
-    <div class="admin-panel">
-      <h2>Panel de Administración</h2>
-      <div class="admin-actions">
-        <a href="{% url 'lista_empleados' %}" class="admin-btn">
-          <i class="fas fa-users"></i>
-          <span>Gestionar Empleados</span>
-        </a>
-        <a href="{% url 'registrar_maquinaria' %}" class="admin-btn">
-          <i class="fas fa-tools"></i>
-          <span>Registrar Maquinaria</span>
-        </a>
-        <a href="{% url 'lista_maquinaria_admin' %}" class="admin-btn">
-          <i class="fas fa-cogs"></i>
-          <span>Gestionar Maquinaria</span>
-        </a>
-        <a href="{% url 'lista_clientes' %}" class="admin-btn">
-          <i class="fas fa-users"></i>
-          <span>Gestionar Clientes</span>
-        </a>
-        <a href="{% url 'historial_reservas' %}" class="admin-btn">
-          <i class="fas fa-calendar-alt"></i>
-          <span>Reservas Activas</span>
-        </a>
-        <a href="{% url 'administrar_sucursales' %}" class="admin-btn">
-          <i class="fas fa-map-marker-alt"></i>
-          <span>Gestionar Ubicaciones</span>
-        </a>
-        <a href="{% url 'gestionar_preguntas' %}" class="admin-btn">
-          <i class="fas fa-question-circle"></i>
-          <span>Gestionar Preguntas</span>
-        </a>
-        <a href="{% url 'registrar_devolucion' %}" class="admin-btn">
-          <i class="fas fa-undo"></i>
-          <span>Registrar Devolución</span>
-        </a>
+      <div class="admin-panel">
+        <h2>Panel de Administración</h2>
+        <div class="admin-actions">
+          <a href="{% url 'lista_empleados' %}" class="admin-btn">
+            <i class="fas fa-users"></i>
+            <span>Gestionar Empleados</span>
+          </a>
+          <a href="{% url 'registrar_maquinaria' %}" class="admin-btn">
+            <i class="fas fa-tools"></i>
+            <span>Registrar Maquinaria</span>
+          </a>
+          <a href="{% url 'lista_maquinaria_admin' %}" class="admin-btn">
+            <i class="fas fa-cogs"></i>
+            <span>Gestionar Maquinaria</span>
+          </a>
+          <a href="{% url 'lista_clientes' %}" class="admin-btn">
+            <i class="fas fa-users"></i>
+            <span>Gestionar Clientes</span>
+          </a>
+          <a href="{% url 'historial_reservas' %}" class="admin-btn">
+            <i class="fas fa-calendar-alt"></i>
+            <span>Reservas Activas</span>
+          </a>
+          <a href="{% url 'administrar_sucursales' %}" class="admin-btn">
+            <i class="fas fa-map-marker-alt"></i>
+            <span>Gestionar Ubicaciones</span>
+          </a>
+          <a href="{% url 'gestionar_preguntas' %}" class="admin-btn">
+            <i class="fas fa-question-circle"></i>
+            <span>Gestionar Preguntas</span>
+          </a>
+          <a href="{% url 'registrar_devolucion' %}" class="admin-btn">
+            <i class="fas fa-undo"></i>
+            <span>Registrar Devolución</span>
+          </a>
+        </div>
       </div>
-    </div>
     {% elif user.perfil.is_empleado %}
-    <div class="admin-panel">
-      <h2>Panel de Gestión</h2>
-      <div class="admin-actions">
-        <a href="{% url 'lista_clientes' %}" class="admin-btn">
-          <i class="fas fa-users"></i>
-          <span>Gestionar Clientes</span>
-        </a>
-        <a href="{% url 'historial_reservas' %}" class="admin-btn">
-          <i class="fas fa-calendar-alt"></i>
-          <span>Reservas Activas</span>
-        </a>
-        <a href="{% url 'gestionar_preguntas' %}" class="admin-btn">
-          <i class="fas fa-question-circle"></i>
-          <span>Gestionar Preguntas</span>
-        </a>
-        <a href="{% url 'registrar_devolucion' %}" class="admin-btn">
-          <i class="fas fa-undo"></i>
-          <span>Registrar Devolución</span>
-        </a>
+      <div class="admin-panel">
+        <h2>Panel de Gestión</h2>
+        <div class="admin-actions">
+          <a href="{% url 'lista_clientes' %}" class="admin-btn">
+            <i class="fas fa-users"></i>
+            <span>Gestionar Clientes</span>
+          </a>
+          <a href="{% url 'historial_reservas' %}" class="admin-btn">
+            <i class="fas fa-calendar-alt"></i>
+            <span>Reservas Activas</span>
+          </a>
+          <a href="{% url 'gestionar_preguntas' %}" class="admin-btn">
+            <i class="fas fa-question-circle"></i>
+            <span>Gestionar Preguntas</span>
+          </a>
+          <a href="{% url 'registrar_devolucion' %}" class="admin-btn">
+            <i class="fas fa-undo"></i>
+            <span>Registrar Devolución</span>
+          </a>
+        </div>
       </div>
-    </div>
-    {% else %}
-   
     {% endif %}
   {% endif %}
 
-  <img src="{% static 'images/logoCompleto.png' %}" alt="Bob el Alquilador" class="brand-logo">
+  <img src="{% static 'images/logoCompleto.png' %}" alt="Bob el Alquilador" class="brand-logo" style="display: block; margin-left: auto; margin-right: auto;">
   
   <div class="hero-section">
     {% if video %}
@@ -277,6 +275,9 @@
     <a href="{% url 'lista_maquinaria' %}" class="btn-home">Ver Catálogo de Maquinarias</a>
     <a href="{% url 'lista_ubicaciones' %}" class="btn-home"><i class="fas fa-map-marker-alt"></i> Ver Sucursales</a>
     {% if user.is_authenticated %}
+      {% if not user.perfil.is_dueno and not user.perfil.is_empleado %}
+        <a href="{% url 'preguntas_cliente' %}" class="btn-home"><i class="fas fa-question-circle"></i> Preguntas Frecuentes</a>
+      {% endif %}
       <a href="{% url 'perfil' %}" class="btn-home">Mi Perfil</a>
       <a href="{% url 'mis_reservas' %}" class="btn-home"><i class="fas fa-calendar-check"></i> Mis Reservas</a>
       <a href="{% url 'mis_alquileres' %}" class="btn-home"><i class="fas fa-clipboard-list"></i> Mis Alquileres</a>
