@@ -7,7 +7,7 @@
 .container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem 1rem;
+  padding: 1.5rem 0.5rem;
 }
 
 .header-container {
@@ -35,10 +35,10 @@
 }
 
 .table-container {
-  background: white;
-  border-radius: 1.5rem;
-  padding: 2rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  background: #fff;
+  border-radius: 1.2rem;
+  padding: 1.5rem 1.2rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.08);
 }
 
 .table {
@@ -156,6 +156,10 @@
     justify-content: center;
     gap: 0.5rem;
 }
+
+.table-container h2 {
+  color: #fff !important;
+}
 </style>
 {% endblock %}
 
@@ -165,7 +169,7 @@
     <a href="{% url 'home' %}" class="btn-volver">
       <i class="fas fa-arrow-left"></i> Volver al inicio
     </a>
-    <h2>Listado de Maquinaria</h2>
+    <h2 style="color: #fff;">Listado de Maquinaria</h2>
   </div>
 
   {% if messages %}
