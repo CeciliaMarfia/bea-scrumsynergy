@@ -12,9 +12,9 @@
 
 .header-container {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
+  gap: 1.5rem;
 }
 
 .btn-volver {
@@ -156,9 +156,10 @@
     justify-content: center;
     gap: 0.5rem;
 }
-
 .table-container h2 {
-  color: #fff !important;
+  color: #546469;
+  margin-bottom: 1.5rem;
+  font-weight: 600;
 }
 </style>
 {% endblock %}
@@ -169,7 +170,6 @@
     <a href="{% url 'home' %}" class="btn-volver">
       <i class="fas fa-arrow-left"></i> Volver al inicio
     </a>
-    <h2 style="color: #fff;">Listado de Maquinaria</h2>
   </div>
 
   {% if messages %}
@@ -183,6 +183,7 @@
   {% endif %}
 
   <div class="table-container">
+    <h2 style="color: #black;">Listado de Maquinaria</h2>
     <table class="table">
       <thead>
         <tr>
