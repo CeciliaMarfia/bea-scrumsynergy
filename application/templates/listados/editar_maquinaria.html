@@ -243,6 +243,19 @@
       </div>
 
       <div class="form-group">
+        <label for="estado">Estado</label>
+        <select class="form-control" id="estado" name="estado" required>
+          {% for value, label in maquina.ESTADO_CHOICES %}
+          <option value="{{ value }}" {% if maquina.estado == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+        <div class="error-message">
+          <i class="fas fa-exclamation-circle"></i>
+          El estado de la máquina es obligatorio.
+        </div>
+      </div>
+
+      <div class="form-group">
         <label for="descripcion">Descripción</label>
         <textarea class="form-control" id="descripcion" name="descripcion" rows="4" required>{{ maquina.descripcion|default:'' }}</textarea>
         <div class="error-message">
@@ -314,8 +327,13 @@
 
       <div class="form-group">
         <label for="nuevas_imagenes">Agregar Nuevas Imágenes</label>
-        <input type="file" class="form-control" id="nuevas_imagenes" name="nuevas_imagenes" multiple accept="image/*">
-        <small class="form-text">Puede seleccionar múltiples imágenes. Formatos permitidos: JPG, PNG. Tamaño máximo por imagen: 5MB</small>
+        <input type="file" 
+               class="form-control" 
+               id="nuevas_imagenes" 
+               name="nuevas_imagenes" 
+               multiple 
+               accept="image/jpeg,image/jpg,image/png">
+        <small class="form-text">Puede seleccionar múltiples imágenes. Formatos permitidos: JPG, JPEG, PNG. Tamaño máximo por imagen: 5MB</small>
       </div>
 
       <div class="text-center">
@@ -360,7 +378,24 @@ function eliminarImagen(imagenId) {
         // Recargar la página para mostrar los cambios
         location.reload();
       } else {
-        alert('Error al eliminar la imagen');
+        // Mostrar el mensaje de error en un alert personalizado
+        const errorMessage = data.error || 'Error al eliminar la imagen';
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'alert alert-danger';
+        alertDiv.role = 'alert';
+        alertDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${errorMessage}`;
+        
+        // Insertar el mensaje al principio del formulario
+        const form = document.querySelector('form');
+        form.insertBefore(alertDiv, form.firstChild);
+        
+        // Hacer scroll hacia el mensaje
+        alertDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // Eliminar el mensaje después de 5 segundos
+        setTimeout(() => {
+          alertDiv.remove();
+        }, 5000);
       }
     })
     .catch(error => {
@@ -370,26 +405,96 @@ function eliminarImagen(imagenId) {
   }
 }
 
-// Validar tamaño y formato de imágenes antes de enviar
-document.querySelector('form').addEventListener('submit', function(e) {
-  const input = document.getElementById('nuevas_imagenes');
-  const files = input.files;
-  const maxSize = 5 * 1024 * 1024; // 5MB
-  const allowedTypes = ['image/jpeg', 'image/png'];
+// Función para obtener la extensión de un archivo
+function getFileExtension(filename) {
+  return filename.slice((filename.lastIndexOf(".") - 1 >>> 0) + 2).toLowerCase();
+}
 
+// Validar archivos al seleccionarlos
+document.getElementById('nuevas_imagenes').addEventListener('change', function(e) {
+  const files = this.files;
+  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+  const allowedExtensions = ['jpg', 'jpeg', 'png'];
+  const maxSize = 5 * 1024 * 1024; // 5MB
+  
   for (let i = 0; i < files.length; i++) {
-    if (files[i].size > maxSize) {
-      e.preventDefault();
-      alert(`La imagen ${files[i].name} excede el tamaño máximo permitido de 5MB`);
+    const file = files[i];
+    const extension = getFileExtension(file.name);
+    
+    // Validar extensión
+    if (!allowedExtensions.includes(extension)) {
+      this.value = ''; // Limpiar la selección
+      mostrarError(`La extensión del archivo ${file.name} no está permitida. Solo se permiten archivos .jpg, .jpeg y .png`);
       return;
     }
-    if (!allowedTypes.includes(files[i].type)) {
-      e.preventDefault();
-      alert(`La imagen ${files[i].name} no tiene un formato válido. Use JPG o PNG`);
+    
+    // Validar tipo
+    if (!allowedTypes.includes(file.type.toLowerCase())) {
+      this.value = ''; // Limpiar la selección
+      mostrarError(`El archivo ${file.name} no es un formato válido. Solo se permiten archivos JPG, JPEG y PNG`);
+      return;
+    }
+    
+    // Validar tamaño
+    if (file.size > maxSize) {
+      this.value = ''; // Limpiar la selección
+      mostrarError(`La imagen ${file.name} excede el tamaño máximo permitido de 5MB`);
       return;
     }
   }
 });
+
+// Validar tipo y tamaño de archivos antes de enviar
+document.querySelector('form').addEventListener('submit', function(e) {
+  const input = document.getElementById('nuevas_imagenes');
+  const files = input.files;
+  const maxSize = 5 * 1024 * 1024; // 5MB
+  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+  const allowedExtensions = ['jpg', 'jpeg', 'png'];
+
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    const extension = getFileExtension(file.name);
+    
+    // Validar extensión
+    if (!allowedExtensions.includes(extension)) {
+      e.preventDefault();
+      mostrarError(`La extensión del archivo ${file.name} no está permitida. Solo se permiten archivos .jpg, .jpeg y .png`);
+      return;
+    }
+    
+    // Validar tamaño
+    if (file.size > maxSize) {
+      e.preventDefault();
+      mostrarError(`La imagen ${file.name} excede el tamaño máximo permitido de 5MB`);
+      return;
+    }
+
+    // Validar tipo
+    if (!allowedTypes.includes(file.type.toLowerCase())) {
+      e.preventDefault();
+      mostrarError(`El archivo ${file.name} no es un formato válido. Solo se permiten archivos JPG, JPEG y PNG`);
+      return;
+    }
+  }
+});
+
+// Función para mostrar mensajes de error
+function mostrarError(mensaje) {
+  const alertDiv = document.createElement('div');
+  alertDiv.className = 'alert alert-danger';
+  alertDiv.role = 'alert';
+  alertDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${mensaje}`;
+  
+  const form = document.querySelector('form');
+  form.insertBefore(alertDiv, form.firstChild);
+  
+  alertDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  
+  setTimeout(() => {
+    alertDiv.remove();
+  }, 5000);
+}
 
 // Validación de formulario
 document.querySelector('form').addEventListener('submit', function(e) {

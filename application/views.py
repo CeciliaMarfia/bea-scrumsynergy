@@ -1533,6 +1533,10 @@ def editar_maquinaria(request, maquina_id):
     maquina = get_object_or_404(Maquina, id=maquina_id)
     
     if request.method == 'POST':
+        print("DEBUG: Procesando POST request para editar maquinaria")
+        print(f"DEBUG: FILES en request: {request.FILES}")
+        print(f"DEBUG: POST data: {request.POST}")
+        
         # Actualizar los campos de la maquinaria
         maquina.nombre = request.POST.get('nombre')
         maquina.marca = request.POST.get('marca')
@@ -1574,25 +1578,59 @@ def editar_maquinaria(request, maquina_id):
         maquina.permisos_requeridos = request.POST.get('permisos_requeridos')
         
         try:
+            print("DEBUG: Validando modelo de maquinaria")
             maquina.full_clean()  # Validar el modelo
             maquina.save()
+            print("DEBUG: Maquinaria guardada exitosamente")
 
             # Manejar imágenes nuevas
             nuevas_imagenes = request.FILES.getlist('nuevas_imagenes')
+            print(f"DEBUG: Nuevas imágenes recibidas: {len(nuevas_imagenes)}")
+            
             for imagen in nuevas_imagenes:
-                ImagenMaquina.objects.create(
-                    maquina=maquina,
-                    imagen=imagen,
-                    es_principal=False  # Las nuevas imágenes nunca son principales por defecto
-                )
+                print(f"DEBUG: Procesando imagen: {imagen.name}, tamaño: {imagen.size}, tipo: {imagen.content_type}")
+                try:
+                    # Validar tamaño
+                    if imagen.size > 5 * 1024 * 1024:  # 5MB
+                        messages.error(request, f'La imagen {imagen.name} excede el tamaño máximo permitido de 5MB.')
+                        return render(request, 'listados/editar_maquinaria.html', {'maquina': maquina})
+                    
+                    # Validar tipo de archivo y extensión
+                    allowed_types = ['image/jpeg', 'image/jpg', 'image/png']
+                    allowed_extensions = ['.jpg', '.jpeg', '.png']
+                    
+                    # Verificar el content type
+                    if imagen.content_type.lower() not in allowed_types:
+                        messages.error(request, f'El archivo {imagen.name} no es un formato válido. Solo se permiten archivos JPG, JPEG y PNG.')
+                        return render(request, 'listados/editar_maquinaria.html', {'maquina': maquina})
+                    
+                    # Verificar la extensión
+                    extension = os.path.splitext(imagen.name.lower())[1]
+                    if extension not in allowed_extensions:
+                        messages.error(request, f'La extensión del archivo {imagen.name} no está permitida. Solo se permiten archivos .jpg, .jpeg y .png')
+                        return render(request, 'listados/editar_maquinaria.html', {'maquina': maquina})
+                    
+                    ImagenMaquina.objects.create(
+                        maquina=maquina,
+                        imagen=imagen,
+                        es_principal=False
+                    )
+                    print(f"DEBUG: Imagen {imagen.name} guardada exitosamente")
+                except Exception as e:
+                    print(f"ERROR: Error al guardar imagen {imagen.name}: {str(e)}")
+                    messages.error(request, f'Error al guardar la imagen {imagen.name}')
+                    return render(request, 'listados/editar_maquinaria.html', {'maquina': maquina})
 
             # Actualizar imagen principal si se seleccionó una
             imagen_principal_id = request.POST.get('imagen_principal')
+            print(f"DEBUG: ID de imagen principal seleccionada: {imagen_principal_id}")
+            
             if imagen_principal_id:
                 # Primero quitamos el flag de principal de todas las imágenes
                 maquina.imagenes.all().update(es_principal=False)
                 # Luego marcamos la seleccionada como principal
                 ImagenMaquina.objects.filter(id=imagen_principal_id).update(es_principal=True)
+                print("DEBUG: Imagen principal actualizada")
             
             # Verificar que haya al menos una imagen
             if not maquina.imagenes.exists() and not nuevas_imagenes:
@@ -1604,11 +1642,17 @@ def editar_maquinaria(request, maquina_id):
                 primera_imagen = maquina.imagenes.first()
                 primera_imagen.es_principal = True
                 primera_imagen.save()
+                print("DEBUG: Primera imagen establecida como principal")
 
             messages.success(request, 'Maquinaria actualizada exitosamente.')
             return redirect('lista_maquinaria_admin')
         except ValidationError as e:
-            messages.error(request, 'Error al actualizar la maquinaria. Por favor, verifica los datos.')
+            print(f"ERROR: Error de validación: {str(e)}")
+            messages.error(request, f'Error al actualizar la maquinaria: {str(e)}')
+            return render(request, 'listados/editar_maquinaria.html', {'maquina': maquina})
+        except Exception as e:
+            print(f"ERROR: Error inesperado: {str(e)}")
+            messages.error(request, f'Error inesperado al actualizar la maquinaria: {str(e)}')
             return render(request, 'listados/editar_maquinaria.html', {'maquina': maquina})
     
     return render(request, 'listados/editar_maquinaria.html', {'maquina': maquina})
@@ -1622,8 +1666,15 @@ def eliminar_imagen(request, imagen_id):
             imagen = ImagenMaquina.objects.get(id=imagen_id)
             maquina = imagen.maquina
             
+            # Verificar si es la última imagen
+            if maquina.imagenes.count() <= 1:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'No se puede eliminar la última imagen. La maquinaria debe tener al menos una imagen.'
+                })
+            
             # Si es la imagen principal y hay otras imágenes, hacer principal a otra
-            if imagen.es_principal and maquina.imagenes.count() > 1:
+            if imagen.es_principal:
                 nueva_principal = maquina.imagenes.exclude(id=imagen_id).first()
                 nueva_principal.es_principal = True
                 nueva_principal.save()
