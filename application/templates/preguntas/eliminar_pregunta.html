@@ -4,6 +4,13 @@
 {% block title %}Eliminar Pregunta{% endblock %}
 
 {% block content %}
+{% if messages %}
+      <ul class="messages">
+          {% for message in messages %}
+              <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+          {% endfor %}
+      </ul>
+  {% endif %}
 <div class="container mt-5">
     <h2>Eliminar Pregunta</h2>
     <div class="alert alert-warning">
@@ -17,4 +24,33 @@
         <a href="{% url 'preguntas_cliente' %}" class="btn btn-secondary">Cancelar</a>
     </form>
 </div>
+{% endblock %}
+
+{% block styles %}
+<style>
+/* definitive message styles */
+.messages {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 2rem;
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto 2rem auto;
+}
+.messages li {
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    border-radius: 0.6rem;
+    text-align: center;
+    background-color: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+}
+.messages .success {
+    background-color: rgba(40, 167, 69, 0.8) !important;
+    border-color: #28a745 !important;
+    color: #fff !important;
+}
+</style>
 {% endblock %} 

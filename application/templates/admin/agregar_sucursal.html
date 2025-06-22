@@ -1,163 +1,151 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<a href="javascript:history.back()" class="btn-volver">
-        <i class="fas fa-arrow-left"></i> Volver a la página anterior
+<div class="top-links">
+    <a href="{% url 'administrar_sucursales' %}" class="btn-volver">
+        <i class="fas fa-arrow-left"></i> Volver a la administración
     </a>
-<<div class="container" style="margin-top: 120px;">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="mb-0">Agregar Nueva Sucursal</h3>
-                </div>
-                <div class="card-body">
-                    {% if messages %}
-                        {% for message in messages %}
-                            <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-{{ message.tags }}{% endif %} alert-dismissible fade show text-start d-flex align-items-center" role="alert">
-                                <i class="fa fa-info-circle me-2" aria-hidden="true"></i>
-                                <span>{{ message }}</span>
-                                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
-                            </div>
-                        {% endfor %}
-                    {% endif %}
-
-                    <form method="post">
-                        {% csrf_token %}
-                        <div class="mb-3">
-    <label for="calle" class="form-label">Calle y Altura</label>
-<input type="text" class="form-control" id="calle" name="calle" 
-       value="{{ calle|default:'' }}" 
-       placeholder="Ej: Calle Ficticia 123"
-       required>
 </div>
-<div class="mb-3">
-    <label for="localidad" class="form-label">Localidad</label>
-    <input type="text" class="form-control" id="localidad" name="localidad" 
-           value="{{ localidad }}" 
-           placeholder="Ej: La Plata"
-           required>
-</div>
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary"><i class="fas fa-map-marker-alt"></i> Agregar Sucursal</button>
-                            <a href="{% url 'administrar_sucursales' %}" class="btn btn-secondary">Cancelar</a>
-                        </div>
-                    </form>
+<div class="container" style="margin-top: 60px; max-width: 650px;">
+    <div class="form-card">
+        <h2>Agregar Nueva Sucursal</h2>
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-{{ message.tags }}{% endif %} alert-dismissible fade show text-start d-flex align-items-center" role="alert">
+                    <i class="fa fa-info-circle me-2" aria-hidden="true"></i>
+                    <span>{{ message }}</span>
+                    <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
+            {% endfor %}
+        {% endif %}
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group mb-4">
+                <label for="calle" class="form-label">Calle y Altura</label>
+                <input type="text" class="form-control" id="calle" name="calle" value="{{ calle|default:'' }}" placeholder="Ej: Calle Ficticia 123" required>
             </div>
-        </div>
+            <div class="form-group mb-4">
+                <label for="localidad" class="form-label">Localidad</label>
+                <input type="text" class="form-control" id="localidad" name="localidad" value="{{ localidad }}" placeholder="Ej: La Plata" required>
+            </div>
+            <button type="submit" class="submit-btn"><i class="fas fa-map-marker-alt"></i> Agregar Sucursal</button>
+            <a href="{% url 'administrar_sucursales' %}" class="btn-cancelar">Cancelar</a>
+        </form>
     </div>
 </div>
 
 <style>
-.card {
-    border: none;
-    border-radius: 1rem;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+.form-card {
+  background-color: #fff;
+  padding: 3rem;
+  border-radius: 1.5rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  transition: 0.3s ease-in-out;
+  margin-top: 20px;
 }
 
-.card-header {
-    background-color: #f8f9fa;
-    border-bottom: 1px solid #e9ecef;
-    border-radius: 1rem 1rem 0 0 !important;
+.form-card h2 {
+  text-align: center;
+  margin-bottom: 2rem;
+  color: #546469;
+  font-size: 2rem;
+  font-weight: 600;
 }
 
-.form-control {
-    border-radius: 0.5rem;
-    border: 1px solid #dee2e6;
-    padding: 0.75rem;
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #546469;
+  font-weight: 600;
+  font-size: 1rem;
 }
 
-.form-control:focus {
-    border-color: #d16c44;
-    box-shadow: 0 0 0 0.2rem rgba(209, 108, 68, 0.25);
+.form-group input[type="text"] {
+  width: 100%;
+  padding: 0.8rem;
+  border: 2px solid #e9ecef;
+  border-radius: 0.6rem;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background-color: #fff;
 }
 
-.btn {
-    border-radius: 0.5rem;
-    padding: 0.75rem;
-    font-weight: 500;
-    transition: all 0.3s ease;
+.form-group input[type="text"]:focus {
+  border-color: #d16c44;
+  outline: none;
+  box-shadow: 0 0 0 0.2rem rgba(209, 108, 68, 0.25);
 }
 
-.btn-primary {
-    background-color: #d16c44;
-    border: none;
+.submit-btn {
+  width: 100%;
+  background-color: #d16c44;
+  color: #fff;
+  border: none;
+  border-radius: 0.6rem;
+  padding: 1rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
 }
 
-.btn-primary:hover {
-    background-color: #b85a3a;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+.submit-btn:hover {
+  background-color: #b85a3a;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-.btn-secondary {
-    background-color: #6c757d;
-    border: none;
+.btn-cancelar {
+  width: 100%;
+  background-color: #6c757d;
+  color: #fff;
+  border: none;
+  border-radius: 0.6rem;
+  padding: 1rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-decoration: none;
 }
 
-.btn-secondary:hover {
-    background-color: #5a6268;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+.btn-cancelar:hover {
+  background-color: #5a6268;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
-
-.alert {
-    border-radius: 0.5rem;
-    margin-bottom: 1rem;
-    text-align: left !important;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.alert-success {
-    background-color: #d4edda;
-    border-color: #c3e6cb;
-    color: #155724;
-}
-
-.alert-danger {
-    background-color: #f8d7da;
-    border-color: #f5c6cb;
-    color: #721c24;
-}
-
-.alert .fa-info-circle {
-    font-size: 1.5rem;
-    color: #155724;
-    margin-right: 0.75rem;
-}
-
-.form-text {
-    color: #6c757d;
-    font-size: 0.875rem;
-    margin-top: 0.25rem;
-}
-
 
 .btn-volver {
-            position: absolute;
-            top: 40px;
-            left: 40px;
-            display: inline-block;
-            background-color: #b95a33;
-            color: white;
-            padding: 0.8rem 1.5rem;
-            border-radius: 0.6rem;
-            text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-        }
+    position: absolute;
+    top: 40px;
+    left: 40px;
+    display: inline-block;
+    background-color: #b95a33;
+    color: white;
+    padding: 0.8rem 1.5rem;
+    border-radius: 0.6rem;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
 
-        .btn-volver:hover {
-            background-color: #3d484c;
-            transform: translateY(-2px);
-        }
-
+.btn-volver:hover {
+    background-color: #3d484c;
+    transform: translateY(-2px);
+}
 </style>
 {% endblock %} 

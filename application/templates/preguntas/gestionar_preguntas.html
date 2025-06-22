@@ -133,17 +133,22 @@
   margin: 0;
   padding: 0;
 }
+.acciones-pregunta {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
 {% endblock %}
 
 {% block content %}
 {% if messages %}
-  <div class="custom-messages">
+  <ul class="messages">
     {% for message in messages %}
-      <div class="custom-alert {% if message.tags == 'success' %}custom-success{% elif message.tags == 'error' %}custom-danger{% else %}custom-info{% endif %}">
-        {{ message }}
-      </div>
+      <li class="success">{{ message }}</li>
     {% endfor %}
-  </div>
+  </ul>
 {% endif %}
 <div class="container mt-5">
   <div class="preguntas-box">
@@ -157,25 +162,28 @@
       {% for pregunta in preguntas %}
         <li class="list-group-item pregunta-flex">
           <div class="pregunta-info">
-            <strong>{{ pregunta.texto }}</strong><br>
-            <small>Cliente: {{ pregunta.usuario.email }} | Enviada el {{ pregunta.fecha_creacion|date:"d/m/Y H:i" }}</small>
-            {% if pregunta.respuesta %}
+          <strong>{{ pregunta.texto }}</strong><br>
+          <small>Cliente: {{ pregunta.usuario.email }} | Enviada el {{ pregunta.fecha_creacion|date:"d/m/Y H:i" }}</small>
+          {% if pregunta.respuesta %}
               <div class="respuesta-hilo">
                 <div class="respuesta-texto">
                   {{ pregunta.respuesta }}
                 </div>
                 <div class="respuesta-fecha">{{ pregunta.fecha_respuesta|date:"d/m/Y H:i" }}</div>
               </div>
-            {% else %}
-              {% if request.user.perfil.is_empleado or request.user.perfil.is_dueno %}
-                <a href="{% url 'responder_pregunta' pregunta.id %}" class="btn btn-sm btn-success ms-2">Responder</a>
-              {% endif %}
             {% endif %}
           </div>
-          <form action="{% url 'eliminar_pregunta' pregunta.id %}" method="post" class="form-eliminar">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-sm btn-danger ms-2" onclick="return confirm('¿Seguro que deseas eliminar esta consulta?');">Eliminar</button>
-          </form>
+          <div class="acciones-pregunta">
+            {% if not pregunta.respuesta and request.user.perfil.is_empleado %}
+              <a href="{% url 'responder_pregunta' pregunta.id %}" class="btn btn-sm btn-success">Responder</a>
+            {% elif not pregunta.respuesta and request.user.perfil.is_dueno %}
+              <a href="{% url 'responder_pregunta' pregunta.id %}" class="btn btn-sm btn-success">Responder</a>
+            {% endif %}
+            <form action="{% url 'eliminar_pregunta' pregunta.id %}" method="post" style="display:inline;">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Seguro que deseas eliminar esta consulta?');">Eliminar</button>
+            </form>
+          </div>
         </li>
       {% empty %}
         <div class="no-preguntas">
@@ -187,4 +195,45 @@
     </ul>
   </div>
 </div>
-{% endblock %} 
+{% endblock %}
+
+<style>
+.custom-messages {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+.custom-success-message {
+  background: #386150cc;
+  color: #fff;
+  border: 1.5px solid #4fd37e;
+  font-size: 1.5rem;
+  font-weight: 600;
+  border-radius: 1rem;
+  padding: 1.2rem 2rem;
+  margin-bottom: 0.5rem;
+  text-align: center;
+  box-shadow: 0 2px 8px #4fd37e22;
+}
+.messages {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 2rem;
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto 2rem auto;
+}
+.messages .success {
+  background: #386150cc;
+  color: #fff;
+  border: 1.5px solid #4fd37e;
+  font-size: 1.5rem;
+  font-weight: 600;
+  border-radius: 1rem;
+  padding: 1.2rem 2rem;
+  margin-bottom: 0.5rem;
+  text-align: center;
+  box-shadow: 0 2px 8px #4fd37e22;
+}
+</style> 

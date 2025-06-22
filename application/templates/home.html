@@ -206,12 +206,14 @@
   {% endfor %}
 </ul>
 {% endif %}
+{% if user.is_authenticated %}
 <div class="top-buttons">
   <a href="{% url 'perfil' %}" class="btn-home btn-compact">Mi Perfil</a>
   <a href="{% url 'logout' %}" class="btn-home btn-logout btn-compact">
     <i class="fas fa-sign-out-alt"></i> Cerrar sesión
   </a>
 </div>
+{% endif %}
 <div class="home-container">
   {% if user.is_authenticated %}
     {% if user.perfil.is_dueno %}

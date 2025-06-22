@@ -207,11 +207,13 @@
                 </div>
             </div>
             <div class="botones-accion">
-                <button class="btn-pagar">
+                {% if reserva.estado == 'pendiente_pago' %}
+                  <a href="{% url 'pagar_reserva' reserva.id %}" class="btn-pagar">
                     <i class="fas fa-credit-card"></i> Pagar Alquiler
-                </a>
+                  </a>
+                {% endif %}
                 <button class="btn-cancelar">
-                    <i class="fas fa-times"></i> Cancelar Alquiler
+                  <i class="fas fa-times"></i> Cancelar Alquiler
                 </button>
             </div>
         </div>

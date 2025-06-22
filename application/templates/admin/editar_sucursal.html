@@ -83,17 +83,22 @@
 }
 
 .form-card {
-    background-color: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    border-radius: 1rem;
-    padding: 2rem;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    background-color: #fff;
+    border-radius: 1.5rem;
+    padding: 3rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
-h2 {
+.form-card h2 {
     color: #546469;
     margin-bottom: 2rem;
     text-align: center;
+    font-size: 2rem;
+    font-weight: 600;
 }
 
 .sucursal-form {
@@ -115,15 +120,17 @@ h2 {
 .form-control {
     width: 100%;
     padding: 0.8rem;
-    border: 1px solid #ccc;
+    border: 2px solid #e9ecef;
     border-radius: 0.6rem;
     font-size: 1rem;
-    transition: border-color 0.3s;
+    transition: all 0.3s ease;
+    background-color: #fff;
 }
 
 .form-control:focus {
     border-color: #d16c44;
     outline: none;
+    box-shadow: 0 0 0 0.2rem rgba(209, 108, 68, 0.25);
 }
 
 .checkbox-label {
@@ -142,22 +149,25 @@ h2 {
 .submit-btn {
     width: 100%;
     background-color: #d16c44;
-    color: white;
-    padding: 1rem;
+    color: #fff;
     border: none;
     border-radius: 0.6rem;
+    padding: 1rem;
+    font-size: 1.2rem;
     font-weight: 600;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+    transition: all 0.3s ease;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
+    gap: 10px;
 }
 
 .submit-btn:hover {
     background-color: #b95a33;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .alert {

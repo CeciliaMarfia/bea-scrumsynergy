@@ -20,6 +20,11 @@
         | Enviada el {{ pregunta.fecha_creacion|date:"d/m/Y H:i" }}
       </small>
     </div>
+    {% if pregunta.respuesta %}
+      <div class="custom-success-message" style="margin-bottom: 2rem;">
+        Esta pregunta ya fue respondida.
+      </div>
+    {% else %}
     <form method="post" id="respuestaForm" novalidate>
       {% csrf_token %}
       <div class="form-group {% if form.respuesta.errors %}has-error{% endif %}">
@@ -39,6 +44,14 @@
         <i class="fas fa-paper-plane"></i> Enviar Respuesta
       </button>
     </form>
+    {% endif %}
+    {% if messages %}
+      <ul class="messages">
+          {% for message in messages %}
+              <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+          {% endfor %}
+      </ul>
+    {% endif %}
   </div>
 </div>
 {% endblock %}
@@ -200,6 +213,50 @@ body {
 
 .submit-btn:active {
   transform: translateY(0);
+}
+
+.custom-success-message {
+  background: #386150cc;
+  color: #fff;
+  border: 1.5px solid #4fd37e;
+  font-size: 1.5rem;
+  font-weight: 600;
+  border-radius: 1rem;
+  padding: 1.2rem 2rem;
+  margin-bottom: 0.5rem;
+  text-align: center;
+  box-shadow: 0 2px 8px #4fd37e22;
+}
+
+.custom-messages {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.messages {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 2rem;
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto 2rem auto;
+}
+.messages li {
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    border-radius: 0.6rem;
+    text-align: center;
+    background-color: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+}
+.messages .success {
+    background-color: rgba(40, 167, 69, 0.8) !important;
+    border-color: #28a745 !important;
+    color: #fff !important;
 }
 </style>
 {% endblock %} 

@@ -18,13 +18,6 @@
   margin-top: 2rem;
 }
 
-.header-container {
-  display: flex;
-  align-items: center;
-  gap: 2rem;
-  margin-bottom: 2rem;
-}
-
 .btn-volver {
   display: inline-block;
   background-color: #546469;
@@ -156,12 +149,14 @@
 {% endblock %}
 
 {% block content %}
+<div class="top-links">
+  <a href="{% url 'lista_maquinaria_admin' %}" class="btn-volver">
+    <i class="fas fa-arrow-left"></i> Volver al listado
+  </a>
+</div>
 <div class="container">
   <div class="form-card">
     <div class="header-container">
-      <a href="{% url 'lista_maquinaria_admin' %}" class="btn-volver">
-        <i class="fas fa-arrow-left"></i> Volver al listado
-      </a>
       <h2>Editar Maquinaria</h2>
     </div>
 
