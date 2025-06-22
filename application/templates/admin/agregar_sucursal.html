@@ -1,7 +1,10 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="container mt-4">
+<a href="javascript:history.back()" class="btn-volver">
+        <i class="fas fa-arrow-left"></i> Volver a la página anterior
+    </a>
+<<div class="container" style="margin-top: 120px;">
     <div class="row justify-content-center">
         <div class="col-md-8">
             <div class="card">
@@ -22,17 +25,21 @@
                     <form method="post">
                         {% csrf_token %}
                         <div class="mb-3">
-                            <label for="direccion_completa" class="form-label">Dirección Completa</label>
-                            <input type="text" class="form-control" id="direccion_completa" name="direccion_completa" 
-                                   value="{{ direccion_completa }}" 
-                                   placeholder="Ej: Calle Ficticia, 123, Localidad, Provincia"
-                                   required>
-                            <div class="form-text">
-                                Ingrese la dirección en el formato: "Calle Número, Localidad, Provincia"
-                            </div>
-                        </div>
+    <label for="calle" class="form-label">Calle y Altura</label>
+<input type="text" class="form-control" id="calle" name="calle" 
+       value="{{ calle|default:'' }}" 
+       placeholder="Ej: Calle Ficticia 123"
+       required>
+</div>
+<div class="mb-3">
+    <label for="localidad" class="form-label">Localidad</label>
+    <input type="text" class="form-control" id="localidad" name="localidad" 
+           value="{{ localidad }}" 
+           placeholder="Ej: La Plata"
+           required>
+</div>
                         <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary">Agregar Sucursal</button>
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-map-marker-alt"></i> Agregar Sucursal</button>
                             <a href="{% url 'administrar_sucursales' %}" class="btn btn-secondary">Cancelar</a>
                         </div>
                     </form>
@@ -127,5 +134,30 @@
     font-size: 0.875rem;
     margin-top: 0.25rem;
 }
+
+
+.btn-volver {
+            position: absolute;
+            top: 40px;
+            left: 40px;
+            display: inline-block;
+            background-color: #b95a33;
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border-radius: 0.6rem;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .btn-volver:hover {
+            background-color: #3d484c;
+            transform: translateY(-2px);
+        }
+
 </style>
 {% endblock %} 

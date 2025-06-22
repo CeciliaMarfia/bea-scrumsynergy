@@ -901,9 +901,11 @@ def eliminar_perfil(request):
     if request.method == 'POST':
         user = request.user
         # Verificar reservas pendientes o activas
-        reservas_pendientes = Reserva.objects.filter(cliente=user, estado__in=['pendiente_pago', 'pagada'])
+        reservas_pendientes = Reserva.objects.filter(
+            cliente=user, estado__in=['pendiente_pago', 'pagada'])
         if reservas_pendientes.exists():
-            messages.error(request, 'No puedes eliminar tu perfil porque tienes reservas o alquileres pendientes.')
+            messages.error(
+                request, 'No puedes eliminar tu perfil porque tienes reservas o alquileres pendientes.')
             return redirect('perfil')
         auth_logout(request)
         user.delete()
@@ -1218,90 +1220,62 @@ def administrar_sucursales(request):
 
 @login_required
 def agregar_sucursal(request):
+    # Inicializa las variables para solicitudes GET o si la validación POST falla
+    calle = ''
+    localidad = ''
+
     if request.method == 'POST':
-        direccion_completa = request.POST.get('direccion_completa')
+        calle = request.POST.get('calle')
+        localidad = request.POST.get('localidad')
+
+        # 1. Verificar si ya existe una sucursal con esa calle y localidad
+        if Sucursal.objects.filter(calle=calle, localidad=localidad).exists():
+            messages.error(
+                request, 'Ya existe una sucursal registrada en esa dirección.')
+            # Al renderizar, calle y localidad tendrán los valores del POST
+            return render(request, 'admin/agregar_sucursal.html', {'calle': calle, 'localidad': localidad})
+
+        # 2. Geocodificar la dirección usando Nominatim
+        direccion_geocodificar = f"{calle}, {localidad}, Argentina"
+        geolocator = Nominatim(user_agent="bea_scrumsynergy")
 
         try:
-            # Separar la dirección en sus componentes
-            # Formato esperado: "Calle Número, Localidad, Provincia"
-            partes = [part.strip() for part in direccion_completa.split(',')]
-
-            if len(partes) < 3:
+            location = geolocator.geocode(direccion_geocodificar)
+            if location:
+                # 3. Crear la sucursal con las coordenadas, usando 'calle' y 'localidad'
+                sucursal = Sucursal.objects.create(
+                    calle=calle,
+                    localidad=localidad,
+                    latitud=location.latitude,
+                    longitud=location.longitude
+                )
+                messages.success(
+                    request, 'Sucursal agregada exitosamente.')
+                return redirect('administrar_sucursales')
+            else:
                 messages.error(
-                    request, 'Por favor, ingrese la dirección en el formato: "Calle Número, Localidad, Provincia"')
+                    request, 'No se pudo encontrar la ubicación. Por favor, verifique los datos.')
                 return render(request, 'admin/agregar_sucursal.html', {
-                    'direccion_completa': direccion_completa
+                    'calle': calle, 'localidad': localidad
                 })
-
-            # Separar calle y número
-            calle_numero = partes[0].strip()
-            calle_parts = calle_numero.rsplit(' ', 1)
-
-            if len(calle_parts) != 2:
-                messages.error(
-                    request, 'Por favor, ingrese la calle y número en el formato: "Calle Número"')
-                return render(request, 'admin/agregar_sucursal.html', {
-                    'direccion_completa': direccion_completa
-                })
-
-            calle = calle_parts[0].strip()
-            numero = calle_parts[1].strip()
-            localidad = partes[1].strip()
-            provincia = partes[2].strip()
-
-            # Verificar si ya existe una sucursal con la misma dirección
-            if Sucursal.objects.filter(
-                calle=calle,
-                numero=numero,
-                localidad=localidad,
-                provincia=provincia
-            ).exists():
-                messages.error(
-                    request, 'Ya existe una sucursal con esta dirección. Por favor, verifique los datos.')
-                return render(request, 'admin/agregar_sucursal.html', {
-                    'direccion_completa': direccion_completa
-                })
-
-            # Geocodificar la dirección usando Nominatim
-            direccion_geocodificar = f"{calle} {numero}, {localidad}, {provincia}, Argentina"
-            geolocator = Nominatim(user_agent="bea_scrumsynergy")
-
-            try:
-                location = geolocator.geocode(direccion_geocodificar)
-                if location:
-                    # Crear la sucursal con las coordenadas
-                    sucursal = Sucursal.objects.create(
-                        calle=calle,
-                        numero=numero,
-                        localidad=localidad,
-                        provincia=provincia,
-                        latitud=location.latitude,
-                        longitud=location.longitude
-                    )
-                    messages.success(
-                        request, 'Sucursal agregada exitosamente.')
-                    return redirect('administrar_sucursales')
-                else:
-                    messages.error(
-                        request, 'No se pudo encontrar la ubicación. Por favor, verifique los datos.')
-                    return render(request, 'admin/agregar_sucursal.html', {
-                        'direccion_completa': direccion_completa
-                    })
-            except GeocoderTimedOut:
-                messages.error(
-                    request, 'El servicio de geocodificación está temporalmente no disponible. Por favor, intente nuevamente.')
-                return render(request, 'admin/agregar_sucursal.html', {
-                    'direccion_completa': direccion_completa
-                })
-
+        except GeocoderTimedOut:
+            messages.error(
+                request, 'El servicio de geocodificación está temporalmente no disponible. Por favor, intente nuevamente.')
+            return render(request, 'admin/agregar_sucursal.html', {
+                'calle': calle, 'localidad': localidad
+            })
         except Exception as e:
             messages.error(
-                request, 'Ocurrió un error al agregar la sucursal. Por favor, intente nuevamente.')
+                request, f'Ocurrió un error al agregar la sucursal: {e}. Por favor, intente nuevamente.')
+            # Para depuración en consola
+            print(f"Error al agregar sucursal: {e}")
             return render(request, 'admin/agregar_sucursal.html', {
-                'direccion_completa': direccion_completa
+                'calle': calle, 'localidad': localidad
             })
 
-    return render(request, 'admin/agregar_sucursal.html')
+    # Para las solicitudes GET (cuando se carga la página por primera vez)
+    # o si el POST falla antes de la redirección
+    return render(request, 'admin/agregar_sucursal.html', {'calle': calle, 'localidad': localidad})
 
 
 @login_required
@@ -1377,13 +1351,15 @@ def politicas_privacidad(request):
 @login_required
 def preguntas_cliente(request):
     if not request.user.perfil.is_cliente:
-        messages.error(request, 'Solo los clientes pueden acceder a esta sección.')
+        messages.error(
+            request, 'Solo los clientes pueden acceder a esta sección.')
         return redirect('home')
 
     if request.method == 'POST':
         texto = request.POST.get('texto', '').strip()
         if not texto:
-            messages.error(request, 'El campo de pregunta no puede estar vacío.')
+            messages.error(
+                request, 'El campo de pregunta no puede estar vacío.')
         else:
             Pregunta.objects.create(usuario=request.user, texto=texto)
             messages.success(request, '¡Pregunta añadida correctamente!')
@@ -1394,20 +1370,24 @@ def preguntas_cliente(request):
     if msg:
         messages.success(request, msg)
 
-    preguntas = Pregunta.objects.filter(usuario=request.user).order_by('-fecha_creacion')
+    preguntas = Pregunta.objects.filter(
+        usuario=request.user).order_by('-fecha_creacion')
     return render(request, 'preguntas/preguntas_cliente.html', {'preguntas': preguntas})
 
 
 @login_required
 def editar_pregunta(request, pregunta_id):
-    pregunta = get_object_or_404(Pregunta, id=pregunta_id, usuario=request.user)
+    pregunta = get_object_or_404(
+        Pregunta, id=pregunta_id, usuario=request.user)
     if pregunta.respuesta:
-        messages.error(request, 'No puedes editar una pregunta que ya tiene respuesta.')
+        messages.error(
+            request, 'No puedes editar una pregunta que ya tiene respuesta.')
         return redirect('preguntas_cliente')
     if request.method == 'POST':
         texto = request.POST.get('texto', '').strip()
         if not texto:
-            messages.error(request, 'El campo de pregunta no puede estar vacío.')
+            messages.error(
+                request, 'El campo de pregunta no puede estar vacío.')
         else:
             pregunta.texto = texto
             pregunta.save()
@@ -1424,7 +1404,8 @@ def eliminar_pregunta(request, pregunta_id):
         (request.user.perfil.is_empleado or request.user.perfil.is_dueno)
     )
     if not puede_eliminar:
-        messages.error(request, 'No tienes permiso para eliminar esta consulta.')
+        messages.error(
+            request, 'No tienes permiso para eliminar esta consulta.')
         return redirect('preguntas_cliente')
     if request.method == 'POST':
         pregunta.delete()
@@ -1438,7 +1419,8 @@ def eliminar_pregunta(request, pregunta_id):
 @login_required
 def gestionar_preguntas(request):
     if not (request.user.perfil.is_empleado or request.user.perfil.is_dueno):
-        messages.error(request, 'No tienes permiso para acceder a esta sección.')
+        messages.error(
+            request, 'No tienes permiso para acceder a esta sección.')
         return redirect('home')
     # Mostrar mensaje de éxito si viene por GET
     msg = request.GET.get('msg')
@@ -1452,8 +1434,9 @@ def gestionar_preguntas(request):
 def registrar_devolucion(request):
     # Verificar que el usuario sea empleado o dueño
     if not (request.user.perfil.is_empleado or request.user.perfil.is_dueno):
-        raise PermissionDenied("No tienes permisos para acceder a esta página.")
-    
+        raise PermissionDenied(
+            "No tienes permisos para acceder a esta página.")
+
     if request.method == 'POST':
         form = RegistrarDevolucionForm(request.POST)
         if form.is_valid():
@@ -1466,13 +1449,16 @@ def registrar_devolucion(request):
                 return render(request, 'registrar_devolucion.html', {'form': form})
 
             if maquina.estado != 'alquilado':
-                messages.error(request, 'La máquina no se encuentra en estado "alquilada".')
+                messages.error(
+                    request, 'La máquina no se encuentra en estado "alquilada".')
                 return render(request, 'registrar_devolucion.html', {'form': form})
 
             # Buscar la reserva activa
-            reserva = Reserva.objects.filter(maquina=maquina, estado='pagada').order_by('-fecha_fin').first()
+            reserva = Reserva.objects.filter(
+                maquina=maquina, estado='pagada').order_by('-fecha_fin').first()
             if not reserva:
-                messages.error(request, 'No se encontró una reserva activa para esta máquina.')
+                messages.error(
+                    request, 'No se encontró una reserva activa para esta máquina.')
                 return render(request, 'registrar_devolucion.html', {'form': form})
 
             # Verificar si la devolución es en término
@@ -1482,7 +1468,8 @@ def registrar_devolucion(request):
                 maquina.save()
                 reserva.estado = 'finalizada'
                 reserva.save()
-                messages.success(request, 'Devolución registrada con éxito. La maquinaria pasa a estado de revisión.')
+                messages.success(
+                    request, 'Devolución registrada con éxito. La maquinaria pasa a estado de revisión.')
             else:
                 # Escenario 2: Devolución fuera de término
                 maquina.estado = 'en_revision'
@@ -1492,7 +1479,8 @@ def registrar_devolucion(request):
                 # Aplica recargo (ejemplo: 10% del monto total por día de retraso)
                 dias_retraso = (fecha_devolucion - reserva.fecha_fin).days
                 recargo = Decimal('0.10') * reserva.monto_total * dias_retraso
-                messages.warning(request, f'Devolución fuera de término. Se aplica un recargo de ${recargo:.2f} por {dias_retraso} días de retraso.')
+                messages.warning(
+                    request, f'Devolución fuera de término. Se aplica un recargo de ${recargo:.2f} por {dias_retraso} días de retraso.')
             return redirect('registrar_devolucion')
     else:
         form = RegistrarDevolucionForm()
@@ -1531,12 +1519,12 @@ def lista_maquinaria_admin(request):
 @user_passes_test(is_owner)
 def editar_maquinaria(request, maquina_id):
     maquina = get_object_or_404(Maquina, id=maquina_id)
-    
+
     if request.method == 'POST':
         print("DEBUG: Procesando POST request para editar maquinaria")
         print(f"DEBUG: FILES en request: {request.FILES}")
         print(f"DEBUG: POST data: {request.POST}")
-        
+
         # Actualizar los campos de la maquinaria
         maquina.nombre = request.POST.get('nombre')
         maquina.marca = request.POST.get('marca')
@@ -1547,22 +1535,24 @@ def editar_maquinaria(request, maquina_id):
         maquina.estado = request.POST.get('estado')
         maquina.descripcion = request.POST.get('descripcion')
         maquina.tipo_cancelacion = request.POST.get('tipo_cancelacion')
-        
+
         # Manejar el porcentaje de reembolso según la política de cancelación
         if maquina.tipo_cancelacion == 'parcial':
             politica_cancelacion = request.POST.get('politica_cancelacion')
             try:
                 porcentaje = float(politica_cancelacion)
                 if porcentaje < 10 or porcentaje > 90:
-                    messages.error(request, 'El porcentaje de reembolso debe estar entre 10% y 90%.')
+                    messages.error(
+                        request, 'El porcentaje de reembolso debe estar entre 10% y 90%.')
                     return render(request, 'listados/editar_maquinaria.html', {'maquina': maquina})
                 maquina.politica_cancelacion = porcentaje
             except (ValueError, TypeError):
-                messages.error(request, 'Por favor ingrese un porcentaje válido para el reembolso.')
+                messages.error(
+                    request, 'Por favor ingrese un porcentaje válido para el reembolso.')
                 return render(request, 'listados/editar_maquinaria.html', {'maquina': maquina})
         else:
             maquina.politica_cancelacion = None
-        
+
         # Convertir precio_por_dia a Decimal
         try:
             precio = request.POST.get('precio_por_dia')
@@ -1574,9 +1564,9 @@ def editar_maquinaria(request, maquina_id):
         except (ValueError, TypeError, InvalidOperation):
             messages.error(request, 'Por favor ingrese un precio válido.')
             return render(request, 'listados/editar_maquinaria.html', {'maquina': maquina})
-            
+
         maquina.permisos_requeridos = request.POST.get('permisos_requeridos')
-        
+
         try:
             print("DEBUG: Validando modelo de maquinaria")
             maquina.full_clean()  # Validar el modelo
@@ -1586,30 +1576,34 @@ def editar_maquinaria(request, maquina_id):
             # Manejar imágenes nuevas
             nuevas_imagenes = request.FILES.getlist('nuevas_imagenes')
             print(f"DEBUG: Nuevas imágenes recibidas: {len(nuevas_imagenes)}")
-            
+
             for imagen in nuevas_imagenes:
-                print(f"DEBUG: Procesando imagen: {imagen.name}, tamaño: {imagen.size}, tipo: {imagen.content_type}")
+                print(
+                    f"DEBUG: Procesando imagen: {imagen.name}, tamaño: {imagen.size}, tipo: {imagen.content_type}")
                 try:
                     # Validar tamaño
                     if imagen.size > 5 * 1024 * 1024:  # 5MB
-                        messages.error(request, f'La imagen {imagen.name} excede el tamaño máximo permitido de 5MB.')
+                        messages.error(
+                            request, f'La imagen {imagen.name} excede el tamaño máximo permitido de 5MB.')
                         return render(request, 'listados/editar_maquinaria.html', {'maquina': maquina})
-                    
+
                     # Validar tipo de archivo y extensión
                     allowed_types = ['image/jpeg', 'image/jpg', 'image/png']
                     allowed_extensions = ['.jpg', '.jpeg', '.png']
-                    
+
                     # Verificar el content type
                     if imagen.content_type.lower() not in allowed_types:
-                        messages.error(request, f'El archivo {imagen.name} no es un formato válido. Solo se permiten archivos JPG, JPEG y PNG.')
+                        messages.error(
+                            request, f'El archivo {imagen.name} no es un formato válido. Solo se permiten archivos JPG, JPEG y PNG.')
                         return render(request, 'listados/editar_maquinaria.html', {'maquina': maquina})
-                    
+
                     # Verificar la extensión
                     extension = os.path.splitext(imagen.name.lower())[1]
                     if extension not in allowed_extensions:
-                        messages.error(request, f'La extensión del archivo {imagen.name} no está permitida. Solo se permiten archivos .jpg, .jpeg y .png')
+                        messages.error(
+                            request, f'La extensión del archivo {imagen.name} no está permitida. Solo se permiten archivos .jpg, .jpeg y .png')
                         return render(request, 'listados/editar_maquinaria.html', {'maquina': maquina})
-                    
+
                     ImagenMaquina.objects.create(
                         maquina=maquina,
                         imagen=imagen,
@@ -1617,24 +1611,29 @@ def editar_maquinaria(request, maquina_id):
                     )
                     print(f"DEBUG: Imagen {imagen.name} guardada exitosamente")
                 except Exception as e:
-                    print(f"ERROR: Error al guardar imagen {imagen.name}: {str(e)}")
-                    messages.error(request, f'Error al guardar la imagen {imagen.name}')
+                    print(
+                        f"ERROR: Error al guardar imagen {imagen.name}: {str(e)}")
+                    messages.error(
+                        request, f'Error al guardar la imagen {imagen.name}')
                     return render(request, 'listados/editar_maquinaria.html', {'maquina': maquina})
 
             # Actualizar imagen principal si se seleccionó una
             imagen_principal_id = request.POST.get('imagen_principal')
-            print(f"DEBUG: ID de imagen principal seleccionada: {imagen_principal_id}")
-            
+            print(
+                f"DEBUG: ID de imagen principal seleccionada: {imagen_principal_id}")
+
             if imagen_principal_id:
                 # Primero quitamos el flag de principal de todas las imágenes
                 maquina.imagenes.all().update(es_principal=False)
                 # Luego marcamos la seleccionada como principal
-                ImagenMaquina.objects.filter(id=imagen_principal_id).update(es_principal=True)
+                ImagenMaquina.objects.filter(
+                    id=imagen_principal_id).update(es_principal=True)
                 print("DEBUG: Imagen principal actualizada")
-            
+
             # Verificar que haya al menos una imagen
             if not maquina.imagenes.exists() and not nuevas_imagenes:
-                messages.error(request, 'Debe subir al menos una imagen para la maquinaria.')
+                messages.error(
+                    request, 'Debe subir al menos una imagen para la maquinaria.')
                 return render(request, 'listados/editar_maquinaria.html', {'maquina': maquina})
 
             # Si no hay imagen principal seleccionada pero hay imágenes, hacer principal la primera
@@ -1648,13 +1647,15 @@ def editar_maquinaria(request, maquina_id):
             return redirect('lista_maquinaria_admin')
         except ValidationError as e:
             print(f"ERROR: Error de validación: {str(e)}")
-            messages.error(request, f'Error al actualizar la maquinaria: {str(e)}')
+            messages.error(
+                request, f'Error al actualizar la maquinaria: {str(e)}')
             return render(request, 'listados/editar_maquinaria.html', {'maquina': maquina})
         except Exception as e:
             print(f"ERROR: Error inesperado: {str(e)}")
-            messages.error(request, f'Error inesperado al actualizar la maquinaria: {str(e)}')
+            messages.error(
+                request, f'Error inesperado al actualizar la maquinaria: {str(e)}')
             return render(request, 'listados/editar_maquinaria.html', {'maquina': maquina})
-    
+
     return render(request, 'listados/editar_maquinaria.html', {'maquina': maquina})
 
 
@@ -1665,23 +1666,24 @@ def eliminar_imagen(request, imagen_id):
         try:
             imagen = ImagenMaquina.objects.get(id=imagen_id)
             maquina = imagen.maquina
-            
+
             # Verificar si es la última imagen
             if maquina.imagenes.count() <= 1:
                 return JsonResponse({
                     'success': False,
                     'error': 'No se puede eliminar la última imagen. La maquinaria debe tener al menos una imagen.'
                 })
-            
+
             # Si es la imagen principal y hay otras imágenes, hacer principal a otra
             if imagen.es_principal:
-                nueva_principal = maquina.imagenes.exclude(id=imagen_id).first()
+                nueva_principal = maquina.imagenes.exclude(
+                    id=imagen_id).first()
                 nueva_principal.es_principal = True
                 nueva_principal.save()
-            
+
             # Eliminar la imagen
             imagen.delete()
-            
+
             return JsonResponse({'success': True})
         except ImagenMaquina.DoesNotExist:
             return JsonResponse({
@@ -1710,7 +1712,8 @@ def alquilar_maquinaria(request):
         fecha_inicio = request.POST.get('fecha_inicio')
         fecha_fin = request.POST.get('fecha_fin')
         # Aquí irá la lógica de alquiler, por ahora solo mostramos los datos
-        messages.info(request, f'ID ingresado: {id_maquinaria}, Fecha inicio: {fecha_inicio}, Fecha fin: {fecha_fin}')
+        messages.info(
+            request, f'ID ingresado: {id_maquinaria}, Fecha inicio: {fecha_inicio}, Fecha fin: {fecha_fin}')
         return redirect('alquilar_maquinaria')
     return render(request, 'reservas/alquilar_maquinaria.html')
 
@@ -1722,7 +1725,8 @@ def alquilar_maquinaria_detalle(request, id_maquina):
     proxima_disponibilidad = maquina.get_proxima_disponibilidad()
 
     if maquina.estado == 'en_revision' or maquina.estado == 'mantenimiento':
-        messages.error(request, 'La máquina está suspendida temporalmente y no puede ser alquilada.')
+        messages.error(
+            request, 'La máquina está suspendida temporalmente y no puede ser alquilada.')
         return redirect('detalle_maquinaria', maquina_id=maquina.id)
 
     if request.method == 'POST':
@@ -1741,15 +1745,18 @@ def alquilar_maquinaria_detalle(request, id_maquina):
             reserva.maquina = maquina
             if request.user.perfil.is_empleado:
                 reserva.empleado_gestor = request.user
-            dias = (form.cleaned_data['fecha_fin'] - form.cleaned_data['fecha_inicio']).days + 1
+            dias = (form.cleaned_data['fecha_fin'] -
+                    form.cleaned_data['fecha_inicio']).days + 1
             reserva.monto_total = maquina.precio_por_dia * dias
             try:
                 with transaction.atomic():
                     reserva.save()
-                    messages.success(request, f'Alquiler creado exitosamente. Número de alquiler: {reserva.numero_reserva}')
+                    messages.success(
+                        request, f'Alquiler creado exitosamente. Número de alquiler: {reserva.numero_reserva}')
                     return redirect('mis_alquileres')
             except Exception as e:
-                messages.error(request, 'Error al crear el alquiler. Por favor, intente nuevamente.')
+                messages.error(
+                    request, 'Error al crear el alquiler. Por favor, intente nuevamente.')
                 return redirect('detalle_maquinaria', maquina_id=maquina.id)
         else:
             # Solo mostrar errores generales como mensajes
@@ -1818,19 +1825,19 @@ def contacto(request):
             correo = form.cleaned_data['correo_electronico']
             telefono = form.cleaned_data['telefono']
             consulta = form.cleaned_data['consulta']
-            
+
             # Construir el mensaje
             mensaje = f"""
             Nuevo mensaje de contacto:
-            
+
             Nombre: {nombre} {apellidos}
             Correo: {correo}
             Teléfono: {telefono}
-            
+
             Consulta:
             {consulta}
             """
-            
+
             # Enviar el correo
             try:
                 send_mail(
@@ -1840,11 +1847,13 @@ def contacto(request):
                     recipient_list=['morearias456@gmail.com'],
                     fail_silently=False,
                 )
-                messages.success(request, 'Tu mensaje ha sido enviado correctamente. Nos pondremos en contacto contigo pronto.')
+                messages.success(
+                    request, 'Tu mensaje ha sido enviado correctamente. Nos pondremos en contacto contigo pronto.')
                 return redirect('contacto')
             except Exception as e:
-                messages.error(request, 'Hubo un error al enviar el mensaje. Por favor, intenta nuevamente.')
+                messages.error(
+                    request, 'Hubo un error al enviar el mensaje. Por favor, intenta nuevamente.')
     else:
         form = ContactForm()
-    
+
     return render(request, 'contacto.html', {'form': form})
