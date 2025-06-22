@@ -105,10 +105,69 @@
     color: white !important;
     text-decoration: none !important;
 }
+.btn-cancelar {
+    background-color: #dc3545;
+    color: white !important;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    text-decoration: none !important;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+    border: none;
+    cursor: pointer;
+    display: inline-block;
+    text-align: center;
+}
+.btn-cancelar:hover {
+    background-color: #c82333;
+    color: white !important;
+}
+.btn-pagar {
+    background-color: #28a745;
+    color: white !important;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    text-decoration: none !important;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+    margin-right: 1rem;
+    display: inline-block;
+    text-align: center;
+    border: none;
+    cursor: pointer;
+}
+.btn-pagar:hover {
+    background-color: #218838;
+    color: white !important;
+}
+.botones-accion {
+    text-align: right;
+    margin-top: 1rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+}
 {% endblock %}
 
 {% block content %}
 <div class="container">
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert {% if message.tags == 'success' %}alert-success{% elif message.tags == 'error' %}alert-danger{% endif %}" 
+         style="text-align: center; padding: 1rem; margin-bottom: 1rem; 
+                {% if message.tags == 'success' %}
+                background-color: rgba(40, 167, 69, 0.2); 
+                color: white;
+                {% elif message.tags == 'error' %}
+                background-color: rgba(220, 53, 69, 0.9);
+                color: white;
+                {% endif %}
+                border-radius: 0.5rem;">
+        {{ message }}
+    </div>
+    {% endfor %}
+    {% endif %}
+
     <div class="header-container" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
         <a href="{% url 'home' %}" class="btn-volver">
             <i class="fas fa-home"></i> Volver al Inicio
@@ -118,6 +177,7 @@
             <i class="fas fa-clipboard-list"></i> Alquilar maquinaria
         </a>
     </div>
+    
     {% if reservas %}
     <div class="reservas-container">
         {% for reserva in reservas %}
@@ -145,6 +205,14 @@
                     <span class="info-label">Total</span>
                     <span class="info-value">${{ reserva.monto_total }}</span>
                 </div>
+            </div>
+            <div class="botones-accion">
+                <button class="btn-pagar">
+                    <i class="fas fa-credit-card"></i> Pagar Alquiler
+                </a>
+                <button class="btn-cancelar">
+                    <i class="fas fa-times"></i> Cancelar Alquiler
+                </button>
             </div>
         </div>
         {% endfor %}

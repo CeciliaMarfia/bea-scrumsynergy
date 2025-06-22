@@ -10,7 +10,7 @@ from .models import Maquina, HomeVideo, PermisoEspecial, Perfil, Reserva, Imagen
 from django.core.mail import send_mail, EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
-from .forms import RegistroUsuarioForm, PermisoEspecialForm, EditarPerfilForm, ReservaMaquinariaForm, TarjetaCreditoForm, CambiarPasswordForm, ResponderPreguntaForm
+from .forms import RegistroUsuarioForm, PermisoEspecialForm, EditarPerfilForm, ReservaMaquinariaForm, TarjetaCreditoForm, CambiarPasswordForm, ResponderPreguntaForm, ContactForm
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.views import PasswordResetView, PasswordResetDoneView, PasswordResetConfirmView, PasswordResetCompleteView
 from django.contrib.auth.models import User
@@ -1746,7 +1746,7 @@ def alquilar_maquinaria_detalle(request, id_maquina):
             try:
                 with transaction.atomic():
                     reserva.save()
-                    messages.success(request, f'Alquiler creado exitosamente. Número de reserva: {reserva.numero_reserva}')
+                    messages.success(request, f'Alquiler creado exitosamente. Número de alquiler: {reserva.numero_reserva}')
                     return redirect('mis_alquileres')
             except Exception as e:
                 messages.error(request, 'Error al crear el alquiler. Por favor, intente nuevamente.')
@@ -1807,3 +1807,44 @@ def preguntas_frecuentes(request):
         },
     ]
     return render(request, 'preguntas/preguntas_frecuentes.html', {'preguntas': preguntas})
+
+
+def contacto(request):
+    if request.method == 'POST':
+        form = ContactForm(request.POST)
+        if form.is_valid():
+            nombre = form.cleaned_data['nombre']
+            apellidos = form.cleaned_data['apellidos']
+            correo = form.cleaned_data['correo_electronico']
+            telefono = form.cleaned_data['telefono']
+            consulta = form.cleaned_data['consulta']
+            
+            # Construir el mensaje
+            mensaje = f"""
+            Nuevo mensaje de contacto:
+            
+            Nombre: {nombre} {apellidos}
+            Correo: {correo}
+            Teléfono: {telefono}
+            
+            Consulta:
+            {consulta}
+            """
+            
+            # Enviar el correo
+            try:
+                send_mail(
+                    subject='Nuevo mensaje de contacto - Bob el Alquilador',
+                    message=mensaje,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=['morearias456@gmail.com'],
+                    fail_silently=False,
+                )
+                messages.success(request, 'Tu mensaje ha sido enviado correctamente. Nos pondremos en contacto contigo pronto.')
+                return redirect('contacto')
+            except Exception as e:
+                messages.error(request, 'Hubo un error al enviar el mensaje. Por favor, intenta nuevamente.')
+    else:
+        form = ContactForm()
+    
+    return render(request, 'contacto.html', {'form': form})
