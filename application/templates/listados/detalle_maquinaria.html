@@ -445,6 +445,17 @@
     color: white;
     text-decoration: none;
 }
+
+.preguntas-box .btn-enviar {
+  background-color: #d16c44;
+  border: none;
+  color: #fff;
+  font-weight: bold;
+  border-radius: 0.5rem;
+  padding: 0.7rem 2.2rem;
+  margin-top: 0.5rem;
+  transition: none;
+}
 {% endblock %}
 
 {% block content %}
@@ -663,9 +674,9 @@
         {% csrf_token %}
         <div class="form-group">
           <label for="texto">¿Querés consultar algo sobre esta máquina?</label>
-          <textarea name="texto" id="texto" class="form-control" rows="3" required style="color:#222;"></textarea>
+          <textarea name="texto" id="texto" class="form-control" rows="3" required style="background:rgba(255,255,255,0.18); color:#222; border:1.5px solid rgba(255,255,255,0.25); border-radius:0.6rem; box-shadow:none; transition:border 0.2s;"></textarea>
         </div>
-        <button type="submit" class="btn btn-enviar">Enviar pregunta</button>
+        <button type="submit" class="btn-enviar">Enviar pregunta</button>
       </form>
       {% elif not user.is_authenticated %}
       <div class="alert alert-info">Iniciá sesión para realizar una pregunta sobre esta máquina.</div>

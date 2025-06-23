@@ -815,15 +815,50 @@ def mis_reservas(request):
 
 
 def detalle_maquinaria(request, maquina_id):
+    from .forms import ResponderPreguntaForm
     maquina = get_object_or_404(Maquina, id=maquina_id)
-
-    # Obtener la próxima disponibilidad usando el nuevo método
     proxima_disponibilidad = maquina.get_proxima_disponibilidad()
+    preguntas = Pregunta.objects.filter(maquina=maquina).order_by('-fecha_creacion')
 
-    return render(request, 'listados/detalle_maquinaria.html', {
+    mostrar_form_pregunta = request.user.is_authenticated and hasattr(request.user, 'perfil') and request.user.perfil.is_cliente
+    mostrar_form_respuesta = request.user.is_authenticated and hasattr(request.user, 'perfil') and (request.user.perfil.is_empleado or request.user.perfil.is_dueno)
+
+    form_respuesta = None
+    pregunta_responder_id = None
+
+    # Manejo de preguntas (solo clientes)
+    if request.method == 'POST' and mostrar_form_pregunta and 'texto' in request.POST:
+        texto = request.POST.get('texto', '').strip()
+        if not texto:
+            messages.error(request, 'El campo de pregunta no puede estar vacío.')
+        else:
+            Pregunta.objects.create(usuario=request.user, maquina=maquina, texto=texto)
+            messages.success(request, '¡Pregunta añadida correctamente!')
+            return redirect('detalle_maquinaria', maquina_id=maquina.id)
+
+    # Manejo de respuestas (solo empleados/dueños)
+    if request.method == 'POST' and mostrar_form_respuesta and 'respuesta' in request.POST:
+        pregunta_responder_id = request.POST.get('pregunta_id')
+        pregunta_a_responder = Pregunta.objects.filter(id=pregunta_responder_id, maquina=maquina).first()
+        if pregunta_a_responder and not pregunta_a_responder.respuesta:
+            form_respuesta = ResponderPreguntaForm(request.POST, instance=pregunta_a_responder)
+            if form_respuesta.is_valid():
+                form_respuesta.save()
+                messages.success(request, '¡Pregunta respondida correctamente!')
+                return redirect('detalle_maquinaria', maquina_id=maquina.id)
+        else:
+            form_respuesta = ResponderPreguntaForm(instance=pregunta_a_responder)
+
+    context = {
         'maquina': maquina,
-        'proxima_disponibilidad': proxima_disponibilidad
-    })
+        'proxima_disponibilidad': proxima_disponibilidad,
+        'preguntas': preguntas,
+        'mostrar_form_pregunta': mostrar_form_pregunta,
+        'mostrar_form_respuesta': mostrar_form_respuesta,
+        'form_respuesta': form_respuesta,
+        'pregunta_responder_id': pregunta_responder_id,
+    }
+    return render(request, 'listados/detalle_maquinaria.html', context)
 
 
 @login_required
