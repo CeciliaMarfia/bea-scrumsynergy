@@ -164,7 +164,7 @@
                             <label class="form-check-label" for="star{{ value }}">
                                 {% for i in "12345"|make_list %}
                                     {% if forloop.counter <= value %}
-                                        ⭐
+                                        <i class="fas fa-star"></i> 
                                     {% endif %}
                                 {% endfor %}
                             </label>

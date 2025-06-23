@@ -818,10 +818,13 @@ def detalle_maquinaria(request, maquina_id):
     from .forms import ResponderPreguntaForm
     maquina = get_object_or_404(Maquina, id=maquina_id)
     proxima_disponibilidad = maquina.get_proxima_disponibilidad()
-    preguntas = Pregunta.objects.filter(maquina=maquina).order_by('-fecha_creacion')
+    preguntas = Pregunta.objects.filter(
+        maquina=maquina).order_by('-fecha_creacion')
 
-    mostrar_form_pregunta = request.user.is_authenticated and hasattr(request.user, 'perfil') and request.user.perfil.is_cliente
-    mostrar_form_respuesta = request.user.is_authenticated and hasattr(request.user, 'perfil') and (request.user.perfil.is_empleado or request.user.perfil.is_dueno)
+    mostrar_form_pregunta = request.user.is_authenticated and hasattr(
+        request.user, 'perfil') and request.user.perfil.is_cliente
+    mostrar_form_respuesta = request.user.is_authenticated and hasattr(
+        request.user, 'perfil') and (request.user.perfil.is_empleado or request.user.perfil.is_dueno)
 
     form_respuesta = None
     pregunta_responder_id = None
@@ -830,24 +833,30 @@ def detalle_maquinaria(request, maquina_id):
     if request.method == 'POST' and mostrar_form_pregunta and 'texto' in request.POST:
         texto = request.POST.get('texto', '').strip()
         if not texto:
-            messages.error(request, 'El campo de pregunta no puede estar vacío.')
+            messages.error(
+                request, 'El campo de pregunta no puede estar vacío.')
         else:
-            Pregunta.objects.create(usuario=request.user, maquina=maquina, texto=texto)
+            Pregunta.objects.create(
+                usuario=request.user, maquina=maquina, texto=texto)
             messages.success(request, '¡Pregunta añadida correctamente!')
             return redirect('detalle_maquinaria', maquina_id=maquina.id)
 
     # Manejo de respuestas (solo empleados/dueños)
     if request.method == 'POST' and mostrar_form_respuesta and 'respuesta' in request.POST:
         pregunta_responder_id = request.POST.get('pregunta_id')
-        pregunta_a_responder = Pregunta.objects.filter(id=pregunta_responder_id, maquina=maquina).first()
+        pregunta_a_responder = Pregunta.objects.filter(
+            id=pregunta_responder_id, maquina=maquina).first()
         if pregunta_a_responder and not pregunta_a_responder.respuesta:
-            form_respuesta = ResponderPreguntaForm(request.POST, instance=pregunta_a_responder)
+            form_respuesta = ResponderPreguntaForm(
+                request.POST, instance=pregunta_a_responder)
             if form_respuesta.is_valid():
                 form_respuesta.save()
-                messages.success(request, '¡Pregunta respondida correctamente!')
+                messages.success(
+                    request, '¡Pregunta respondida correctamente!')
                 return redirect('detalle_maquinaria', maquina_id=maquina.id)
         else:
-            form_respuesta = ResponderPreguntaForm(instance=pregunta_a_responder)
+            form_respuesta = ResponderPreguntaForm(
+                instance=pregunta_a_responder)
 
     context = {
         'maquina': maquina,
@@ -1032,16 +1041,18 @@ def pagar_reserva(request, reserva_id):
                 try:
                     tarjeta = TarjetaCredito.objects.get(
                         id=tarjeta_id, usuario=request.user)
-                    
+
                     # Obtener el número completo de la tarjeta
                     numero_tarjeta = tarjeta.numero_tarjeta
-                    
+
                     # Validación específica según el número de tarjeta
                     if numero_tarjeta == '1111111111111111':
-                        messages.error(request, 'La tarjeta tiene fondos insuficientes')
+                        messages.error(
+                            request, 'La tarjeta tiene fondos insuficientes')
                         return redirect('pagar_reserva', reserva_id=reserva.id)
                     elif numero_tarjeta == '2222222222222222':
-                        messages.error(request, 'Falló la conexión con el banco')
+                        messages.error(
+                            request, 'Falló la conexión con el banco')
                         return redirect('pagar_reserva', reserva_id=reserva.id)
                     elif numero_tarjeta == '3333333333333333':
                         # Pago exitoso
@@ -1053,9 +1064,10 @@ def pagar_reserva(request, reserva_id):
                         # Para cualquier otra tarjeta, simular pago exitoso
                         reserva.estado = 'pagada'
                         reserva.save()
-                        messages.success(request, 'Pago realizado exitosamente')
+                        messages.success(
+                            request, 'Pago realizado exitosamente')
                         return redirect('mis_reservas')
-                        
+
                 except TarjetaCredito.DoesNotExist:
                     messages.error(request, 'Tarjeta no encontrada')
             else:
@@ -1179,8 +1191,9 @@ def payment_pending(request):
 
 def limpiar_datos(request):
     """
-    Vista para eliminar todas las tarjetas, reservas, maquinarias y perfiles del sistema.
+    Vista para eliminar todas las tarjetas, reservas, maquinarias, sucursales y perfiles del sistema.
     """
+
     # Eliminar todas las tarjetas
     TarjetaCredito.objects.all().delete()
 
@@ -1190,12 +1203,15 @@ def limpiar_datos(request):
     # Eliminar todas las maquinarias y sus imágenes asociadas
     Maquina.objects.all().delete()
 
+    # Eliminar todas las sucursales
+    Sucursal.objects.all().delete()
+
     # Eliminar todos los usuarios (empleados y clientes) excepto el dueño
     User.objects.filter(perfil__role__name__in=[
-                        Role.EMPLEADO, Role.CLIENTE]).delete()
+        Role.EMPLEADO, Role.CLIENTE]).delete()
 
     messages.success(
-        request, 'Se han eliminado todas las tarjetas, reservas, maquinarias y perfiles de usuarios exitosamente.')
+        request, 'Se han eliminado todas las tarjetas, reservas, maquinarias, sucursales y perfiles de usuarios exitosamente.')
     return redirect('home')
 
 
@@ -1274,61 +1290,54 @@ def administrar_sucursales(request):
 
 @login_required
 def agregar_sucursal(request):
-    # Inicializa las variables para solicitudes GET o si la validación POST falla
     calle = ''
     localidad = ''
 
     if request.method == 'POST':
-        calle = request.POST.get('calle')
-        localidad = request.POST.get('localidad')
+        calle = request.POST.get('calle', '').strip()
+        localidad = request.POST.get('localidad', '').strip()
 
-        # 1. Verificar si ya existe una sucursal con esa calle y localidad
+        if not calle or not localidad:
+            messages.error(request, 'Todos los campos son obligatorios.')
+            return render(request, 'admin/agregar_sucursal.html', {'calle': calle, 'localidad': localidad})
+
+        if calle.isdigit() or localidad.isdigit() or len(calle) < 3 or len(localidad) < 3:
+            messages.error(
+                request, 'Calle y/o localidad inválidas')  # (mínimo 3 letras, no solo números).
+            return render(request, 'admin/agregar_sucursal.html', {'calle': calle, 'localidad': localidad})
+
         if Sucursal.objects.filter(calle=calle, localidad=localidad).exists():
             messages.error(
                 request, 'Ya existe una sucursal registrada en esa dirección.')
-            # Al renderizar, calle y localidad tendrán los valores del POST
             return render(request, 'admin/agregar_sucursal.html', {'calle': calle, 'localidad': localidad})
 
-        # 2. Geocodificar la dirección usando Nominatim
-        direccion_geocodificar = f"{calle}, {localidad}, Argentina"
+        direccion_geocodificar = f"{calle}, {localidad}, Buenos Aires, Argentina"
         geolocator = Nominatim(user_agent="bea_scrumsynergy")
 
         try:
-            location = geolocator.geocode(direccion_geocodificar)
-            if location:
-                # 3. Crear la sucursal con las coordenadas, usando 'calle' y 'localidad'
-                sucursal = Sucursal.objects.create(
-                    calle=calle,
-                    localidad=localidad,
-                    latitud=location.latitude,
-                    longitud=location.longitude
-                )
-                messages.success(
-                    request, 'Sucursal agregada exitosamente.')
-                return redirect('administrar_sucursales')
-            else:
-                messages.error(
-                    request, 'No se pudo encontrar la ubicación. Por favor, verifique los datos.')
-                return render(request, 'admin/agregar_sucursal.html', {
-                    'calle': calle, 'localidad': localidad
-                })
-        except GeocoderTimedOut:
-            messages.error(
-                request, 'El servicio de geocodificación está temporalmente no disponible. Por favor, intente nuevamente.')
-            return render(request, 'admin/agregar_sucursal.html', {
-                'calle': calle, 'localidad': localidad
-            })
-        except Exception as e:
-            messages.error(
-                request, f'Ocurrió un error al agregar la sucursal: {e}. Por favor, intente nuevamente.')
-            # Para depuración en consola
-            print(f"Error al agregar sucursal: {e}")
-            return render(request, 'admin/agregar_sucursal.html', {
-                'calle': calle, 'localidad': localidad
-            })
+            location = geolocator.geocode(
+                direccion_geocodificar, country_codes='ar', timeout=5)
 
-    # Para las solicitudes GET (cuando se carga la página por primera vez)
-    # o si el POST falla antes de la redirección
+            if not location or "Argentina" not in location.address:
+                messages.error(
+                    request, 'No se pudo encontrar la ubicación en Argentina. Verificá los datos.')
+                return render(request, 'admin/agregar_sucursal.html', {'calle': calle, 'localidad': localidad})
+
+            nueva_sucursal = Sucursal.objects.create(
+                calle=calle,
+                localidad=localidad,
+                latitud=location.latitude,
+                longitud=location.longitude,
+                activa=True
+            )
+            messages.success(request, 'Sucursal agregada correctamente.')
+            return redirect('administrar_sucursales')
+
+        except (GeocoderTimedOut, GeocoderUnavailable, requests.exceptions.ReadTimeout):
+            messages.error(
+                request, 'El servicio de mapas está demorando o no responde. Intentá nuevamente.')
+            return render(request, 'admin/agregar_sucursal.html', {'calle': calle, 'localidad': localidad})
+
     return render(request, 'admin/agregar_sucursal.html', {'calle': calle, 'localidad': localidad})
 
 
@@ -1916,18 +1925,20 @@ def contacto(request):
 @login_required
 def calificar_maquina(request, maquina_id):
     maquina = get_object_or_404(Maquina, id=maquina_id)
-    
+
     # Verificar si el usuario ya ha calificado esta máquina
-    calificacion_existente = Calificacion.objects.filter(usuario=request.user, maquina=maquina).first()
-    
+    calificacion_existente = Calificacion.objects.filter(
+        usuario=request.user, maquina=maquina).first()
+
     if request.method == 'POST':
         if calificacion_existente:
-            form = CalificacionForm(request.POST, instance=calificacion_existente)
+            form = CalificacionForm(
+                request.POST, instance=calificacion_existente)
             mensaje = '¡Gracias por actualizar tu calificación!'
         else:
             form = CalificacionForm(request.POST)
             mensaje = '¡Gracias por tu calificación!'
-            
+
         if form.is_valid():
             calificacion = form.save(commit=False)
             calificacion.usuario = request.user
@@ -1936,8 +1947,9 @@ def calificar_maquina(request, maquina_id):
             messages.success(request, mensaje)
             return redirect('detalle_maquinaria', maquina_id=maquina.id)
     else:
-        form = CalificacionForm(instance=calificacion_existente) if calificacion_existente else CalificacionForm()
-    
+        form = CalificacionForm(
+            instance=calificacion_existente) if calificacion_existente else CalificacionForm()
+
     return render(request, 'listados/calificar_maquina.html', {
         'form': form,
         'maquina': maquina,

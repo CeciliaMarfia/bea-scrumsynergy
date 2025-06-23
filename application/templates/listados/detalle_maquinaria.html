@@ -353,7 +353,7 @@
 }
 
 .calificacion-estrellas {
-    color: #ffd700;
+    color: white;
     margin-bottom: 1rem;
     font-size: 1.2rem;
 }
@@ -368,7 +368,7 @@
 
 .promedio-estrellas {
     font-size: 2rem;
-    color: #ffd700;
+    color: white;
     margin-bottom: 1rem;
     display: flex;
     align-items: center;
@@ -455,6 +455,29 @@
   padding: 0.7rem 2.2rem;
   margin-top: 0.5rem;
   transition: none;
+}
+.list-group {
+    background: transparent;
+    padding: 0;
+    border-radius: 0;
+}
+
+.list-group-item {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    margin-bottom: 1rem;
+    border-radius: 1rem;
+    padding: 1.5rem;
+}
+
+.list-group-item strong {
+    color: #d16c44;
+    font-size: 1.1rem;
+}
+
+.list-group-item small {
+    color: rgba(255, 255, 255, 0.7);
 }
 {% endblock %}
 
@@ -627,7 +650,7 @@
         {% if maquina.calificaciones.exists %}
             <div class="promedio-estrellas">
                 <span class="promedio-numero">{{ maquina.get_promedio_calificaciones }}</span>
-                <span class="estrellas">⭐</span>
+                <i class="fas fa-star"></i>
                 <span class="total-calificaciones">({{ maquina.get_cantidad_calificaciones }} calificaciones)</span>
             </div>
             
@@ -640,7 +663,7 @@
                     <div class="calificacion-estrellas">
                         {% for i in "12345"|make_list %}
                             {% if forloop.counter <= calificacion.estrellas %}
-                                ⭐
+                                <i class="fas fa-star"></i> 
                             {% endif %}
                         {% endfor %}
                     </div>
@@ -674,9 +697,11 @@
         {% csrf_token %}
         <div class="form-group">
           <label for="texto">¿Querés consultar algo sobre esta máquina?</label>
-          <textarea name="texto" id="texto" class="form-control" rows="3" required style="background:rgba(255,255,255,0.18); color:#222; border:1.5px solid rgba(255,255,255,0.25); border-radius:0.6rem; box-shadow:none; transition:border 0.2s;"></textarea>
+          <textarea name="texto" id="texto" class="form-control" rows="3" required style="background:rgba(255,255,255,0.18); color:white; border:1.5px solid rgba(255,255,255,0.25); border-radius:0.6rem; box-shadow:none; transition:border 0.2s;"></textarea>
         </div>
-        <button type="submit" class="btn-enviar">Enviar pregunta</button>
+       <div class="text-end">
+  <button type="submit" class="btn-enviar">Enviar pregunta</button>
+</div>
       </form>
       {% elif not user.is_authenticated %}
       <div class="alert alert-info">Iniciá sesión para realizar una pregunta sobre esta máquina.</div>

@@ -134,6 +134,9 @@ class RegistroUsuarioForm(UserCreationForm):
         # Usar el email como username
         if email:
             cleaned_data['username'] = email
+            if User.objects.filter(username=email).exists():
+                raise forms.ValidationError(
+                    "Ya existe una cuenta con este correo electrónico.")
 
         return cleaned_data
 
