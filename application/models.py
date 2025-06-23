@@ -481,6 +481,7 @@ class Pago(models.Model):
 class TarjetaCredito(models.Model):
     usuario = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name='tarjetas')
+    numero_tarjeta = models.CharField(max_length=16, null=True, blank=True)  # Número completo de la tarjeta
     ultimos_digitos = models.CharField(max_length=4)
     tipo = models.CharField(max_length=20)
     nombre_titular = models.CharField(max_length=100)

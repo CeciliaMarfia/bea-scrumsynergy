@@ -997,11 +997,30 @@ def pagar_reserva(request, reserva_id):
                 try:
                     tarjeta = TarjetaCredito.objects.get(
                         id=tarjeta_id, usuario=request.user)
-                    # Aquí iría la lógica de procesamiento del pago
-                    reserva.estado = 'pagada'
-                    reserva.save()
-                    messages.success(request, 'Pago realizado exitosamente')
-                    return redirect('mis_reservas')
+                    
+                    # Obtener el número completo de la tarjeta
+                    numero_tarjeta = tarjeta.numero_tarjeta
+                    
+                    # Validación específica según el número de tarjeta
+                    if numero_tarjeta == '1111111111111111':
+                        messages.error(request, 'La tarjeta tiene fondos insuficientes')
+                        return redirect('pagar_reserva', reserva_id=reserva.id)
+                    elif numero_tarjeta == '2222222222222222':
+                        messages.error(request, 'Falló la conexión con el banco')
+                        return redirect('pagar_reserva', reserva_id=reserva.id)
+                    elif numero_tarjeta == '3333333333333333':
+                        # Pago exitoso
+                        reserva.estado = 'pagada'
+                        reserva.save()
+                        messages.success(request, 'Pago realizado con éxito')
+                        return redirect('mis_reservas')
+                    else:
+                        # Para cualquier otra tarjeta, simular pago exitoso
+                        reserva.estado = 'pagada'
+                        reserva.save()
+                        messages.success(request, 'Pago realizado exitosamente')
+                        return redirect('mis_reservas')
+                        
                 except TarjetaCredito.DoesNotExist:
                     messages.error(request, 'Tarjeta no encontrada')
             else:

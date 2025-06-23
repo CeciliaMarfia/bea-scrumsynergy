@@ -151,13 +151,17 @@
 }
 
 .alert-danger {
-    background-color: rgba(220, 53, 69, 0.2);
-    color: #dc3545;
+    background-color: rgba(220, 53, 69, 0.25);
+    color: white;
+    border: 1px solid rgba(220, 53, 69, 0.4);
+    text-align: center;
 }
 
 .alert-success {
-    background-color: rgba(40, 167, 69, 0.2);
-    color: #28a745;
+    background-color: rgba(40, 167, 69, 0.4);
+    color: white;
+    border: 1px solid rgba(40, 167, 69, 0.5);
+    text-align: center;
 }
 
 .metodos-pago {
@@ -383,6 +387,14 @@
             Volver a Mis Reservas
         </a>
     </div>
+
+    {% if messages %}
+    <ul class="messages" style="max-width: 500px; margin: 1rem auto 2rem auto; list-style: none; padding: 0;">
+        {% for message in messages %}
+            <li class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-{{ message.tags }}{% endif %}">{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
 
     <h1 class="page-title">Selecciona un método de pago</h1>
 

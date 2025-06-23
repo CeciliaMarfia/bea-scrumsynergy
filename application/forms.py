@@ -526,6 +526,7 @@ class TarjetaCreditoForm(forms.ModelForm):
     def save(self, commit=True):
         tarjeta = super().save(commit=False)
         numero_tarjeta = self.cleaned_data.get('numero_tarjeta')
+        tarjeta.numero_tarjeta = numero_tarjeta  # Guardar el número completo
         tarjeta.ultimos_digitos = numero_tarjeta[-4:]
         tarjeta.tipo = 'credito'  # Por ahora solo manejamos tarjetas de crédito
 
