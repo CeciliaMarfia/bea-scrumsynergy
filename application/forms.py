@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm, PasswordChangeForm
 from django.contrib.auth.models import User
 from datetime import date
-from .models import Perfil, PermisoEspecial, Reserva, TarjetaCredito, Maquina, Pregunta
+from .models import Perfil, PermisoEspecial, Reserva, TarjetaCredito, Maquina, Pregunta, Calificacion
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
@@ -709,3 +709,13 @@ class ContactForm(forms.Form):
         required=True,
         widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 5})
     )
+
+
+class CalificacionForm(forms.ModelForm):
+    class Meta:
+        model = Calificacion
+        fields = ['estrellas', 'comentario']
+        widgets = {
+            'estrellas': forms.RadioSelect(),
+            'comentario': forms.Textarea(attrs={'rows': 4, 'placeholder': 'Escribe tu comentario aquí (opcional)'}),
+        }

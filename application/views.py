@@ -6,11 +6,11 @@ from django.contrib.auth.forms import UserCreationForm
 import os
 from django.conf import settings
 from .machinery.forms import AltaMaquinariaForm, RegistrarDevolucionForm
-from .models import Maquina, HomeVideo, PermisoEspecial, Perfil, Reserva, ImagenMaquina, Pago, TarjetaCredito, Role, Sucursal, Pregunta
+from .models import Maquina, HomeVideo, PermisoEspecial, Perfil, Reserva, ImagenMaquina, Pago, TarjetaCredito, Role, Sucursal, Pregunta, Calificacion
 from django.core.mail import send_mail, EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
-from .forms import RegistroUsuarioForm, PermisoEspecialForm, EditarPerfilForm, ReservaMaquinariaForm, TarjetaCreditoForm, CambiarPasswordForm, ResponderPreguntaForm, ContactForm
+from .forms import RegistroUsuarioForm, PermisoEspecialForm, EditarPerfilForm, ReservaMaquinariaForm, TarjetaCreditoForm, CambiarPasswordForm, ResponderPreguntaForm, ContactForm, CalificacionForm
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.views import PasswordResetView, PasswordResetDoneView, PasswordResetConfirmView, PasswordResetCompleteView
 from django.contrib.auth.models import User
@@ -1857,3 +1857,35 @@ def contacto(request):
         form = ContactForm()
 
     return render(request, 'contacto.html', {'form': form})
+
+
+@login_required
+def calificar_maquina(request, maquina_id):
+    maquina = get_object_or_404(Maquina, id=maquina_id)
+    
+    # Verificar si el usuario ya ha calificado esta máquina
+    calificacion_existente = Calificacion.objects.filter(usuario=request.user, maquina=maquina).first()
+    
+    if request.method == 'POST':
+        if calificacion_existente:
+            form = CalificacionForm(request.POST, instance=calificacion_existente)
+            mensaje = '¡Gracias por actualizar tu calificación!'
+        else:
+            form = CalificacionForm(request.POST)
+            mensaje = '¡Gracias por tu calificación!'
+            
+        if form.is_valid():
+            calificacion = form.save(commit=False)
+            calificacion.usuario = request.user
+            calificacion.maquina = maquina
+            calificacion.save()
+            messages.success(request, mensaje)
+            return redirect('detalle_maquinaria', maquina_id=maquina.id)
+    else:
+        form = CalificacionForm(instance=calificacion_existente) if calificacion_existente else CalificacionForm()
+    
+    return render(request, 'listados/calificar_maquina.html', {
+        'form': form,
+        'maquina': maquina,
+        'calificacion_existente': calificacion_existente
+    })

@@ -311,10 +311,114 @@
 .carousel-control-next {
     width: 5%;
 }
+
+.calificaciones-section {
+    margin-top: 2rem;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 1rem;
+    padding: 2rem;
+}
+
+.calificacion-item {
+    background-color: rgba(255, 255, 255, 0.15);
+    padding: 1.5rem;
+    border-radius: 0.8rem;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+}
+
+.calificacion-item:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.calificacion-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.calificacion-usuario {
+    font-weight: 500;
+    color: #d16c44;
+    font-size: 1.1rem;
+}
+
+.calificacion-fecha {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9rem;
+}
+
+.calificacion-estrellas {
+    color: #ffd700;
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+}
+
+.calificacion-comentario {
+    color: white;
+    background-color: rgba(255, 255, 255, 0.05);
+    padding: 1rem;
+    border-radius: 0.5rem;
+    font-style: italic;
+}
+
+.promedio-estrellas {
+    font-size: 2rem;
+    color: #ffd700;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.promedio-numero {
+    font-weight: bold;
+}
+
+.total-calificaciones {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.sin-calificaciones {
+    text-align: center;
+    color: rgba(255, 255, 255, 0.7);
+    font-style: italic;
+    padding: 2rem;
+}
+
+.sin-comentario {
+    color: rgba(255, 255, 255, 0.5);
+    font-style: italic;
+    font-size: 0.9rem;
+}
+
+.mensaje-exito {
+    background-color: rgba(46, 204, 113, 0.2);
+    border: 2px solid #2ecc71;
+    color: #2ecc71;
+    padding: 1rem;
+    border-radius: 0.8rem;
+    margin-bottom: 2rem;
+    text-align: center;
+    font-weight: 500;
+}
 {% endblock %}
 
 {% block content %}
 <div class="detalle-container">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="mensaje-exito">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
     <div class="header">
         <a href="{% url 'lista_maquinaria' %}" class="btn-volver">
             <i class="fas fa-arrow-left"></i> Volver al listado de maquinarias
@@ -432,21 +536,26 @@
         </div>
     </div>
 
-    {% if user.is_authenticated %}
-    <a href="{% url 'reservar_maquinaria' maquina.id %}" class="btn-reservar">
-        <i class="fas fa-calendar-plus"></i> Reservar Maquinaria
-    </a>
-    <a href="{% url 'alquilar_maquinaria_detalle' maquina.id %}" class="btn-reservar" style="margin-left: 1rem; background-color: #546469;">
-        <i class="fas fa-clipboard-list"></i> Alquilar Maquinaria
-    </a>
-    {% else %}
-        <a href="{% url 'login' %}?next={% url 'reservar_maquinaria' maquina.id %}" class="btn-reservar">
-            <i class="fas fa-sign-in-alt"></i> Iniciar sesión para reservar
-        </a>
-    {% endif %}
+    <div class="text-center mt-4">
+        {% if user.is_authenticated %}
+            <a href="{% url 'reservar_maquinaria' maquina.id %}" class="btn btn-primary btn-lg me-3" style="background-color: #d16c44; border: none;">
+                <i class="fas fa-calendar-plus"></i> Reservar
+            </a>
+            <a href="{% url 'alquilar_maquinaria_detalle' maquina.id %}" class="btn btn-primary btn-lg" style="background-color: #d16c44; border: none;">
+                <i class="fas fa-handshake"></i> Alquilar
+            </a>
+        {% else %}
+            <a href="{% url 'login' %}?next={% url 'reservar_maquinaria' maquina.id %}" class="btn btn-primary btn-lg me-3" style="background-color: #d16c44; border: none;">
+                <i class="fas fa-sign-in-alt"></i> Iniciar sesión para reservar
+            </a>
+            <a href="{% url 'login' %}?next={% url 'alquilar_maquinaria_detalle' maquina.id %}" class="btn btn-primary btn-lg" style="background-color: #d16c44; border: none;">
+                <i class="fas fa-sign-in-alt"></i> Iniciar sesión para alquilar
+            </a>
+        {% endif %}
+    </div>
 
     {% if not maquina.esta_disponible %}
-    <div class="no-stock">
+    <div class="no-stock mt-4">
         {% if proxima_disponibilidad %}
             Esta máquina estará disponible para reservar a partir del {{ proxima_disponibilidad|date:"d/m/Y" }}
         {% else %}
@@ -454,6 +563,59 @@
         {% endif %}
     </div>
     {% endif %}
+
+    <div class="text-end mt-4">
+        {% if user.is_authenticated %}
+            <a href="{% url 'calificar_maquina' maquina.id %}" class="btn btn-primary">
+                <i class="fas fa-star"></i> Calificar maquinaria
+            </a>
+        {% endif %}
+    </div>
+
+    <div class="calificaciones-section">
+        <h3 class="info-title">Calificaciones y Comentarios</h3>
+        
+        {% if maquina.calificaciones.exists %}
+            <div class="promedio-estrellas">
+                <span class="promedio-numero">{{ maquina.get_promedio_calificaciones }}</span>
+                <span class="estrellas">⭐</span>
+                <span class="total-calificaciones">({{ maquina.get_cantidad_calificaciones }} calificaciones)</span>
+            </div>
+            
+            {% for calificacion in maquina.get_calificaciones_ordenadas %}
+                <div class="calificacion-item">
+                    <div class="calificacion-header">
+                        <span class="calificacion-usuario">{{ calificacion.usuario.get_full_name|default:calificacion.usuario.username }}</span>
+                        <span class="calificacion-fecha">{{ calificacion.fecha_creacion|date:"d/m/Y H:i" }}</span>
+                    </div>
+                    <div class="calificacion-estrellas">
+                        {% for i in "12345"|make_list %}
+                            {% if forloop.counter <= calificacion.estrellas %}
+                                ⭐
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    {% if calificacion.comentario %}
+                        <div class="calificacion-comentario">
+                            "{{ calificacion.comentario }}"
+                        </div>
+                    {% else %}
+                        <div class="sin-comentario">
+                            Sin comentario
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="sin-calificaciones">
+                Esta maquinaria aún no tiene calificaciones.
+                {% if user.is_authenticated %}
+                    <br>
+                    ¡Sé el primero en calificarla!
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
 </div>
 {% endblock %}
 

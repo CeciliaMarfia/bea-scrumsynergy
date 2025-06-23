@@ -218,6 +218,28 @@ class Maquina(models.Model):
     def get_imagen_principal(self):
         return self.imagenes.filter(es_principal=True).first()
 
+    def get_promedio_calificaciones(self):
+        """
+        Calcula el promedio de estrellas de todas las calificaciones.
+        """
+        calificaciones = self.calificaciones.all()
+        if not calificaciones.exists():
+            return 0
+        total_estrellas = sum(c.estrellas for c in calificaciones)
+        return round(total_estrellas / calificaciones.count(), 1)
+
+    def get_cantidad_calificaciones(self):
+        """
+        Retorna la cantidad total de calificaciones.
+        """
+        return self.calificaciones.count()
+
+    def get_calificaciones_ordenadas(self):
+        """
+        Retorna las calificaciones ordenadas por fecha de creación (más recientes primero).
+        """
+        return self.calificaciones.all().order_by('-fecha_creacion')
+
 
 class ImagenMaquina(models.Model):
     maquina = models.ForeignKey(
@@ -516,3 +538,28 @@ class Pregunta(models.Model):
 
     def __str__(self):
         return f"Pregunta de {self.usuario.username}: {self.texto[:30]}..."
+
+
+class Calificacion(models.Model):
+    ESTRELLAS_CHOICES = [
+        (1, '1 estrella'),
+        (2, '2 estrellas'),
+        (3, '3 estrellas'),
+        (4, '4 estrellas'),
+        (5, '5 estrellas'),
+    ]
+
+    maquina = models.ForeignKey('Maquina', on_delete=models.CASCADE, related_name='calificaciones')
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='calificaciones')
+    estrellas = models.IntegerField(choices=ESTRELLAS_CHOICES)
+    comentario = models.TextField(blank=True, null=True)
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Calificación'
+        verbose_name_plural = 'Calificaciones'
+        # Un usuario solo puede calificar una vez cada máquina
+        unique_together = ['usuario', 'maquina']
+
+    def __str__(self):
+        return f'Calificación de {self.usuario.username} para {self.maquina.nombre}'

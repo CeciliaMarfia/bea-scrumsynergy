@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Calificar {{ maquina.nombre }}</h2>
+                </div>
+                <div class="card-body">
+                    {% if calificacion_existente %}
+                        <div class="alert alert-info">
+                            Ya has calificado esta máquina. Puedes modificar tu calificación si lo deseas.
+                        </div>
+                    {% endif %}
+
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="form-group mb-3">
+                            <label>Calificación:</label>
+                            <div class="rating-stars">
+                                {% for value, label in form.estrellas.field.choices %}
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="estrellas" 
+                                               value="{{ value }}" id="star{{ value }}"
+                                               {% if form.estrellas.value|stringformat:"i" == value|stringformat:"i" %}checked{% endif %}>
+                                        <label class="form-check-label" for="star{{ value }}">
+                                            {% for i in "12345"|make_list %}
+                                                {% if forloop.counter <= value %}
+                                                    ⭐
+                                                {% endif %}
+                                            {% endfor %}
+                                        </label>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            {% if form.estrellas.errors %}
+                                <div class="text-danger">
+                                    {{ form.estrellas.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="{{ form.comentario.id_for_label }}">Comentario:</label>
+                            {{ form.comentario }}
+                            {% if form.comentario.errors %}
+                                <div class="text-danger">
+                                    {{ form.comentario.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'detalle_maquinaria' maquina.id %}" class="btn btn-secondary">Cancelar</a>
+                            <button type="submit" class="btn btn-primary">
+                                {% if calificacion_existente %}
+                                    Actualizar calificación
+                                {% else %}
+                                    Enviar calificación
+                                {% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
