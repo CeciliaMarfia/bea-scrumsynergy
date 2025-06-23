@@ -692,24 +692,11 @@
                 <div class="mt-2 alert alert-info"><strong>Respuesta:</strong> {{ pregunta.respuesta }}</div>
               {% endif %}
               {% if mostrar_form_respuesta and not pregunta.respuesta %}
-                {% if pregunta_responder_id and pregunta_responder_id|add:"" == pregunta.id|stringformat:"s" %}
-                  <form method="post" class="mt-3">
-                    {% csrf_token %}
-                    <input type="hidden" name="pregunta_id" value="{{ pregunta.id }}">
-                    {{ form_respuesta.respuesta }}
-                    <button type="submit" class="btn btn-enviar btn-gris mt-2">Responder</button>
-                  </form>
-                {% else %}
-                  <form method="post" style="display:inline;">
-                    {% csrf_token %}
-                    <input type="hidden" name="pregunta_id" value="{{ pregunta.id }}">
-                    <button type="submit" name="responder" value="1" class="btn btn-sm btn-success ms-2">Responder</button>
-                  </form>
-                  <form action="{% url 'eliminar_pregunta' pregunta.id %}" method="post" style="display:inline;">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-sm btn-danger ms-2" onclick="return confirm('¿Seguro que deseas eliminar esta pregunta?');">Eliminar</button>
-                  </form>
-                {% endif %}
+                <a href="{% url 'responder_pregunta' pregunta.id %}" class="btn btn-sm btn-success ms-2">Responder</a>
+                <form action="{% url 'eliminar_pregunta' pregunta.id %}" method="post" style="display:inline;">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-danger ms-2" onclick="return confirm('¿Seguro que deseas eliminar esta pregunta?');">Eliminar</button>
+                </form>
               {% endif %}
             </div>
           </li>
@@ -724,42 +711,25 @@
 {% block extra_js %}
 <script src="https://kit.fontawesome.com/a076d05399.js"></script>
 <script>
-let imagenActual = 0;
-const imagenes = document.querySelectorAll('.imagen-card');
-const indicadores = document.querySelectorAll('.indicador');
-const totalImagenes = imagenes.length;
-
-function mostrarImagen(indice) {
-    // Ocultar todas las imágenes
-    imagenes.forEach(img => {
-        img.classList.remove('active');
+console.log('Script de preguntas cargado');
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.btn-mostrar-respuesta').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var preguntaId = this.getAttribute('data-pregunta-id');
+            console.log('Click en responder para pregunta', preguntaId);
+            var formDiv = document.getElementById('form-respuesta-' + preguntaId);
+            if (!formDiv) {
+                console.log('No se encontró el div del formulario para la pregunta', preguntaId);
+                return;
+            }
+            // Oculta todos los formularios primero
+            document.querySelectorAll('.form-respuesta-container').forEach(function(div) {
+                div.style.display = 'none';
+            });
+            // Muestra el formulario correspondiente
+            formDiv.style.display = 'block';
+        });
     });
-    indicadores.forEach(ind => {
-        ind.classList.remove('active');
-    });
-
-    // Mostrar la imagen actual
-    imagenes[indice].classList.add('active');
-    indicadores[indice].classList.add('active');
-}
-
-function cambiarImagen(direccion) {
-    imagenActual = (imagenActual + direccion + totalImagenes) % totalImagenes;
-    mostrarImagen(imagenActual);
-}
-
-function irAImagen(indice) {
-    imagenActual = indice;
-    mostrarImagen(imagenActual);
-}
-
-// Inicializar el carrusel
-document.addEventListener('DOMContentLoaded', () => {
-    if (totalImagenes === 1) {
-        // Si solo hay una imagen, ocultar los botones de navegación
-        document.querySelector('.carrusel-botones').style.display = 'none';
-        document.querySelector('.indicadores-carrusel').style.display = 'none';
-    }
 });
 </script>
 {% endblock %} 

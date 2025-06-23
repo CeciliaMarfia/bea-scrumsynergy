@@ -1549,13 +1549,13 @@ def responder_pregunta(request, pregunta_id):
     pregunta = get_object_or_404(Pregunta, id=pregunta_id)
     if pregunta.respuesta:
         messages.info(request, 'Esta pregunta ya fue respondida.')
-        return redirect('gestionar_preguntas')
+        return redirect('detalle_maquinaria', maquina_id=pregunta.maquina.id)
     if request.method == 'POST':
         form = ResponderPreguntaForm(request.POST, instance=pregunta)
         if form.is_valid():
             form.save()
             messages.success(request, 'Respuesta registrada con éxito.')
-            return redirect('gestionar_preguntas')
+            return redirect(f"{reverse('detalle_maquinaria', args=[pregunta.maquina.id])}#preguntas")
     else:
         form = ResponderPreguntaForm(instance=pregunta)
     return render(request, 'preguntas/responder_pregunta.html', {'form': form, 'pregunta': pregunta})
