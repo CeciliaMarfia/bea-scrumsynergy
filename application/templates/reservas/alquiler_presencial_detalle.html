@@ -351,6 +351,14 @@
                     </div>
                 </div>
 
+                <!-- Cartel informativo de próxima disponibilidad -->
+                {% if proxima_disponibilidad %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Recordatorio:</strong> Esta máquina estará disponible para alquilar a partir del <strong>{{ proxima_disponibilidad|date:"d/m/Y" }}</strong>
+                    </div>
+                {% endif %}
+
                 <!-- Fechas de alquiler -->
                 <div class="row">
                     <div class="col-md-6">
@@ -385,14 +393,6 @@
                 </div>
                 <!-- Contenedor de errores de fechas -->
                 <div id="errores-fechas" class="mt-2"></div>
-
-                <!-- Información de disponibilidad -->
-                {% if proxima_disponibilidad %}
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle"></i>
-                        <strong>Próxima disponibilidad:</strong> {{ proxima_disponibilidad|date:"d/m/Y" }}
-                    </div>
-                {% endif %}
 
                 <!-- Cálculo del monto -->
                 <div class="resumen-card">

@@ -93,4 +93,5 @@ urlpatterns = [
     path('seleccionar-maquinaria-alquiler-presencial/', views.seleccionar_maquinaria_alquiler_presencial, name='seleccionar_maquinaria_alquiler_presencial'),
     path('preguntas-frecuentes/', views.preguntas_frecuentes, name='preguntas_frecuentes'),
     path('contacto/', views.contacto, name='contacto'),
+    path('cancelar-alquiler/<int:reserva_id>/', views.cancelar_alquiler, name='cancelar_alquiler'),
 ]

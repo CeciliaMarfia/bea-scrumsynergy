@@ -160,6 +160,14 @@
         </div>
         {% endif %}
         
+        {# Cartel informativo de próxima disponibilidad #}
+        {% if proxima_disponibilidad %}
+        <div class="alert alert-info" style="margin: 1.5rem 0 1rem 0; background: rgba(23, 162, 184, 0.15); color: #17a2b8; border: 1px solid #17a2b8; border-radius: 0.5rem; padding: 1rem;">
+            <i class="fas fa-info-circle"></i>
+            <strong>Recordatorio:</strong> Esta máquina estará disponible para alquilar a partir del <strong>{{ proxima_disponibilidad|date:"d/m/Y" }}</strong>
+        </div>
+        {% endif %}
+        
         <form method="post" style="margin-top: 2rem;">
             {% csrf_token %}
             <div class="form-group">

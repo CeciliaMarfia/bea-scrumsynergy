@@ -1761,11 +1761,20 @@ def eliminar_imagen(request, imagen_id):
 
 @login_required
 def mis_alquileres(request):
-    reservas = Reserva.objects.filter(
+    # Alquileres activos
+    alquileres = Reserva.objects.filter(
         cliente=request.user,
         estado__in=['pendiente_pago', 'pagada']
     ).order_by('-fecha_inicio')
-    return render(request, 'reservas/mis_alquileres.html', {'reservas': reservas})
+    # Alquileres cancelados
+    alquileres_cancelados = Reserva.objects.filter(
+        cliente=request.user,
+        estado='cancelada'
+    ).order_by('-fecha_inicio')
+    return render(request, 'reservas/mis_alquileres.html', {
+        'reservas': alquileres,
+        'alquileres_cancelados': alquileres_cancelados
+    })
 
 
 @login_required
@@ -2267,3 +2276,31 @@ def seleccionar_maquinaria_alquiler_presencial(request):
     }
     
     return render(request, 'reservas/seleccionar_maquinaria_alquiler_presencial.html', context)
+
+
+@login_required
+def cancelar_alquiler(request, reserva_id):
+    reserva = get_object_or_404(Reserva, id=reserva_id, cliente=request.user)
+    estado_original = reserva.estado
+    reserva.estado = 'cancelada'
+    reserva.save()
+    # Email
+    asunto = f"Cancelación de alquiler {reserva.numero_reserva}"
+    mensaje = render_to_string('emails/cancelacion_reserva.html', {
+        'reserva': reserva,
+        'reembolso': estado_original == 'pagada',
+        'maquina': reserva.maquina,
+        'cliente': reserva.cliente,
+        'monto': reserva.monto_total,
+        'fecha_inicio': reserva.fecha_inicio,
+        'fecha_fin': reserva.fecha_fin,
+    })
+    send_mail(
+        asunto,
+        '',
+        settings.DEFAULT_FROM_EMAIL,
+        [reserva.cliente.email],
+        html_message=mensaje
+    )
+    messages.error(request, f'Se canceló el alquiler {reserva.numero_reserva} con éxito.')
+    return redirect('mis_alquileres')

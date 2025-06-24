@@ -178,7 +178,7 @@
         </a>
     </div>
     
-    {% if reservas %}
+    {% if reservas or alquileres_cancelados %}
     <div class="reservas-container">
         {% for reserva in reservas %}
         <div class="reserva-card">
@@ -212,9 +212,40 @@
                     <i class="fas fa-credit-card"></i> Pagar Alquiler
                   </a>
                 {% endif %}
-                <button class="btn-cancelar">
-                  <i class="fas fa-times"></i> Cancelar Alquiler
-                </button>
+                <form method="post" action="{% url 'cancelar_alquiler' reserva.id %}" class="form-cancelar-alquiler" style="display:inline;">
+                  {% csrf_token %}
+                  <button type="submit" class="btn-cancelar">
+                    <i class="fas fa-times"></i> Cancelar Alquiler
+                  </button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+        {% for reserva in alquileres_cancelados %}
+        <div class="reserva-card" style="opacity:0.7;">
+            <div class="reserva-header">
+                <div class="maquina-nombre">{{ reserva.maquina.nombre }}</div>
+                <div class="estado-reserva estado-cancelada">
+                    Cancelada
+                </div>
+            </div>
+            <div class="reserva-info">
+                <div class="info-item">
+                    <span class="info-label">Número de alquiler</span>
+                    <span class="info-value">{{ reserva.numero_reserva }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Fecha de inicio</span>
+                    <span class="info-value">{{ reserva.fecha_inicio|date:"d/m/Y" }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Fecha de fin</span>
+                    <span class="info-value">{{ reserva.fecha_fin|date:"d/m/Y" }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Total</span>
+                    <span class="info-value">${{ reserva.monto_total }}</span>
+                </div>
             </div>
         </div>
         {% endfor %}
@@ -226,9 +257,50 @@
         <p>¡Comienza alquilando una máquina!</p>
     </div>
     {% endif %}
+
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script src="https://kit.fontawesome.com/a076d05399.js"></script>
+<!-- Modal de confirmación Bootstrap -->
+<div class="modal fade" id="modalConfirmarCancelacion" tabindex="-1" aria-labelledby="modalConfirmarCancelacionLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalConfirmarCancelacionLabel"><i class="fas fa-exclamation-triangle text-danger"></i> Confirmar cancelación</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        ¿Estás seguro de que deseas cancelar este alquiler? Esta acción no se puede deshacer.
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No, volver</button>
+        <button type="button" class="btn btn-danger" id="btnConfirmarCancelacion">Sí, cancelar alquiler</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  let formAConfirmar = null;
+  // Interceptar el submit de todos los formularios de cancelación
+  document.querySelectorAll('.form-cancelar-alquiler').forEach(form => {
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      formAConfirmar = form;
+      const modal = new bootstrap.Modal(document.getElementById('modalConfirmarCancelacion'));
+      modal.show();
+    });
+  });
+  // Botón de confirmación en el modal
+  document.getElementById('btnConfirmarCancelacion').addEventListener('click', function() {
+    if (formAConfirmar) {
+      formAConfirmar.submit();
+    }
+    const modal = bootstrap.Modal.getInstance(document.getElementById('modalConfirmarCancelacion'));
+    modal.hide();
+  });
+});
+</script>
 {% endblock %} 
