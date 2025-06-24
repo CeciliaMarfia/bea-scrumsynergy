@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Historial de Alquileres Activos{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-truck"></i> Historial de Alquileres Activos</h2>
+                <a href="{% url 'home' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Volver
+                </a>
+            </div>
+
+            {% if alquileres %}
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Número de Alquiler</th>
+                                <th>Cliente</th>
+                                <th>Máquina</th>
+                                <th>Fecha Inicio</th>
+                                <th>Fecha Fin</th>
+                                <th>Estado</th>
+                                <th>Monto</th>
+                                <th>Empleado Gestor</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for alquiler in alquileres %}
+                            <tr>
+                                <td>
+                                    <strong>{{ alquiler.numero_reserva }}</strong>
+                                    {% if alquiler.codigo_retiro %}
+                                        <br><small class="text-muted">Código: {{ alquiler.codigo_retiro }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {{ alquiler.cliente.get_full_name }}
+                                    <br><small class="text-muted">{{ alquiler.cliente.email }}</small>
+                                </td>
+                                <td>
+                                    <strong>{{ alquiler.maquina.nombre }}</strong>
+                                    <br><small class="text-muted">{{ alquiler.maquina.marca }} - {{ alquiler.maquina.modelo }}</small>
+                                </td>
+                                <td>{{ alquiler.fecha_inicio|date:"d/m/Y" }}</td>
+                                <td>{{ alquiler.fecha_fin|date:"d/m/Y" }}</td>
+                                <td>
+                                    {% if alquiler.estado == 'pendiente_pago' %}
+                                        <span class="badge bg-warning">Pendiente de Pago</span>
+                                    {% elif alquiler.estado == 'pagada' %}
+                                        <span class="badge bg-success">Pagada</span>
+                                    {% endif %}
+                                </td>
+                                <td>${{ alquiler.monto_total }}</td>
+                                <td>
+                                    {% if alquiler.empleado_gestor %}
+                                        {{ alquiler.empleado_gestor.get_full_name }}
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{% url 'detalle_reserva' alquiler.numero_reserva %}" 
+                                           class="btn btn-sm btn-info" 
+                                           title="Ver detalles">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        {% if alquiler.estado == 'pendiente_pago' %}
+                                            <a href="{% url 'pagar_reserva_presencial' alquiler.id %}" 
+                                               class="btn btn-sm btn-success" 
+                                               title="Pagar alquiler">
+                                                <i class="fas fa-credit-card"></i>
+                                            </a>
+                                        {% endif %}
+                                        <button type="button" 
+                                                class="btn btn-sm btn-danger" 
+                                                title="Cancelar alquiler"
+                                                onclick="confirmarCancelacion('{{ alquiler.numero_reserva }}', '{{ alquiler.id }}')">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info text-center">
+                    <i class="fas fa-info-circle"></i>
+                    No hay alquileres activos en este momento.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmación para cancelación -->
+<div class="modal fade" id="modalConfirmarCancelacion" tabindex="-1" aria-labelledby="modalConfirmarCancelacionLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalConfirmarCancelacionLabel">
+                    <i class="fas fa-exclamation-triangle text-danger"></i> Confirmar cancelación
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que deseas cancelar este alquiler?</p>
+                <p class="text-muted">Esta acción no se puede deshacer.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="formCancelarAlquiler" method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-times"></i> Sí, cancelar alquiler
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function confirmarCancelacion(numeroAlquiler, alquilerId) {
+    const modal = new bootstrap.Modal(document.getElementById('modalConfirmarCancelacion'));
+    const form = document.getElementById('formCancelarAlquiler');
+    
+    // Actualizar la acción del formulario
+    form.action = `/reserva/${numeroAlquiler}/cancelar/`;
+    
+    modal.show();
+}
+</script>
+{% endblock %} 

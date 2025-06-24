@@ -52,6 +52,7 @@ urlpatterns = [
     # Reservations
     path('reservas/historial/', views.historial_reservas,
          name='historial_reservas'),
+    path('alquileres/historial/', views.historial_alquileres, name='historial_alquileres'),
     path('mis-reservas/', views.mis_reservas, name='mis_reservas'),
     path('reserva/<str:numero_reserva>/cancelar/',
          views.cancelar_reserva, name='cancelar_reserva'),

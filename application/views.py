@@ -2077,11 +2077,12 @@ def alquiler_presencial_detalle(request, id_maquina):
             try:
                 with transaction.atomic():
                     reserva.save()
-                    
                     # Marcar la reserva como pagada directamente (pago presencial)
                     reserva.estado = 'pagada'
                     reserva.save()
-                    
+                    # Cambiar el estado de la máquina a 'alquilado'
+                    reserva.maquina.estado = 'alquilado'
+                    reserva.maquina.save()
                     # Enviar email de confirmación al cliente
                     subject = f'Confirmación de Alquiler Presencial - {reserva.numero_reserva}'
                     html_message = render_to_string('emails/confirmacion_alquiler_presencial.html', {
@@ -2101,7 +2102,6 @@ def alquiler_presencial_detalle(request, id_maquina):
                     except Exception as e:
                         print(f"Error al enviar email de confirmación: {str(e)}")
                         # No fallar la transacción si el email no se envía
-                    
                     messages.success(
                         request, f'Alquiler presencial creado y pagado exitosamente. Número de alquiler: {reserva.numero_reserva} para el cliente {cliente.get_full_name()}. Se ha enviado un email de confirmación con el código de retiro.')
                     return redirect('historial_reservas')
@@ -2304,3 +2304,14 @@ def cancelar_alquiler(request, reserva_id):
     )
     messages.error(request, f'Se canceló el alquiler {reserva.numero_reserva} con éxito.')
     return redirect('mis_alquileres')
+
+
+@login_required
+@user_passes_test(is_owner_or_employee)
+def historial_alquileres(request):
+    # Filtrar solo alquileres activos (máquinas con estado 'alquilado')
+    alquileres = Reserva.objects.filter(
+        maquina__estado='alquilado',
+        estado__in=['pendiente_pago', 'pagada']
+    ).order_by('fecha_inicio')  # Ordenar por fecha de inicio
+    return render(request, 'reservas/historial_alquileres.html', {'alquileres': alquileres})
