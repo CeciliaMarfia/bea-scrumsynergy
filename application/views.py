@@ -10,7 +10,7 @@ from .models import Maquina, HomeVideo, PermisoEspecial, Perfil, Reserva, Imagen
 from django.core.mail import send_mail, EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
-from .forms import RegistroUsuarioForm, PermisoEspecialForm, EditarPerfilForm, ReservaMaquinariaForm, TarjetaCreditoForm, CambiarPasswordForm, ResponderPreguntaForm, ContactForm, CalificacionForm
+from .forms import RegistroUsuarioForm, PermisoEspecialForm, EditarPerfilForm, ReservaMaquinariaForm, TarjetaCreditoForm, CambiarPasswordForm, ResponderPreguntaForm, ContactForm, CalificacionForm, AlquilerPresencialForm
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.views import PasswordResetView, PasswordResetDoneView, PasswordResetConfirmView, PasswordResetCompleteView
 from django.contrib.auth.models import User
@@ -1955,3 +1955,315 @@ def calificar_maquina(request, maquina_id):
         'maquina': maquina,
         'calificacion_existente': calificacion_existente
     })
+
+
+@login_required
+@user_passes_test(lambda u: u.perfil.is_empleado or u.perfil.is_dueno)
+def alquiler_presencial_detalle(request, id_maquina):
+    from .forms import AlquilerPresencialForm
+    maquina = get_object_or_404(Maquina, id=id_maquina)
+    proxima_disponibilidad = maquina.get_proxima_disponibilidad()
+
+    # Verificar si la máquina está suspendida (en revisión o mantenimiento)
+    if maquina.estado == 'en_revision' or maquina.estado == 'mantenimiento':
+        messages.error(
+            request, 'La máquina está suspendida temporalmente y no puede ser alquilada.')
+        return redirect('detalle_maquinaria', maquina_id=maquina.id)
+
+    if request.method == 'POST':
+        # Creamos el formulario manualmente porque el template no lo renderiza como {{ form }}
+        fecha_inicio = request.POST.get('fecha_inicio')
+        fecha_fin = request.POST.get('fecha_fin')
+        email_cliente = request.POST.get('email_cliente')
+        
+        data = {
+            'maquina': maquina.id,
+            'fecha_inicio': fecha_inicio,
+            'fecha_fin': fecha_fin,
+            'email_cliente': email_cliente
+        }
+        form = AlquilerPresencialForm(data)
+        if form.is_valid():
+            # Obtener el cliente por email
+            cliente = User.objects.get(email=email_cliente)
+            
+            # Validaciones adicionales de fechas
+            fecha_inicio = form.cleaned_data['fecha_inicio']
+            fecha_fin = form.cleaned_data['fecha_fin']
+            hoy = timezone.now().date()
+            
+            # Validar que la fecha de inicio no sea anterior a hoy
+            if fecha_inicio < hoy:
+                messages.error(request, 'La fecha de inicio debe ser igual o posterior a la fecha actual.')
+                return render(request, 'reservas/alquiler_presencial_detalle.html', {
+                    'maquina': maquina,
+                    'proxima_disponibilidad': proxima_disponibilidad,
+                    'form': form
+                })
+            
+            # Validar que la fecha de fin no sea anterior a la fecha de inicio
+            if fecha_fin < fecha_inicio:
+                messages.error(request, 'La fecha de fin no puede ser anterior a la fecha de inicio.')
+                return render(request, 'reservas/alquiler_presencial_detalle.html', {
+                    'maquina': maquina,
+                    'proxima_disponibilidad': proxima_disponibilidad,
+                    'form': form
+                })
+            
+            # Validar que la reserva no exceda los 7 días
+            duracion = (fecha_fin - fecha_inicio).days + 1
+            if duracion > 7:
+                messages.error(request, 'La reserva no puede exceder los 7 días.')
+                return render(request, 'reservas/alquiler_presencial_detalle.html', {
+                    'maquina': maquina,
+                    'proxima_disponibilidad': proxima_disponibilidad,
+                    'form': form
+                })
+            
+            # Verificar si hay otras reservas que se solapan
+            reservas_previas = Reserva.objects.filter(
+                maquina=maquina,
+                estado__in=['pendiente_pago', 'pagada'],
+                fecha_fin__gte=hoy,
+            ).exclude(
+                estado='cancelada'
+            ).order_by('fecha_inicio')
+            
+            # Verificar cada reserva previa
+            for reserva_prev in reservas_previas:
+                # Verificar si la nueva reserva se solapa con una reserva existente
+                if (
+                    (fecha_inicio >= reserva_prev.fecha_inicio and fecha_inicio <= reserva_prev.fecha_fin) or
+                    (fecha_fin >= reserva_prev.fecha_inicio and fecha_fin <= reserva_prev.fecha_fin) or
+                    (fecha_inicio <= reserva_prev.fecha_inicio and fecha_fin >= reserva_prev.fecha_fin)
+                ):
+                    fin_mantenimiento = reserva_prev.fecha_fin + timezone.timedelta(days=2)
+                    messages.error(request, f'La máquina está reservada del {reserva_prev.fecha_inicio.strftime("%d/%m/%Y")} al {reserva_prev.fecha_fin.strftime("%d/%m/%Y")} y estará en mantenimiento hasta el {fin_mantenimiento.strftime("%d/%m/%Y")}.')
+                    return render(request, 'reservas/alquiler_presencial_detalle.html', {
+                        'maquina': maquina,
+                        'proxima_disponibilidad': proxima_disponibilidad,
+                        'form': form
+                    })
+                
+                # Verificar período de mantenimiento
+                fin_mantenimiento = reserva_prev.fecha_fin + timezone.timedelta(days=2)
+                if fecha_inicio <= fin_mantenimiento and fecha_inicio > reserva_prev.fecha_fin:
+                    messages.error(request, f'La máquina estará en mantenimiento hasta el {fin_mantenimiento.strftime("%d/%m/%Y")}.')
+                    return render(request, 'reservas/alquiler_presencial_detalle.html', {
+                        'maquina': maquina,
+                        'proxima_disponibilidad': proxima_disponibilidad,
+                        'form': form
+                    })
+            
+            reserva = form.save(commit=False)
+            reserva.cliente = cliente
+            reserva.maquina = maquina
+            reserva.empleado_gestor = request.user  # Registrar el empleado que gestiona
+            
+            # Calcular el monto total
+            dias = (form.cleaned_data['fecha_fin'] -
+                    form.cleaned_data['fecha_inicio']).days + 1
+            reserva.monto_total = maquina.precio_por_dia * dias
+            
+            try:
+                with transaction.atomic():
+                    reserva.save()
+                    
+                    # Marcar la reserva como pagada directamente (pago presencial)
+                    reserva.estado = 'pagada'
+                    reserva.save()
+                    
+                    # Enviar email de confirmación al cliente
+                    subject = f'Confirmación de Alquiler Presencial - {reserva.numero_reserva}'
+                    html_message = render_to_string('emails/confirmacion_alquiler_presencial.html', {
+                        'reserva': reserva,
+                    })
+                    plain_message = strip_tags(html_message)
+
+                    try:
+                        send_mail(
+                            subject,
+                            plain_message,
+                            settings.EMAIL_HOST_USER,
+                            [cliente.email],
+                            html_message=html_message,
+                            fail_silently=False,
+                        )
+                    except Exception as e:
+                        print(f"Error al enviar email de confirmación: {str(e)}")
+                        # No fallar la transacción si el email no se envía
+                    
+                    messages.success(
+                        request, f'Alquiler presencial creado y pagado exitosamente. Número de alquiler: {reserva.numero_reserva} para el cliente {cliente.get_full_name()}. Se ha enviado un email de confirmación con el código de retiro.')
+                    return redirect('historial_reservas')
+            except Exception as e:
+                messages.error(
+                    request, 'Error al crear el alquiler presencial. Por favor, intente nuevamente.')
+                return redirect('detalle_maquinaria', maquina_id=maquina.id)
+        else:
+            # Solo mostrar errores generales como mensajes
+            for error in form.non_field_errors():
+                messages.error(request, error)
+            # Mostrar errores de campos específicos
+            for field, errors in form.errors.items():
+                if field != '__all__':
+                    for error in errors:
+                        messages.error(request, f'{form.fields[field].label}: {error}')
+    else:
+        initial_data = {
+            'maquina': maquina.id,
+            'fecha_inicio': proxima_disponibilidad
+        }
+        form = AlquilerPresencialForm(initial=initial_data)
+
+    return render(request, 'reservas/alquiler_presencial_detalle.html', {
+        'maquina': maquina,
+        'proxima_disponibilidad': proxima_disponibilidad,
+        'form': form
+    })
+
+
+@login_required
+@user_passes_test(lambda u: u.perfil.is_empleado or u.perfil.is_dueno)
+def pagar_reserva_presencial(request, reserva_id):
+    reserva = get_object_or_404(Reserva, id=reserva_id)
+    
+    # Verificar que el empleado actual es el gestor de esta reserva
+    if reserva.empleado_gestor != request.user:
+        messages.error(request, 'No tienes permisos para gestionar esta reserva.')
+        return redirect('historial_reservas')
+    
+    tarjetas = TarjetaCredito.objects.filter(usuario=request.user).order_by(
+        '-es_predeterminada', '-fecha_creacion')
+    form = TarjetaCreditoForm()
+
+    if request.method == 'POST':
+        if 'agregar_tarjeta' in request.POST:
+            form = TarjetaCreditoForm(request.POST)
+            if form.is_valid():
+                # Verificar si ya existe una tarjeta con los mismos últimos 4 dígitos y titular
+                numero_tarjeta = form.cleaned_data.get('numero_tarjeta')
+                nombre_titular = form.cleaned_data.get('nombre_titular')
+                ultimos_digitos = numero_tarjeta[-4:]
+
+                tarjeta_existente = TarjetaCredito.objects.filter(
+                    usuario=request.user,
+                    ultimos_digitos=ultimos_digitos,
+                    nombre_titular=nombre_titular
+                ).exists()
+
+                if tarjeta_existente:
+                    form.add_error(None, 'Ya tienes registrada esta tarjeta.')
+                    context = {
+                        'reserva': reserva,
+                        'tarjetas': tarjetas,
+                        'form': form,
+                        'preference_id': generar_preference_mercadopago(request, reserva_id)["id"],
+                        'show_card_form': True
+                    }
+                    return render(request, 'reservas/pagar_reserva_presencial.html', context)
+
+                tarjeta = form.save(commit=False)
+                tarjeta.usuario = request.user
+                tarjeta.save()
+                context = {
+                    'reserva': reserva,
+                    'tarjetas': TarjetaCredito.objects.filter(usuario=request.user).order_by('-es_predeterminada', '-fecha_creacion'),
+                    'form': TarjetaCreditoForm(),
+                    'preference_id': generar_preference_mercadopago(request, reserva_id)["id"],
+                    'success_message': 'Tarjeta agregada exitosamente.'
+                }
+                return render(request, 'reservas/pagar_reserva_presencial.html', context)
+        elif 'usar_tarjeta' in request.POST:
+            tarjeta_id = request.POST.get('tarjeta_id')
+            if tarjeta_id:
+                try:
+                    tarjeta = TarjetaCredito.objects.get(
+                        id=tarjeta_id, usuario=request.user)
+
+                    # Obtener el número completo de la tarjeta
+                    numero_tarjeta = tarjeta.numero_tarjeta
+
+                    # Validación específica según el número de tarjeta
+                    if numero_tarjeta == '1111111111111111':
+                        messages.error(
+                            request, 'La tarjeta tiene fondos insuficientes')
+                        return redirect('pagar_reserva_presencial', reserva_id=reserva.id)
+                    elif numero_tarjeta == '2222222222222222':
+                        messages.error(
+                            request, 'Falló la conexión con el banco')
+                        return redirect('pagar_reserva_presencial', reserva_id=reserva.id)
+                    elif numero_tarjeta == '3333333333333333':
+                        # Pago exitoso
+                        reserva.estado = 'pagada'
+                        reserva.save()
+                        messages.success(request, f'Pago realizado con éxito para el cliente {reserva.cliente.get_full_name()}')
+                        return redirect('historial_reservas')
+                    else:
+                        # Para cualquier otra tarjeta, simular pago exitoso
+                        reserva.estado = 'pagada'
+                        reserva.save()
+                        messages.success(
+                            request, f'Pago realizado exitosamente para el cliente {reserva.cliente.get_full_name()}')
+                        return redirect('historial_reservas')
+
+                except TarjetaCredito.DoesNotExist:
+                    messages.error(request, 'Tarjeta no encontrada')
+            else:
+                messages.error(request, 'Selecciona una tarjeta válida')
+    
+    preference = generar_preference_mercadopago(request, reserva_id)
+    context = {
+        'reserva': reserva,
+        'tarjetas': tarjetas,
+        'form': form,
+        'preference_id': preference["id"],
+    }
+    return render(request, 'reservas/pagar_reserva_presencial.html', context)
+
+
+@login_required
+@user_passes_test(lambda u: u.perfil.is_empleado or u.perfil.is_dueno)
+def seleccionar_maquinaria_alquiler_presencial(request):
+    """Vista para que empleados/dueños seleccionen maquinaria para alquiler presencial"""
+    # Obtener todas las máquinas disponibles (no suspendidas)
+    maquinas = Maquina.objects.exclude(
+        estado__in=['en_revision', 'mantenimiento']
+    ).order_by('nombre')
+    
+    # Filtrar por búsqueda si se proporciona
+    busqueda = request.GET.get('busqueda', '').strip()
+    if busqueda:
+        maquinas = maquinas.filter(
+            Q(nombre__icontains=busqueda) |
+            Q(codigo__icontains=busqueda) |
+            Q(marca__icontains=busqueda) |
+            Q(modelo__icontains=busqueda)
+        )
+    
+    # Filtrar por tipo si se proporciona
+    tipo = request.GET.get('tipo')
+    if tipo:
+        maquinas = maquinas.filter(tipo=tipo)
+    
+    # Calcular disponibilidad para cada máquina
+    maquinas_info = []
+    for maquina in maquinas:
+        proxima_disponibilidad = None
+        if not maquina.esta_disponible():
+            proxima_disponibilidad = maquina.get_proxima_disponibilidad()
+        
+        maquinas_info.append({
+            'maquina': maquina,
+            'proxima_disponibilidad': proxima_disponibilidad,
+            'disponible_ahora': maquina.esta_disponible()
+        })
+    
+    context = {
+        'maquinas_info': maquinas_info,
+        'tipos': Maquina.TIPO_CHOICES,
+        'busqueda': busqueda,
+        'tipo_seleccionado': tipo,
+    }
+    
+    return render(request, 'reservas/seleccionar_maquinaria_alquiler_presencial.html', context)

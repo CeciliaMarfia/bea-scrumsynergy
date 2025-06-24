@@ -1,0 +1,505 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Alquiler Presencial - {{ maquina.nombre }}{% endblock %}
+
+{% block styles %}
+.container {
+    padding: 2rem;
+}
+
+.form-card {
+    background-color: rgba(84, 100, 105, 0.6);
+    backdrop-filter: blur(10px);
+    border-radius: 1.5rem;
+    padding: 2.5rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    color: white;
+}
+
+.page-title {
+    color: white;
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+    font-weight: bold;
+}
+
+.back-btn {
+    display: inline-block;
+    background-color: #546469;
+    color: white;
+    padding: 0.7rem 1.2rem;
+    border-radius: 0.6rem;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: background-color 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    margin-bottom: 0.5rem;
+}
+
+.back-btn:hover {
+    background-color: #3d484c;
+    color: white;
+    text-decoration: none;
+}
+
+.maquina-info {
+    background-color: rgba(255, 255, 255, 0.1);
+    padding: 1.5rem;
+    border-radius: 0.8rem;
+    margin-bottom: 2rem;
+    backdrop-filter: blur(10px);
+}
+
+.maquina-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    align-items: start;
+}
+
+.maquina-details {
+    color: white;
+}
+
+.maquina-details h5 {
+    color: #d16c44;
+    margin-bottom: 1rem;
+    font-weight: bold;
+}
+
+.maquina-details ul {
+    list-style: none;
+    padding: 0;
+}
+
+.maquina-details li {
+    margin-bottom: 0.5rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.maquina-details li:last-child {
+    border-bottom: none;
+}
+
+.maquina-image {
+    text-align: center;
+}
+
+.maquina-image img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.8rem;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.form-section {
+    background-color: rgba(255, 255, 255, 0.1);
+    padding: 2rem;
+    border-radius: 0.8rem;
+    margin-bottom: 2rem;
+    backdrop-filter: blur(10px);
+}
+
+.form-section h5 {
+    color: #d16c44;
+    margin-bottom: 1.5rem;
+    font-weight: bold;
+}
+
+.form-label {
+    color: white;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.form-control {
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 0.5rem;
+    padding: 0.8rem;
+    transition: border-color 0.3s ease;
+    color: white;
+    width: 100%;
+}
+
+.form-control:focus {
+    border-color: #d16c44;
+    box-shadow: 0 0 0 0.2rem rgba(209, 108, 68, 0.25);
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.form-control::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.form-text {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9rem;
+    margin-top: 0.3rem;
+}
+
+.alert {
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+    border: 1px solid;
+}
+
+.alert-info {
+    background-color: rgba(23, 162, 184, 0.2);
+    border-color: rgba(23, 162, 184, 0.3);
+    color: #17a2b8;
+}
+
+.alert-warning {
+    background-color: rgba(255, 193, 7, 0.2);
+    border-color: rgba(255, 193, 7, 0.3);
+    color: #ffc107;
+}
+
+.alert-warning h6 {
+    color: #ffc107;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+}
+
+.alert-warning ul {
+    margin: 0;
+    padding-left: 1.2rem;
+}
+
+.alert-warning li {
+    margin-bottom: 0.3rem;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.resumen-card {
+    background-color: rgba(255, 255, 255, 0.1);
+    padding: 1.5rem;
+    border-radius: 0.8rem;
+    margin-bottom: 2rem;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.resumen-card h6 {
+    color: #d16c44;
+    margin-bottom: 1rem;
+    font-weight: bold;
+}
+
+.resumen-card p {
+    color: white;
+    margin-bottom: 0.5rem;
+}
+
+.resumen-card strong {
+    color: #d16c44;
+}
+
+.btn {
+    padding: 0.8rem 1.5rem;
+    border: none;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    text-decoration: none;
+}
+
+.btn-secondary {
+    background-color: #546469;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background-color: #3d484c;
+    color: white;
+}
+
+.btn-primary {
+    background-color: #d16c44;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #b95a33;
+    color: white;
+}
+
+.info-card {
+    background-color: rgba(255, 255, 255, 0.1);
+    padding: 1.5rem;
+    border-radius: 0.8rem;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.info-card h5 {
+    color: #d16c44;
+    margin-bottom: 1rem;
+    font-weight: bold;
+}
+
+.info-card ul {
+    list-style: none;
+    padding: 0;
+}
+
+.info-card li {
+    color: white;
+    margin-bottom: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.info-card .text-success {
+    color: #28a745 !important;
+}
+
+@media (max-width: 768px) {
+    .maquina-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .container {
+        padding: 1rem;
+    }
+    
+    .form-card {
+        padding: 1.5rem;
+    }
+}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="form-card">
+        <a href="{% url 'seleccionar_maquinaria_alquiler_presencial' %}" class="back-btn">
+            <i class="fas fa-arrow-left"></i> Regresar a Selección de Maquinaria
+        </a>
+        <h2 class="page-title">
+            <i class="fas fa-store"></i> Registrar Alquiler Presencial - {{ maquina.nombre }}
+        </h2>
+
+        <!-- Información de la máquina -->
+        <div class="maquina-info">
+            <div class="maquina-grid">
+                <div class="maquina-details">
+                    <h5><i class="fas fa-tools"></i> Información de la Máquina</h5>
+                    <ul>
+                        <li><strong>Nombre:</strong> {{ maquina.nombre }}</li>
+                        <li><strong>Marca:</strong> {{ maquina.marca }}</li>
+                        <li><strong>Modelo:</strong> {{ maquina.modelo }}</li>
+                        <li><strong>Año:</strong> {{ maquina.anio }}</li>
+                        <li><strong>Ubicación:</strong> {{ maquina.ubicacion }}</li>
+                        <li><strong>Precio por día:</strong> ${{ maquina.precio_por_dia }}</li>
+                    </ul>
+                </div>
+                <div class="maquina-image">
+                    {% if maquina.get_imagen_principal %}
+                        <img src="{{ maquina.get_imagen_principal.imagen.url }}" 
+                             alt="{{ maquina.nombre }}" 
+                             style="max-height: 250px;">
+                    {% else %}
+                        <div style="background-color: rgba(255, 255, 255, 0.1); padding: 2rem; border-radius: 0.8rem; color: rgba(255, 255, 255, 0.5);">
+                            <i class="fas fa-image fa-3x"></i>
+                            <p>Sin imagen disponible</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulario de alquiler -->
+        <div class="form-section">
+            <h5><i class="fas fa-edit"></i> Datos del Cliente y Alquiler</h5>
+            <form method="post" class="needs-validation" novalidate>
+                {% csrf_token %}
+                
+                <!-- Campo oculto para la máquina -->
+                <input type="hidden" name="maquina" value="{{ maquina.id }}">
+                
+                <!-- Email del cliente -->
+                <div class="mb-3">
+                    <label for="email_cliente" class="form-label">
+                        <i class="fas fa-envelope"></i> Email del Cliente *
+                    </label>
+                    <input type="email" 
+                           class="form-control" 
+                           id="email_cliente" 
+                           name="email_cliente" 
+                           placeholder="ejemplo@email.com"
+                           required>
+                    <div class="form-text">
+                        Ingrese el email del cliente para registrar el alquiler en su historial
+                    </div>
+                </div>
+
+                <!-- Fechas de alquiler -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="fecha_inicio" class="form-label">
+                                <i class="fas fa-calendar-plus"></i> Fecha de Inicio *
+                            </label>
+                            <input type="date" 
+                                   class="form-control" 
+                                   id="fecha_inicio" 
+                                   name="fecha_inicio"
+                                   value="{{ proxima_disponibilidad|date:'Y-m-d' }}"
+                                   min="{{ proxima_disponibilidad|date:'Y-m-d' }}"
+                                   required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="fecha_fin" class="form-label">
+                                <i class="fas fa-calendar-minus"></i> Fecha de Fin *
+                            </label>
+                            <input type="date" 
+                                   class="form-control" 
+                                   id="fecha_fin" 
+                                   name="fecha_fin"
+                                   required>
+                            <div class="form-text">
+                                La fecha de fin debe ser igual o posterior a la fecha de inicio
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Contenedor de errores de fechas -->
+                <div id="errores-fechas" class="mt-2"></div>
+
+                <!-- Información de disponibilidad -->
+                {% if proxima_disponibilidad %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Próxima disponibilidad:</strong> {{ proxima_disponibilidad|date:"d/m/Y" }}
+                    </div>
+                {% endif %}
+
+                <!-- Cálculo del monto -->
+                <div class="resumen-card">
+                    <h6>
+                        <i class="fas fa-calculator"></i> Resumen del Alquiler (Pago Presencial)
+                    </h6>
+                    <div id="resumen-alquiler">
+                        <p><strong>Precio por día:</strong> ${{ maquina.precio_por_dia }}</p>
+                        <p><strong>Días de alquiler:</strong> <span id="dias-alquiler">-</span></p>
+                        <p><strong>Total estimado:</strong> <span id="total-estimado">-</span></p>
+                    </div>
+                </div>
+
+                <!-- Botones -->
+                <div class="d-flex justify-content-between">
+                    <a href="{% url 'seleccionar_maquinaria_alquiler_presencial' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Volver
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-check"></i> Pago Realizado
+                    </button>
+                </div>
+            </form>
+        </div>
+
+
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fechaInicio = document.getElementById('fecha_inicio');
+    const fechaFin = document.getElementById('fecha_fin');
+    const diasAlquiler = document.getElementById('dias-alquiler');
+    const totalEstimado = document.getElementById('total-estimado');
+    const precioPorDia = parseFloat('{{ maquina.precio_por_dia }}');
+
+    function calcularResumen() {
+        if (fechaInicio.value && fechaFin.value) {
+            const inicio = new Date(fechaInicio.value);
+            const fin = new Date(fechaFin.value);
+            
+            if (fin >= inicio) {
+                const dias = Math.floor((fin - inicio) / (1000 * 60 * 60 * 24)) + 1;
+                const total = dias * precioPorDia;
+                
+                diasAlquiler.textContent = dias;
+                totalEstimado.textContent = `$${total.toFixed(2)}`;
+            } else {
+                diasAlquiler.textContent = '-';
+                totalEstimado.textContent = '-';
+            }
+        }
+    }
+
+    fechaInicio.addEventListener('change', function() {
+        // Actualizar la fecha mínima de fin
+        fechaFin.min = fechaInicio.value;
+        
+        // Si la fecha de fin es anterior a la nueva fecha de inicio, limpiarla
+        if (fechaFin.value && fechaFin.value < fechaInicio.value) {
+            fechaFin.value = '';
+        }
+        
+        calcularResumen();
+    });
+    fechaFin.addEventListener('change', calcularResumen);
+
+    // Validación del formulario
+    const form = document.querySelector('.needs-validation');
+    form.addEventListener('submit', function(event) {
+        event.preventDefault();
+        
+        let isValid = true;
+        let errores = [];
+        const fechaInicioInput = document.getElementById('fecha_inicio');
+        const fechaFinInput = document.getElementById('fecha_fin');
+        const fechaInicio = new Date(fechaInicioInput.value);
+        const fechaFin = new Date(fechaFinInput.value);
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+        
+        // Validar fecha de inicio
+        if (fechaInicio < hoy) {
+            errores.push('La fecha de inicio debe ser igual o posterior a hoy.');
+            isValid = false;
+        }
+        // Validar fecha de fin
+        if (fechaFin < fechaInicio) {
+            errores.push('La fecha de fin no puede ser anterior a la fecha de inicio.');
+            isValid = false;
+        }
+        // Validar duración máxima
+        const dias = Math.floor((fechaFin - fechaInicio) / (1000 * 60 * 60 * 24)) + 1;
+        if (dias > 7) {
+            errores.push('La reserva no puede exceder los 7 días.');
+            isValid = false;
+        }
+        // Mostrar errores en el div
+        const erroresDiv = document.getElementById('errores-fechas');
+        if (!isValid) {
+            erroresDiv.innerHTML = '<div class="alert alert-danger" style="margin-top:0.5rem;"><ul style="margin-bottom:0;">' + errores.map(e => `<li>${e}</li>`).join('') + '</ul></div>';
+        } else {
+            erroresDiv.innerHTML = '';
+            form.submit();
+        }
+    });
+});
+</script>
+{% endblock %} 

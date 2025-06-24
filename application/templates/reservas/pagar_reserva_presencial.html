@@ -1,0 +1,508 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Pago Presencial - Reserva {{ reserva.numero_reserva }}{% endblock %}
+
+{% block styles %}
+.container {
+    padding: 2rem;
+}
+
+.form-card {
+    background-color: rgba(84, 100, 105, 0.6);
+    backdrop-filter: blur(10px);
+    border-radius: 1.5rem;
+    padding: 2.5rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    color: white;
+}
+
+.page-title {
+    color: white;
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+    font-weight: bold;
+}
+
+.back-btn {
+    display: inline-block;
+    background-color: #546469;
+    color: white;
+    padding: 0.7rem 1.2rem;
+    border-radius: 0.6rem;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: background-color 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    margin-bottom: 0.5rem;
+}
+
+.back-btn:hover {
+    background-color: #3d484c;
+    color: white;
+    text-decoration: none;
+}
+
+.info-section {
+    background-color: rgba(255, 255, 255, 0.1);
+    padding: 1.5rem;
+    border-radius: 0.8rem;
+    margin-bottom: 2rem;
+    backdrop-filter: blur(10px);
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    align-items: start;
+}
+
+.info-card h5 {
+    color: #d16c44;
+    margin-bottom: 1rem;
+    font-weight: bold;
+}
+
+.info-card ul {
+    list-style: none;
+    padding: 0;
+}
+
+.info-card li {
+    color: white;
+    margin-bottom: 0.5rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.info-card li:last-child {
+    border-bottom: none;
+}
+
+.code-section {
+    background-color: rgba(209, 108, 68, 0.2);
+    padding: 2rem;
+    border-radius: 0.8rem;
+    margin-bottom: 2rem;
+    backdrop-filter: blur(10px);
+    border: 2px solid #d16c44;
+    text-align: center;
+}
+
+.code-title {
+    color: #d16c44;
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+}
+
+.code-value {
+    font-size: 3rem;
+    font-weight: bold;
+    letter-spacing: 0.5rem;
+    background-color: white;
+    color: #d16c44;
+    padding: 1rem 2rem;
+    border-radius: 0.5rem;
+    display: inline-block;
+    margin: 1rem 0;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.payment-section {
+    background-color: rgba(255, 255, 255, 0.1);
+    padding: 2rem;
+    border-radius: 0.8rem;
+    margin-bottom: 2rem;
+    backdrop-filter: blur(10px);
+}
+
+.payment-section h5 {
+    color: #d16c44;
+    margin-bottom: 1.5rem;
+    font-weight: bold;
+}
+
+.payment-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+}
+
+.payment-card {
+    background-color: rgba(255, 255, 255, 0.05);
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.payment-card h6 {
+    color: #d16c44;
+    margin-bottom: 1rem;
+    font-weight: bold;
+}
+
+.form-label {
+    color: white;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.form-control {
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 0.5rem;
+    padding: 0.8rem;
+    transition: border-color 0.3s ease;
+    color: white;
+    width: 100%;
+}
+
+.form-control:focus {
+    border-color: #d16c44;
+    box-shadow: 0 0 0 0.2rem rgba(209, 108, 68, 0.25);
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.form-control::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.form-check-input {
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.form-check-input:checked {
+    background-color: #d16c44;
+    border-color: #d16c44;
+}
+
+.form-check-label {
+    color: white;
+}
+
+.btn {
+    padding: 0.8rem 1.5rem;
+    border: none;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    text-decoration: none;
+}
+
+.btn-secondary {
+    background-color: #546469;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background-color: #3d484c;
+    color: white;
+}
+
+.btn-primary {
+    background-color: #d16c44;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #b95a33;
+    color: white;
+}
+
+.btn-success {
+    background-color: #28a745;
+    color: white;
+}
+
+.btn-success:hover {
+    background-color: #218838;
+    color: white;
+}
+
+.btn-info {
+    background-color: #17a2b8;
+    color: white;
+}
+
+.btn-info:hover {
+    background-color: #138496;
+    color: white;
+}
+
+.btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+}
+
+.mercadopago-section {
+    background-color: rgba(255, 255, 255, 0.1);
+    padding: 1.5rem;
+    border-radius: 0.8rem;
+    margin-bottom: 2rem;
+    backdrop-filter: blur(10px);
+}
+
+.mercadopago-section h6 {
+    color: #d16c44;
+    margin-bottom: 1rem;
+    font-weight: bold;
+}
+
+.total-section {
+    background-color: rgba(40, 167, 69, 0.2);
+    padding: 1.5rem;
+    border-radius: 0.8rem;
+    margin-bottom: 2rem;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(40, 167, 69, 0.3);
+    text-align: center;
+}
+
+.total-section h4 {
+    color: #28a745;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+}
+
+.total-section p {
+    color: rgba(255, 255, 255, 0.8);
+    margin: 0;
+}
+
+@media (max-width: 768px) {
+    .info-grid, .payment-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .container {
+        padding: 1rem;
+    }
+    
+    .form-card {
+        padding: 1.5rem;
+    }
+    
+    .code-value {
+        font-size: 2rem;
+        letter-spacing: 0.3rem;
+        padding: 0.8rem 1.5rem;
+    }
+}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="form-card">
+        <a href="{% url 'historial_reservas' %}" class="back-btn">
+            <i class="fas fa-arrow-left"></i> Regresar al Historial
+        </a>
+        <h2 class="page-title">
+            <i class="fas fa-credit-card"></i> Pago Presencial - Reserva {{ reserva.numero_reserva }}
+        </h2>
+
+        <!-- Información de la reserva -->
+        <div class="info-section">
+            <div class="info-grid">
+                <div class="info-card">
+                    <h5><i class="fas fa-user"></i> Información del Cliente</h5>
+                    <ul>
+                        <li><strong>Cliente:</strong> {{ reserva.cliente.get_full_name }}</li>
+                        <li><strong>Email:</strong> {{ reserva.cliente.email }}</li>
+                        <li><strong>Empleado gestor:</strong> {{ reserva.empleado_gestor.get_full_name }}</li>
+                    </ul>
+                </div>
+                <div class="info-card">
+                    <h5><i class="fas fa-tools"></i> Detalles del Alquiler</h5>
+                    <ul>
+                        <li><strong>Máquina:</strong> {{ reserva.maquina.nombre }}</li>
+                        <li><strong>Fecha inicio:</strong> {{ reserva.fecha_inicio|date:"d/m/Y" }}</li>
+                        <li><strong>Fecha fin:</strong> {{ reserva.fecha_fin|date:"d/m/Y" }}</li>
+                        <li><strong>Días:</strong> {{ reserva.dias }}</li>
+                        <li><strong>Total:</strong> ${{ reserva.monto_total }}</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Código de retiro -->
+        {% if reserva.codigo_retiro %}
+        <div class="code-section">
+            <div class="code-title">
+                <i class="fas fa-key"></i> CÓDIGO DE RETIRO
+            </div>
+            <div class="code-value">{{ reserva.codigo_retiro }}</div>
+            <p style="color: rgba(255, 255, 255, 0.8); margin-top: 1rem;">
+                <i class="fas fa-info-circle"></i> 
+                Este código ha sido enviado al cliente por email. Presenta este código al retirar la maquinaria.
+            </p>
+        </div>
+        {% endif %}
+
+        <!-- Total a pagar -->
+        <div class="total-section">
+            <h4><i class="fas fa-dollar-sign"></i> ${{ reserva.monto_total }}</h4>
+            <p>Total a pagar</p>
+        </div>
+
+        <!-- Opciones de pago -->
+        <div class="payment-section">
+            <h5><i class="fas fa-credit-card"></i> Opciones de Pago</h5>
+            <div class="payment-grid">
+                <div class="payment-card">
+                    <h6><i class="fas fa-credit-card"></i> Tarjetas Guardadas</h6>
+                    {% if tarjetas %}
+                        <form method="post">
+                            {% csrf_token %}
+                            {% for tarjeta in tarjetas %}
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="radio" 
+                                           name="tarjeta_id" value="{{ tarjeta.id }}" 
+                                           id="tarjeta_{{ tarjeta.id }}">
+                                    <label class="form-check-label" for="tarjeta_{{ tarjeta.id }}">
+                                        <i class="fas fa-credit-card"></i>
+                                        {{ tarjeta.tipo }} terminada en {{ tarjeta.ultimos_digitos }}
+                                        {% if tarjeta.es_predeterminada %}
+                                            <span style="background-color: #d16c44; color: white; padding: 0.2rem 0.5rem; border-radius: 0.3rem; font-size: 0.8rem;">Predeterminada</span>
+                                        {% endif %}
+                                    </label>
+                                </div>
+                            {% endfor %}
+                            <button type="submit" name="usar_tarjeta" class="btn btn-primary btn-sm">
+                                <i class="fas fa-check"></i> Usar Tarjeta Seleccionada
+                            </button>
+                        </form>
+                    {% else %}
+                        <p style="color: rgba(255, 255, 255, 0.7);">No tienes tarjetas guardadas.</p>
+                    {% endif %}
+                </div>
+
+                <div class="payment-card">
+                    <h6><i class="fas fa-plus"></i> Agregar Nueva Tarjeta</h6>
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="numero_tarjeta" class="form-label">Número de Tarjeta</label>
+                            <input type="text" class="form-control" id="numero_tarjeta" 
+                                   name="numero_tarjeta" maxlength="16" pattern="[0-9]{16}" required>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="codigo_seguridad" class="form-label">CVV</label>
+                                    <input type="password" class="form-control" id="codigo_seguridad" 
+                                           name="codigo_seguridad" maxlength="4" pattern="[0-9]{3,4}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="fecha_vencimiento" class="form-label">Vencimiento</label>
+                                    <input type="text" class="form-control" id="fecha_vencimiento" 
+                                           name="fecha_vencimiento" placeholder="MM/YYYY" 
+                                           pattern="(0[1-9]|1[0-2])\/[0-9]{4}" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="nombre_titular" class="form-label">Nombre del Titular</label>
+                            <input type="text" class="form-control" id="nombre_titular" 
+                                   name="nombre_titular" required>
+                        </div>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="es_predeterminada" 
+                                   name="es_predeterminada">
+                            <label class="form-check-label" for="es_predeterminada">
+                                Establecer como tarjeta predeterminada
+                            </label>
+                        </div>
+                        <button type="submit" name="agregar_tarjeta" class="btn btn-success btn-sm">
+                            <i class="fas fa-plus"></i> Agregar Tarjeta
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mercado Pago -->
+        <div class="mercadopago-section">
+            <h6><i class="fab fa-mercado-pago"></i> Pago con Mercado Pago</h6>
+            <div id="wallet_container"></div>
+        </div>
+
+        <!-- Botones de acción -->
+        <div class="d-flex justify-content-between">
+            <a href="{% url 'historial_reservas' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Volver al Historial
+            </a>
+            <a href="{% url 'detalle_maquinaria' reserva.maquina.id %}" class="btn btn-info">
+                <i class="fas fa-tools"></i> Ver Máquina
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Mercado Pago SDK -->
+<script src="https://sdk.mercadopago.com/js/v2"></script>
+<script>
+    const mp = new MercadoPago('{{ preference_id }}', {
+        locale: 'es-AR'
+    });
+
+    mp.checkout({
+        preference: {
+            id: '{{ preference_id }}'
+        },
+        render: {
+            container: '#wallet_container',
+            label: 'Pagar con Mercado Pago'
+        }
+    });
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Formatear fecha de vencimiento
+    const fechaVencimiento = document.getElementById('fecha_vencimiento');
+    if (fechaVencimiento) {
+        fechaVencimiento.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length >= 2) {
+                value = value.substring(0, 2) + '/' + value.substring(2, 6);
+            }
+            e.target.value = value;
+        });
+    }
+
+    // Formatear número de tarjeta
+    const numeroTarjeta = document.getElementById('numero_tarjeta');
+    if (numeroTarjeta) {
+        numeroTarjeta.addEventListener('input', function(e) {
+            e.target.value = e.target.value.replace(/\D/g, '').substring(0, 16);
+        });
+    }
+
+    // Formatear CVV
+    const codigoSeguridad = document.getElementById('codigo_seguridad');
+    if (codigoSeguridad) {
+        codigoSeguridad.addEventListener('input', function(e) {
+            e.target.value = e.target.value.replace(/\D/g, '').substring(0, 4);
+        });
+    }
+});
+</script>
+{% endblock %} 

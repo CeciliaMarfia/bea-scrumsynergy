@@ -4,6 +4,8 @@ from django.dispatch import receiver
 from django.db.models.signals import post_save
 from django.core.exceptions import ValidationError
 from django.utils import timezone
+import random
+import string
 
 
 class Role(models.Model):
@@ -321,6 +323,7 @@ class Reserva(models.Model):
     estado = models.CharField(
         max_length=20, choices=ESTADO_CHOICES, default='pendiente_pago')
     monto_total = models.DecimalField(max_digits=10, decimal_places=2)
+    codigo_retiro = models.CharField(max_length=8, unique=True, blank=True, null=True)
 
     def __str__(self):
         return f'Reserva #{self.numero_reserva} - {self.maquina.nombre}'
@@ -408,6 +411,16 @@ class Reserva(models.Model):
             else:
                 ultimo_id = 0
             self.numero_reserva = f'RES{timezone.now().strftime("%Y%m")}{str(ultimo_id + 1).zfill(4)}'
+
+        # Generar código de retiro único si no existe
+        if not self.codigo_retiro:
+            while True:
+                # Generar código de 8 caracteres alfanuméricos
+                codigo = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+                # Verificar que no exista
+                if not Reserva.objects.filter(codigo_retiro=codigo).exists():
+                    self.codigo_retiro = codigo
+                    break
 
         # Actualizar el estado de la máquina solo si es una nueva reserva o se está cancelando
         if self.pk is None:  # Nueva reserva

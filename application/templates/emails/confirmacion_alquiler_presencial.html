@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmación de Alquiler Presencial - Bob el Alquilador</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #d16c44;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #d16c44;
+            margin-bottom: 10px;
+        }
+        .title {
+            color: #333;
+            font-size: 20px;
+            margin-bottom: 5px;
+        }
+        .subtitle {
+            color: #666;
+            font-size: 14px;
+        }
+        .section {
+            margin-bottom: 25px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }
+        .section-title {
+            font-weight: bold;
+            color: #d16c44;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding: 5px 0;
+        }
+        .info-label {
+            font-weight: 500;
+            color: #555;
+        }
+        .info-value {
+            color: #333;
+        }
+        .code-section {
+            text-align: center;
+            background-color: #d16c44;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 25px 0;
+        }
+        .code-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .code-value {
+            font-size: 32px;
+            font-weight: bold;
+            letter-spacing: 3px;
+            background-color: white;
+            color: #d16c44;
+            padding: 15px;
+            border-radius: 5px;
+            display: inline-block;
+            min-width: 200px;
+        }
+        .instructions {
+            background-color: #e8f4fd;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .instructions h4 {
+            color: #17a2b8;
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+        .instructions ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .instructions li {
+            margin-bottom: 5px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            color: #666;
+            font-size: 12px;
+        }
+        .contact-info {
+            background-color: #f0f8ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .contact-info h4 {
+            color: #17a2b8;
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #d16c44;
+            color: white;
+            padding: 12px 25px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 10px 5px;
+            font-weight: bold;
+        }
+        .btn:hover {
+            background-color: #b95a33;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">🔧 Bob el Alquilador</div>
+            <div class="title">Confirmación de Alquiler Presencial</div>
+            <div class="subtitle">Tu maquinaria está lista para retirar - Pago Confirmado</div>
+        </div>
+
+        <p>Hola <strong>{{ reserva.cliente.first_name }} {{ reserva.cliente.last_name }}</strong>,</p>
+        
+        <p>¡Tu alquiler presencial ha sido confirmado y el pago procesado exitosamente! A continuación encontrarás todos los detalles de tu alquiler.</p>
+
+        <div class="section">
+            <div class="section-title">📋 Detalles del Alquiler</div>
+            <div class="info-row">
+                <span class="info-label">Número de Reserva:</span>
+                <span class="info-value"><strong>{{ reserva.numero_reserva }}</strong></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Máquina:</span>
+                <span class="info-value">{{ reserva.maquina.nombre }} ({{ reserva.maquina.marca }} {{ reserva.maquina.modelo }})</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Fecha de Inicio:</span>
+                <span class="info-value">{{ reserva.fecha_inicio|date:"d/m/Y" }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Fecha de Fin:</span>
+                <span class="info-value">{{ reserva.fecha_fin|date:"d/m/Y" }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Duración:</span>
+                <span class="info-value">{{ reserva.dias }} día{{ reserva.dias|pluralize:"s" }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Monto Total:</span>
+                <span class="info-value"><strong>${{ reserva.monto_total }}</strong></span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Empleado Gestor:</span>
+                <span class="info-value">{{ reserva.empleado_gestor.get_full_name }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Estado del Pago:</span>
+                <span class="info-value"><strong style="color: #28a745;">✅ Pagado</strong></span>
+            </div>
+        </div>
+
+        <div class="code-section">
+            <div class="code-title">🔑 CÓDIGO DE RETIRO</div>
+            <div class="code-value">{{ reserva.codigo_retiro }}</div>
+            <p style="margin-top: 15px; font-size: 14px;">
+                Presenta este código al retirar tu maquinaria
+            </p>
+        </div>
+
+        <div class="instructions">
+            <h4>📋 Instrucciones para el Retiro</h4>
+            <ul>
+                <li><strong>Lugar de retiro:</strong> {{ reserva.maquina.ubicacion }}</li>
+                <li><strong>Fecha de retiro:</strong> {{ reserva.fecha_inicio|date:"d/m/Y" }}</li>
+                <li><strong>Documentación requerida:</strong> DNI y código de retiro</li>
+                <li><strong>Horario de atención:</strong> Lunes a Viernes de 8:00 a 18:00</li>
+                <li><strong>Contacto:</strong> Comunícate con nosotros si tienes alguna consulta</li>
+            </ul>
+        </div>
+
+        <div class="contact-info">
+            <h4>📞 Información de Contacto</h4>
+            <p><strong>Empleado asignado:</strong> {{ reserva.empleado_gestor.get_full_name }}</p>
+            <p><strong>Email:</strong> {{ reserva.empleado_gestor.email }}</p>
+            <p><strong>Ubicación:</strong> {{ reserva.maquina.ubicacion }}</p>
+        </div>
+
+        <div class="footer">
+            <p>Este es un email automático, por favor no respondas a este mensaje.</p>
+            <p>Si tienes alguna consulta, contacta con nuestro equipo de soporte.</p>
+            <p>&copy; 2024 Bob el Alquilador. Todos los derechos reservados.</p>
+        </div>
+    </div>
+</body>
+</html> 

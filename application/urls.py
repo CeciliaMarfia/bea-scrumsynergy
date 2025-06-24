@@ -88,6 +88,9 @@ urlpatterns = [
     path('mis-alquileres/', views.mis_alquileres, name='mis_alquileres'),
     path('alquilar/', views.alquilar_maquinaria, name='alquilar_maquinaria'),
     path('alquilar/<int:id_maquina>/', views.alquilar_maquinaria_detalle, name='alquilar_maquinaria_detalle'),
+    path('alquiler-presencial/<int:id_maquina>/', views.alquiler_presencial_detalle, name='alquiler_presencial_detalle'),
+    path('pagar-reserva-presencial/<int:reserva_id>/', views.pagar_reserva_presencial, name='pagar_reserva_presencial'),
+    path('seleccionar-maquinaria-alquiler-presencial/', views.seleccionar_maquinaria_alquiler_presencial, name='seleccionar_maquinaria_alquiler_presencial'),
     path('preguntas-frecuentes/', views.preguntas_frecuentes, name='preguntas_frecuentes'),
     path('contacto/', views.contacto, name='contacto'),
 ]
