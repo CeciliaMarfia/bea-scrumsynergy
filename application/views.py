@@ -688,6 +688,9 @@ def reservar_maquinaria(request, maquina_id):
             try:
                 with transaction.atomic():
                     reserva.save()
+                    # Cambiar el estado de la máquina a 'alquilado'
+                    maquina.estado = 'alquilado'
+                    maquina.save()
                     messages.success(
                         request, f'Reserva creada exitosamente. Número de reserva: {reserva.numero_reserva}')
                     return redirect('mis_reservas')
@@ -1072,6 +1075,17 @@ def pagar_reserva(request, reserva_id):
                     messages.error(request, 'Tarjeta no encontrada')
             else:
                 messages.error(request, 'Selecciona una tarjeta válida')
+        elif 'eliminar_tarjeta' in request.POST:
+            tarjeta_id = request.POST.get('tarjeta_id')
+            try:
+                tarjeta = TarjetaCredito.objects.get(id=tarjeta_id, usuario=request.user)
+                tarjeta.delete()
+                messages.success(request, 'La tarjeta se eliminó correctamente.')
+                return redirect('pagar_reserva', reserva_id=reserva.id)
+            except TarjetaCredito.DoesNotExist:
+                messages.error(request, 'No se pudo eliminar la tarjeta. Intente nuevamente.')
+                return redirect('pagar_reserva', reserva_id=reserva.id)
+
     preference = generar_preference_mercadopago(request, reserva_id)
     print(preference)
     context = {
@@ -1557,14 +1571,19 @@ def responder_pregunta(request, pregunta_id):
         return redirect('gestionar_preguntas')
     pregunta = get_object_or_404(Pregunta, id=pregunta_id)
     if pregunta.respuesta:
-        messages.info(request, 'Esta pregunta ya fue respondida.')
-        return redirect('detalle_maquinaria', maquina_id=pregunta.maquina.id)
+        if pregunta.maquina:
+            return redirect('detalle_maquinaria', maquina_id=pregunta.maquina.id)
+        else:
+            return redirect('gestionar_preguntas')
     if request.method == 'POST':
         form = ResponderPreguntaForm(request.POST, instance=pregunta)
         if form.is_valid():
             form.save()
             messages.success(request, 'Respuesta registrada con éxito.')
-            return redirect(f"{reverse('detalle_maquinaria', args=[pregunta.maquina.id])}#preguntas")
+            if pregunta.maquina:
+                return redirect(f"{reverse('detalle_maquinaria', args=[pregunta.maquina.id])}#preguntas")
+            else:
+                return redirect('gestionar_preguntas')
     else:
         form = ResponderPreguntaForm(instance=pregunta)
     return render(request, 'preguntas/responder_pregunta.html', {'form': form, 'pregunta': pregunta})
@@ -1823,6 +1842,9 @@ def alquilar_maquinaria_detalle(request, id_maquina):
             try:
                 with transaction.atomic():
                     reserva.save()
+                    # Cambiar el estado de la máquina a 'alquilado'
+                    maquina.estado = 'alquilado'
+                    maquina.save()
                     messages.success(
                         request, f'Alquiler creado exitosamente. Número de alquiler: {reserva.numero_reserva}')
                     return redirect('mis_alquileres')
@@ -2220,6 +2242,16 @@ def pagar_reserva_presencial(request, reserva_id):
                     messages.error(request, 'Tarjeta no encontrada')
             else:
                 messages.error(request, 'Selecciona una tarjeta válida')
+        elif 'eliminar_tarjeta' in request.POST:
+            tarjeta_id = request.POST.get('tarjeta_id')
+            try:
+                tarjeta = TarjetaCredito.objects.get(id=tarjeta_id, usuario=request.user)
+                tarjeta.delete()
+                messages.success(request, 'La tarjeta se eliminó correctamente.')
+                return redirect('pagar_reserva', reserva_id=reserva.id)
+            except TarjetaCredito.DoesNotExist:
+                messages.error(request, 'No se pudo eliminar la tarjeta. Intente nuevamente.')
+                return redirect('pagar_reserva', reserva_id=reserva.id)
     
     preference = generar_preference_mercadopago(request, reserva_id)
     context = {
