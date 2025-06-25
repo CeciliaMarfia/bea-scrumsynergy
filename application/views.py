@@ -6,11 +6,11 @@ from django.contrib.auth.forms import UserCreationForm
 import os
 from django.conf import settings
 from .machinery.forms import AltaMaquinariaForm, RegistrarDevolucionForm
-from .models import Maquina, HomeVideo, PermisoEspecial, Perfil, Reserva, ImagenMaquina, Pago, TarjetaCredito, Role, Sucursal, Pregunta, Calificacion
+from .models import Maquina, HomeVideo, PermisoEspecial, Perfil, Reserva, ImagenMaquina, Pago, TarjetaCredito, Role, Sucursal, Pregunta, Calificacion, ValoracionEmpleado
 from django.core.mail import send_mail, EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
-from .forms import RegistroUsuarioForm, PermisoEspecialForm, EditarPerfilForm, ReservaMaquinariaForm, TarjetaCreditoForm, CambiarPasswordForm, ResponderPreguntaForm, ContactForm, CalificacionForm, AlquilerPresencialForm
+from .forms import RegistroUsuarioForm, PermisoEspecialForm, EditarPerfilForm, ReservaMaquinariaForm, TarjetaCreditoForm, CambiarPasswordForm, ResponderPreguntaForm, ContactForm, CalificacionForm, AlquilerPresencialForm, ValoracionEmpleadoForm
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.views import PasswordResetView, PasswordResetDoneView, PasswordResetConfirmView, PasswordResetCompleteView
 from django.contrib.auth.models import User
@@ -2107,8 +2107,25 @@ def alquiler_presencial_detalle(request, id_maquina):
                     reserva.maquina.save()
                     # Enviar email de confirmación al cliente
                     subject = f'Confirmación de Alquiler Presencial - {reserva.numero_reserva}'
+                    
+                    # Generar la URL completa para valorar empleado
+                    from django.contrib.sites.shortcuts import get_current_site
+                    from django.urls import reverse
+                    
+                    # Usar el dominio configurado en settings o localhost para desarrollo
+                    try:
+                        current_site = get_current_site(request)
+                        domain = current_site.domain
+                        if not domain or domain == 'example.com':
+                            domain = '127.0.0.1:8000'
+                    except:
+                        domain = '127.0.0.1:8000'
+                    
+                    valorar_url = f"http://{domain}/valorar-empleado/{reserva.id}/"
+                    
                     html_message = render_to_string('emails/confirmacion_alquiler_presencial.html', {
                         'reserva': reserva,
+                        'valorar_url': valorar_url,
                     })
                     plain_message = strip_tags(html_message)
 
@@ -2124,9 +2141,13 @@ def alquiler_presencial_detalle(request, id_maquina):
                     except Exception as e:
                         print(f"Error al enviar email de confirmación: {str(e)}")
                         # No fallar la transacción si el email no se envía
-                    messages.success(
-                        request, f'Alquiler presencial creado y pagado exitosamente. Número de alquiler: {reserva.numero_reserva} para el cliente {cliente.get_full_name()}. Se ha enviado un email de confirmación con el código de retiro.')
-                    return redirect('historial_reservas')
+                    return render(request, 'reservas/alquiler_presencial_detalle.html', {
+                        'maquina': maquina,
+                        'proxima_disponibilidad': maquina.get_proxima_disponibilidad(),
+                        'form': AlquilerPresencialForm(initial={'maquina': maquina.id, 'fecha_inicio': maquina.get_proxima_disponibilidad()}),
+                        'alquiler_exitoso': True,
+                        'reserva_creada': reserva
+                    })
             except Exception as e:
                 messages.error(
                     request, 'Error al crear el alquiler presencial. Por favor, intente nuevamente.')
@@ -2347,3 +2368,69 @@ def historial_alquileres(request):
         estado__in=['pendiente_pago', 'pagada']
     ).order_by('fecha_inicio')  # Ordenar por fecha de inicio
     return render(request, 'reservas/historial_alquileres.html', {'alquileres': alquileres})
+
+
+@login_required
+def valorar_empleado(request, reserva_id):
+    reserva = get_object_or_404(Reserva, id=reserva_id, cliente=request.user)
+    
+    # Verificar que la reserva tenga un empleado gestor
+    if not reserva.empleado_gestor:
+        messages.error(request, 'Esta reserva no tiene un empleado asignado para valorar.')
+        return redirect('mis_alquileres')
+    
+    # Verificar que la reserva esté pagada
+    if reserva.estado != 'pagada':
+        messages.error(request, 'Solo puedes valorar empleados de alquileres pagados.')
+        return redirect('mis_alquileres')
+    
+    # Verificar si el usuario ya ha valorado este empleado para esta reserva
+    valoracion_existente = ValoracionEmpleado.objects.filter(
+        cliente=request.user, 
+        empleado=reserva.empleado_gestor,
+        reserva=reserva
+    ).first()
+
+    # Si ya existe una valoración, mostrar la página con la información pero sin permitir modificar
+    if valoracion_existente:
+        return render(request, 'valoraciones/valorar_empleado.html', {
+            'empleado': reserva.empleado_gestor,
+            'reserva': reserva,
+            'valoracion_existente': valoracion_existente
+        })
+
+    if request.method == 'POST':
+        form = ValoracionEmpleadoForm(request.POST)
+        if form.is_valid():
+            try:
+                valoracion = form.save(commit=False)
+                valoracion.cliente = request.user
+                valoracion.empleado = reserva.empleado_gestor
+                valoracion.reserva = reserva
+                valoracion.save()
+                
+                print(f"DEBUG: Valoración guardada exitosamente - ID: {valoracion.id}")
+                print(f"DEBUG: Cliente: {valoracion.cliente.username}")
+                print(f"DEBUG: Empleado: {valoracion.empleado.username}")
+                print(f"DEBUG: Reserva: {valoracion.reserva.numero_reserva}")
+                print(f"DEBUG: Estrellas: {valoracion.estrellas}")
+                
+                messages.success(request, '¡Gracias por tu valoración!')
+                return redirect('mis_alquileres')
+            except Exception as e:
+                print(f"ERROR al guardar valoración: {str(e)}")
+                messages.error(request, f'Error al guardar la valoración: {str(e)}')
+        else:
+            print(f"ERROR en formulario: {form.errors}")
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f'Error en {field}: {error}')
+    else:
+        form = ValoracionEmpleadoForm()
+
+    return render(request, 'valoraciones/valorar_empleado.html', {
+        'form': form,
+        'empleado': reserva.empleado_gestor,
+        'reserva': reserva,
+        'valoracion_existente': valoracion_existente
+    })

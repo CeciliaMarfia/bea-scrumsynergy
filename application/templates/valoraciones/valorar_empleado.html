@@ -1,0 +1,334 @@
+{% extends 'base.html' %}
+{% block styles %}
+.btn-volver {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    display: inline-block;
+    background-color: #b95a33;
+    color: white;
+    padding: 0.8rem 1.5rem;
+    border-radius: 0.6rem;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.btn-volver:hover {
+    background-color: #666;
+    transform: translateY(-2px);
+    color: white;
+    text-decoration: none;
+}
+
+.valorar-box {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    padding: 2rem;
+    border-radius: 1rem;
+    margin: 2rem auto;
+    max-width: 1200px;
+}
+.btn-primary {
+    display: inline-block;
+    background-color: #d16c44 !important;  
+    color: white !important;               
+    padding: 0.7rem 1.2rem;
+    border-radius: 0.6rem;
+    text-decoration: none;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    transition: background-color 0.3s ease;
+    border: none !important;               
+}
+
+.btn-primary:hover {
+    background-color: #b85a38 !important; 
+    color: white !important;               
+    text-decoration: none;
+}
+.valorar-box h2, .valorar-box label {
+    color: white;
+}
+
+.valorar-box .form-control {
+   font-size: 1.1rem;
+   width: 100%;
+   border-radius: 0.8rem;
+}
+
+.alert-info {
+    background-color: rgba(255, 141, 133, 0.3);
+    border-color: #d16c44;
+    color: white !important;
+    border-radius: 0.8rem;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.valorar-box .form-control {
+    font-size: 1.1rem;
+    width: 100%;
+    border-radius: 0.8rem;
+    transition: background-color 0.3s ease;
+}
+
+.valorar-box .form-control:hover {
+    background-color: #666;
+}
+
+.btn-secondary {
+    display: inline-block;
+    background-color: #6c757d;
+    color: white;
+    padding: 0.7rem 1.2rem;
+    border-radius: 0.6rem;
+    text-decoration: none;
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+    border: none;
+}
+
+.btn-secondary:hover {
+    background-color: #545b62;
+    color: white;
+    text-decoration: none;
+}
+
+/* Para que los botones estén alineados */
+.d-flex .btn {
+    margin-bottom: 0;
+}
+
+.valorar-box textarea {
+    border-radius: 0.8rem !important;
+    border: 1.5px solid #d16c44;
+    padding: 0.75rem;
+    font-size: 1.1rem;
+    width: 100% !important;
+    resize: vertical;
+    min-height: 120px;
+    background: rgba(255,255,255,0.18) !important;
+    color: #222;
+}
+
+.valorar-box textarea:focus {
+    border-color: #d16c44;
+    box-shadow: 0 0 0 0.2rem rgba(209, 108, 68, 0.25);
+    outline: none;
+}
+
+.valorar-box textarea::placeholder {
+    color: #fff !important;
+    opacity: 1;
+}
+
+/* Mensajes de error unificados */
+.text-danger, .invalid-feedback {
+    background-color: rgba(220, 53, 69, 0.2) !important;
+    border: 1px solid rgba(220, 53, 69, 0.3) !important;
+    color: #fff !important;
+    padding: 0.75rem 1rem !important;
+    border-radius: 0.5rem !important;
+    margin-top: 0.5rem !important;
+    display: block !important;
+    max-width: 75% 
+}
+
+.text-danger::before, .invalid-feedback::before {
+    margin-right: 0.5rem;
+}
+
+.empleado-info {
+    background-color: rgba(255, 255, 255, 0.1);
+    padding: 1.5rem;
+    border-radius: 0.8rem;
+    margin-bottom: 2rem;
+    backdrop-filter: blur(10px);
+}
+
+.empleado-info h4 {
+    color: #d16c44;
+    margin-bottom: 1rem;
+    font-weight: bold;
+}
+
+.empleado-info p {
+    color: white;
+    margin-bottom: 0.5rem;
+}
+
+.empleado-info strong {
+    color: #d16c44;
+}
+
+.valoracion-existente {
+    background-color: rgba(255, 255, 255, 0.1);
+    padding: 1.5rem;
+    border-radius: 0.8rem;
+    margin-bottom: 2rem;
+    backdrop-filter: blur(10px);
+    border-left: 4px solid #d16c44;
+}
+
+.valoracion-existente h4 {
+    color: #d16c44;
+    margin-bottom: 1rem;
+    font-weight: bold;
+}
+
+.valoracion-existente p {
+    color: white;
+    margin-bottom: 0.5rem;
+}
+
+.valoracion-existente strong {
+    color: #d16c44;
+}
+
+.estrellas-mostradas {
+    font-size: 2rem;
+    color: #ffb23a;
+    text-shadow: 0 0 8px #ffb23a99;
+    margin: 1rem 0;
+}
+{% endblock %}
+{% load static %}
+{% block content %}
+<a href="javascript:history.back()" class="btn-volver">
+                <i class="fas fa-arrow-left"></i> Volver a la página anterior
+            </a>
+<div class="container mt-5">
+    <div class="valorar-box">
+
+        
+        <h2>Valorar Atención de {{ empleado.get_full_name }}</h2>
+        
+        <!-- Información del empleado y reserva -->
+        <div class="empleado-info">
+            <h4><i class="fas fa-user-tie"></i> Información del Empleado</h4>
+            <p><strong>Empleado:</strong> {{ empleado.get_full_name }}</p>
+            <p><strong>Email:</strong> {{ empleado.email }}</p>
+            <p><strong>Reserva:</strong> {{ reserva.numero_reserva }}</p>
+            <p><strong>Máquina:</strong> {{ reserva.maquina.nombre }}</p>
+            <p><strong>Fecha de alquiler:</strong> {{ reserva.fecha_inicio|date:"d/m/Y" }} - {{ reserva.fecha_fin|date:"d/m/Y" }}</p>
+        </div>
+        
+        {% if valoracion_existente %}
+            <!-- Mostrar valoración existente -->
+            <div class="valoracion-existente">
+                <h4><i class="fas fa-star"></i> Tu Valoración</h4>
+                <div class="estrellas-mostradas">
+                    {% for i in "12345"|make_list %}
+                        {% if forloop.counter <= valoracion_existente.estrellas %}
+                            <i class="fas fa-star"></i>
+                        {% else %}
+                            <i class="far fa-star"></i>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                <p><strong>Valoración:</strong> {{ valoracion_existente.estrellas }} estrella{{ valoracion_existente.estrellas|pluralize:"s" }}</p>
+                {% if valoracion_existente.comentario %}
+                    <p><strong>Tu comentario:</strong> "{{ valoracion_existente.comentario }}"</p>
+                {% endif %}
+                <p><strong>Fecha de valoración:</strong> {{ valoracion_existente.fecha_creacion|date:"d/m/Y H:i" }}</p>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> <strong>No se pueden modificar las valoraciones una vez enviadas.</strong>
+                </div>
+            </div>
+            
+            <div class="d-flex justify-content-center">
+                <a href="{% url 'mis_alquileres' %}" class="btn btn-secondary">Volver a Mis Alquileres</a>
+            </div>
+        {% else %}
+            <!-- Mostrar formulario para nueva valoración -->
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="form-group mb-3">
+                    <label>Valoración:</label>
+                    <div id="star-rating" style="font-size:2.8rem; display:flex; gap:0.7rem; cursor:pointer;">
+                        {% for i in "12345"|make_list %}
+                            <span class="star {% if form.estrellas.value|stringformat:'i' >= i %}selected{% endif %}" data-value="{{ i }}">
+                                <i class="fas fa-star"></i>
+                            </span>
+                        {% endfor %}
+                    </div>
+                    <input type="hidden" name="estrellas" id="estrellas-input" value="{{ form.estrellas.value|default_if_none:'' }}">
+                    <style>
+                    #star-rating .star.selected i {
+                        color: #ffb23a;
+                        text-shadow: 0 0 8px #ffb23a99;
+                    }
+                    #star-rating .star i {
+                        color: #222;
+                        transition: color 0.2s, text-shadow 0.2s;
+                    }
+                    #star-rating .star:hover i,
+                    #star-rating .star.hovered i {
+                        color: #ffb23a;
+                        text-shadow: 0 0 8px #ffb23a99;
+                    }
+                    </style>
+                    <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const stars = document.querySelectorAll('#star-rating .star');
+                        const input = document.getElementById('estrellas-input');
+                        let current = parseInt(input.value) || 0;
+                        stars.forEach((star, idx) => {
+                            star.addEventListener('mouseenter', () => {
+                                stars.forEach((s, i) => {
+                                    if(i <= idx) s.classList.add('hovered');
+                                    else s.classList.remove('hovered');
+                                });
+                            });
+                            star.addEventListener('mouseleave', () => {
+                                stars.forEach((s) => s.classList.remove('hovered'));
+                            });
+                            star.addEventListener('click', () => {
+                                current = idx+1;
+                                input.value = current;
+                                stars.forEach((s, i) => {
+                                    if(i < current) s.classList.add('selected');
+                                    else s.classList.remove('selected');
+                                });
+                            });
+                        });
+                        // Inicializar selección
+                        stars.forEach((s, i) => {
+                            if(i < current) s.classList.add('selected');
+                            else s.classList.remove('selected');
+                        });
+                    });
+                    </script>
+                    {% if form.estrellas.errors %}
+                        <div class="text-danger">
+                            {{ form.estrellas.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+                 <label for="{{ form.comentario.id_for_label }}">Comentario:</label>
+                <div class="form-group mb-3">
+                    {{ form.comentario }}
+                    {% if form.comentario.errors %}
+                        <div class="text-danger">
+                            {{ form.comentario.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a href="{% url 'mis_alquileres' %}" class="btn btn-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-primary">
+                        Enviar valoración
+                    </button>
+                </div>
+            </form>
+        {% endif %}
+    </div>
+</div>
+{% endblock %} 

@@ -271,6 +271,31 @@
     color: #28a745 !important;
 }
 
+.alert-success {
+    background-color: rgba(40, 167, 69, 0.2);
+    border-color: rgba(40, 167, 69, 0.3);
+    color: #28a745;
+    padding: 1.5rem;
+    border-radius: 0.8rem;
+    margin-bottom: 2rem;
+}
+
+.alert-success h4 {
+    color: #28a745;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+}
+
+.alert-success p {
+    margin-bottom: 0.5rem;
+    color: #28a745;
+}
+
+.alert-success strong {
+    color: #28a745;
+    font-weight: bold;
+}
+
 @media (max-width: 768px) {
     .maquina-grid {
         grid-template-columns: 1fr;
@@ -296,6 +321,25 @@
         <h2 class="page-title">
             <i class="fas fa-store"></i> Registrar Alquiler Presencial - {{ maquina.nombre }}
         </h2>
+
+        <!-- Confirmación de alquiler exitoso -->
+        {% if alquiler_exitoso %}
+        <div class="alert alert-success" style="background-color: rgba(40, 167, 69, 0.2); border-color: rgba(40, 167, 69, 0.3); color: #28a745; padding: 1.5rem; border-radius: 0.8rem; margin-bottom: 2rem;">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <i class="fas fa-check-circle" style="font-size: 2rem;"></i>
+                <div>
+                    <h4 style="margin: 0 0 0.5rem 0; color: #28a745;"> Alquiler Registrado Exitosamente</h4>
+                    <p style="margin: 0 0 0.5rem 0;"><strong>Número de alquiler:</strong> {{ reserva_creada.numero_reserva }}</p>
+                </div>
+            </div>
+            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(40, 167, 69, 0.3);">
+                <p style="margin: 0; font-size: 0.9rem;">
+                    <i class="fas fa-info-circle"></i> 
+                    Se ha enviado un email de confirmación al cliente con todos los detalles del alquiler y el código de retiro.
+                </p>
+            </div>
+        </div>
+        {% endif %}
 
         <!-- Información de la máquina -->
         <div class="maquina-info">

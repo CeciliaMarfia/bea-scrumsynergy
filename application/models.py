@@ -577,3 +577,44 @@ class Calificacion(models.Model):
 
     def __str__(self):
         return f'Calificación de {self.usuario.username} para {self.maquina.nombre}'
+
+
+class ValoracionEmpleado(models.Model):
+    ESTRELLAS_CHOICES = [
+        (1, '1 estrella'),
+        (2, '2 estrellas'),
+        (3, '3 estrellas'),
+        (4, '4 estrellas'),
+        (5, '5 estrellas'),
+    ]
+
+    empleado = models.ForeignKey(User, on_delete=models.CASCADE, related_name='valoraciones_recibidas')
+    cliente = models.ForeignKey(User, on_delete=models.CASCADE, related_name='valoraciones_empleados')
+    reserva = models.ForeignKey('Reserva', on_delete=models.CASCADE, related_name='valoraciones_empleado')
+    estrellas = models.IntegerField(choices=ESTRELLAS_CHOICES)
+    comentario = models.TextField(blank=True, null=True)
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Valoración de Empleado'
+        verbose_name_plural = 'Valoraciones de Empleados'
+        # Un cliente solo puede valorar una vez cada empleado por reserva
+        unique_together = ['cliente', 'empleado', 'reserva']
+
+    def __str__(self):
+        return f'Valoración de {self.cliente.username} para {self.empleado.get_full_name()}'
+
+    def get_promedio_valoraciones(self):
+        """Obtiene el promedio de valoraciones del empleado"""
+        valoraciones = ValoracionEmpleado.objects.filter(empleado=self.empleado)
+        if valoraciones.exists():
+            return valoraciones.aggregate(models.Avg('estrellas'))['estrellas__avg']
+        return 0
+
+    def get_cantidad_valoraciones(self):
+        """Obtiene la cantidad de valoraciones del empleado"""
+        return ValoracionEmpleado.objects.filter(empleado=self.empleado).count()
+
+    def get_valoraciones_ordenadas(self):
+        """Obtiene las valoraciones del empleado ordenadas por fecha"""
+        return ValoracionEmpleado.objects.filter(empleado=self.empleado).order_by('-fecha_creacion')

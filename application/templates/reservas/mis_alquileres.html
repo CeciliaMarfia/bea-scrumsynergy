@@ -140,6 +140,24 @@
     background-color: #218838;
     color: white !important;
 }
+.btn-valorar {
+    background-color: #ffc107;
+    color: #212529 !important;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    text-decoration: none !important;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+    margin-right: 1rem;
+    display: inline-block;
+    text-align: center;
+    border: none;
+    cursor: pointer;
+}
+.btn-valorar:hover {
+    background-color: #e0a800;
+    color: #212529 !important;
+}
 .botones-accion {
     text-align: right;
     margin-top: 1rem;
@@ -210,6 +228,11 @@
                 {% if reserva.estado == 'pendiente_pago' %}
                   <a href="{% url 'pagar_reserva' reserva.id %}" class="btn-pagar">
                     <i class="fas fa-credit-card"></i> Pagar Alquiler
+                  </a>
+                {% endif %}
+                {% if reserva.estado == 'pagada' and reserva.empleado_gestor %}
+                  <a href="{% url 'valorar_empleado' reserva.id %}" class="btn-valorar" style="background-color: #ffc107; color: #212529 !important; padding: 0.5rem 1rem; border-radius: 0.5rem; text-decoration: none !important; font-weight: bold; transition: background-color 0.3s ease; margin-right: 1rem; display: inline-block; text-align: center; border: none; cursor: pointer;">
+                    <i class="fas fa-star"></i> Valorar Empleado
                   </a>
                 {% endif %}
                 <form method="post" action="{% url 'cancelar_alquiler' reserva.id %}" class="form-cancelar-alquiler" style="display:inline;">

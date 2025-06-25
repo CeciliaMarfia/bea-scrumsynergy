@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm, PasswordChangeForm
 from django.contrib.auth.models import User
 from datetime import date
-from .models import Perfil, PermisoEspecial, Reserva, TarjetaCredito, Maquina, Pregunta, Calificacion
+from .models import Perfil, PermisoEspecial, Reserva, TarjetaCredito, Maquina, Pregunta, Calificacion, ValoracionEmpleado
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
@@ -720,8 +720,34 @@ class CalificacionForm(forms.ModelForm):
         model = Calificacion
         fields = ['estrellas', 'comentario']
         widgets = {
-            'estrellas': forms.RadioSelect(),
-            'comentario': forms.Textarea(attrs={'rows': 4, 'placeholder': 'Escribe tu comentario aquí (opcional)'}),
+            'estrellas': forms.HiddenInput(),
+            'comentario': forms.Textarea(attrs={
+                'rows': 4,
+                'placeholder': 'Comparte tu experiencia con esta máquina...',
+                'class': 'form-control'
+            })
+        }
+        labels = {
+            'estrellas': 'Calificación',
+            'comentario': 'Comentario'
+        }
+
+
+class ValoracionEmpleadoForm(forms.ModelForm):
+    class Meta:
+        model = ValoracionEmpleado
+        fields = ['estrellas', 'comentario']
+        widgets = {
+            'estrellas': forms.HiddenInput(),
+            'comentario': forms.Textarea(attrs={
+                'rows': 4,
+                'placeholder': 'Comparte tu experiencia con la atención del empleado...',
+                'class': 'form-control'
+            })
+        }
+        labels = {
+            'estrellas': 'Valoración',
+            'comentario': 'Comentario'
         }
 
 

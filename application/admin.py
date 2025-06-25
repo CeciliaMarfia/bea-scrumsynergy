@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Perfil, HomeVideo, Maquina
+from .models import Perfil, HomeVideo, Maquina, ValoracionEmpleado
 
 
 @admin.register(HomeVideo)
@@ -13,3 +13,4 @@ class HomeVideoAdmin(admin.ModelAdmin):
 # Registrar otros modelos si es necesario
 admin.site.register(Perfil)
 admin.site.register(Maquina)
+admin.site.register(ValoracionEmpleado)

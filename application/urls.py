@@ -48,6 +48,7 @@ urlpatterns = [
     path('editar-maquinaria/<int:maquina_id>/', views.editar_maquinaria, name='editar_maquinaria'),
     path('eliminar-imagen/<int:imagen_id>/', views.eliminar_imagen, name='eliminar_imagen'),
     path('maquinaria/<int:maquina_id>/calificar/', views.calificar_maquina, name='calificar_maquina'),
+    path('valorar-empleado/<int:reserva_id>/', views.valorar_empleado, name='valorar_empleado'),
 
     # Reservations
     path('reservas/historial/', views.historial_reservas,
