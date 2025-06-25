@@ -638,8 +638,8 @@
 
     <div class="text-end mt-4">
         {% if user.is_authenticated %}
-            <a href="{% url '_maquina' maquina.id %}" class="btn-">
-                <i class="fas fa-star"></i>  maquinaria
+            <a href="{% url 'calificar_maquina' maquina.id %}" class="btn-">
+                <i class="fas fa-star"></i>  Calificar Maquinaria
             </a>
         {% endif %}
     </div>

@@ -1979,6 +1979,9 @@ def calificar_maquina(request, maquina_id):
             calificacion.maquina = maquina
             calificacion.save()
             messages.success(request, mensaje)
+            # Redirigir según el origen
+            if request.GET.get('from') == 'alquileres':
+                return redirect('mis_alquileres')
             return redirect('detalle_maquinaria', maquina_id=maquina.id)
     else:
         form = CalificacionForm(

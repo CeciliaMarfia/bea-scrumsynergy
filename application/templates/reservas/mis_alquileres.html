@@ -50,6 +50,16 @@
     background-color:  rgba(220, 53, 69, 0.2);
     border: 1px solid  rgba(220, 53, 69, 0.2);
 }
+.estado-pagada {
+    background-color: rgba(40, 167, 69, 0.2);
+    border: 1px solid rgba(40, 167, 69, 0.5);
+    color: #fff;
+}
+.estado-cancelada {
+    background-color: rgba(220, 53, 69, 0.8);
+    border: 1px solid rgba(220, 53, 69, 0.9);
+    color: #fff;
+}
 .reserva-info {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -141,8 +151,8 @@
     color: white !important;
 }
 .btn-valorar {
-    background-color: #ffc107;
-    color: #212529 !important;
+    background-color: #ff9800;
+    color: #fff !important;
     padding: 0.5rem 1rem;
     border-radius: 0.5rem;
     text-decoration: none !important;
@@ -155,8 +165,8 @@
     cursor: pointer;
 }
 .btn-valorar:hover {
-    background-color: #e0a800;
-    color: #212529 !important;
+    background-color: #fb8c00;
+    color: #fff !important;
 }
 .botones-accion {
     text-align: right;
@@ -165,22 +175,30 @@
     justify-content: flex-end;
     gap: 1rem;
 }
+/* Agregar estilos para los mensajes de éxito y error */
+.alert-success {
+    background-color: rgba(40, 167, 69, 0.2) !important;
+    color: #fff !important;
+    border-radius: 0.5rem;
+    text-align: center;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+.alert-danger {
+    background-color: rgba(220, 53, 69, 0.9) !important;
+    color: #fff !important;
+    border-radius: 0.5rem;
+    text-align: center;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
 {% endblock %}
 
 {% block content %}
 <div class="container">
     {% if messages %}
     {% for message in messages %}
-    <div class="alert {% if message.tags == 'success' %}alert-success{% elif message.tags == 'error' %}alert-danger{% endif %}" 
-         style="text-align: center; padding: 1rem; margin-bottom: 1rem; 
-                {% if message.tags == 'success' %}
-                background-color: rgba(40, 167, 69, 0.2); 
-                color: white;
-                {% elif message.tags == 'error' %}
-                background-color: rgba(220, 53, 69, 0.9);
-                color: white;
-                {% endif %}
-                border-radius: 0.5rem;">
+    <div class="alert {% if message.tags == 'success' %}alert-success{% elif message.tags == 'error' %}alert-danger{% endif %}">
         {{ message }}
     </div>
     {% endfor %}
@@ -202,9 +220,19 @@
         <div class="reserva-card">
             <div class="reserva-header">
                 <div class="maquina-nombre">{{ reserva.maquina.nombre }}</div>
-                <div class="estado-reserva estado-activa">
-                    {{ reserva.get_estado_display }}
-                </div>
+                {% if reserva.estado == 'pagada' %}
+                    <div class="estado-reserva estado-pagada">
+                        {{ reserva.get_estado_display }}
+                    </div>
+                {% elif reserva.estado == 'pendiente_pago' %}
+                    <div class="estado-reserva estado-activa">
+                        {{ reserva.get_estado_display }}
+                    </div>
+                {% else %}
+                    <div class="estado-reserva estado-activa">
+                        {{ reserva.get_estado_display }}
+                    </div>
+                {% endif %}
             </div>
             <div class="reserva-info">
                 <div class="info-item">
@@ -231,8 +259,11 @@
                   </a>
                 {% endif %}
                 {% if reserva.estado == 'pagada' and reserva.empleado_gestor %}
-                  <a href="{% url 'valorar_empleado' reserva.id %}" class="btn-valorar" style="background-color: #ffc107; color: #212529 !important; padding: 0.5rem 1rem; border-radius: 0.5rem; text-decoration: none !important; font-weight: bold; transition: background-color 0.3s ease; margin-right: 1rem; display: inline-block; text-align: center; border: none; cursor: pointer;">
+                  <a href="{% url 'valorar_empleado' reserva.id %}" class="btn-valorar">
                     <i class="fas fa-star"></i> Valorar Empleado
+                  </a>
+                  <a href="{% url 'calificar_maquina' reserva.maquina.id %}?from=alquileres" class="btn-valorar">
+                    <i class="fas fa-star"></i> Calificar Maquinaria
                   </a>
                 {% endif %}
                 <form method="post" action="{% url 'cancelar_alquiler' reserva.id %}" class="form-cancelar-alquiler" style="display:inline;">
