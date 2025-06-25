@@ -25,7 +25,7 @@
     text-decoration: none;
 }
 
-.calificar-box {
+.-box {
     background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
     padding: 2rem;
@@ -51,11 +51,11 @@
     color: white !important;               
     text-decoration: none;
 }
-.calificar-box h2, .calificar-box label {
+.-box h2, .-box label {
     color: white;
 }
 
-.calificar-box .form-control {
+.-box .form-control {
    font-size: 1.1rem;
    width: 100%;
    border-radius: 0.8rem;
@@ -67,14 +67,14 @@
     color: #0c5460;
 }
 
-.calificar-box .form-control {
+.-box .form-control {
     font-size: 1.1rem;
     width: 100%;
     border-radius: 0.8rem;
     transition: background-color 0.3s ease;
 }
 
-.calificar-box .form-control:hover {
+.-box .form-control:hover {
     background-color: #666;
 }
 
@@ -101,7 +101,7 @@
     margin-bottom: 0;
 }
 
-.calificar-box textarea {
+.-box textarea {
     border-radius: 0.8rem !important;
     border: 1.5px solid #d16c44;
     padding: 0.75rem;
@@ -110,16 +110,16 @@
     resize: vertical;
     min-height: 120px;
     background: rgba(255,255,255,0.18) !important;
-    color: #222;
+    color: white;
 }
 
-.calificar-box textarea:focus {
+.-box textarea:focus {
     border-color: #d16c44;
     box-shadow: 0 0 0 0.2rem rgba(209, 108, 68, 0.25);
     outline: none;
 }
 
-.calificar-box textarea::placeholder {
+.-box textarea::placeholder {
     color: #fff !important;
     opacity: 1;
 }
@@ -147,10 +147,10 @@
                 <i class="fas fa-arrow-left"></i> Volver a la página anterior
             </a>
 <div class="container mt-5">
-    <div class="calificar-box">
+    <div class="-box">
 
         
-        <h2>Calificar {{ maquina.nombre }}</h2>
+        <h2> {{ maquina.nombre }}</h2>
         
         {% if calificacion_existente %}
             <div class="alert alert-info mb-4">

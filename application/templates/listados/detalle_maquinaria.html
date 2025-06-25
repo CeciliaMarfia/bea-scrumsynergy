@@ -407,7 +407,7 @@
     text-align: center;
     font-weight: 500;
 }
-.btn-calificar {
+.btn- {
     display: inline-block;
     background-color: #d16c44;
     color: white;
@@ -419,7 +419,7 @@
     transition: background-color 0.3s ease;
 }
 
-.btn-calificar:hover {
+.btn-:hover {
     background-color: #b95a33;
     color: white;
     text-decoration: none;
@@ -638,8 +638,8 @@
 
     <div class="text-end mt-4">
         {% if user.is_authenticated %}
-            <a href="{% url 'calificar_maquina' maquina.id %}" class="btn-calificar">
-                <i class="fas fa-star"></i> Calificar maquinaria
+            <a href="{% url '_maquina' maquina.id %}" class="btn-">
+                <i class="fas fa-star"></i>  maquinaria
             </a>
         {% endif %}
     </div>
@@ -683,7 +683,7 @@
                 Esta maquinaria aún no tiene calificaciones.
                 {% if user.is_authenticated %}
                     <br>
-                    ¡Sé el primero en calificarla!
+                    ¡Sé el primero en la!
                 {% endif %}
             </div>
         {% endif %}
