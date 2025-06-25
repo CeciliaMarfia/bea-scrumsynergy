@@ -40,7 +40,7 @@ from django.utils.http import urlencode
 from decimal import Decimal
 from django.core.exceptions import PermissionDenied
 from django.core.exceptions import ValidationError
-
+from geopy.exc import GeocoderUnavailable, GeocoderTimedOut
 import os
 load_dotenv
 MP_ACCESS_TOKEN = os.getenv('MP_ACCESS_TOKEN')
@@ -1984,7 +1984,7 @@ def alquiler_presencial_detalle(request, id_maquina):
         fecha_inicio = request.POST.get('fecha_inicio')
         fecha_fin = request.POST.get('fecha_fin')
         email_cliente = request.POST.get('email_cliente')
-        
+
         data = {
             'maquina': maquina.id,
             'fecha_inicio': fecha_inicio,
@@ -1995,40 +1995,43 @@ def alquiler_presencial_detalle(request, id_maquina):
         if form.is_valid():
             # Obtener el cliente por email
             cliente = User.objects.get(email=email_cliente)
-            
+
             # Validaciones adicionales de fechas
             fecha_inicio = form.cleaned_data['fecha_inicio']
             fecha_fin = form.cleaned_data['fecha_fin']
             hoy = timezone.now().date()
-            
+
             # Validar que la fecha de inicio no sea anterior a hoy
             if fecha_inicio < hoy:
-                messages.error(request, 'La fecha de inicio debe ser igual o posterior a la fecha actual.')
+                messages.error(
+                    request, 'La fecha de inicio debe ser igual o posterior a la fecha actual.')
                 return render(request, 'reservas/alquiler_presencial_detalle.html', {
                     'maquina': maquina,
                     'proxima_disponibilidad': proxima_disponibilidad,
                     'form': form
                 })
-            
+
             # Validar que la fecha de fin no sea anterior a la fecha de inicio
             if fecha_fin < fecha_inicio:
-                messages.error(request, 'La fecha de fin no puede ser anterior a la fecha de inicio.')
+                messages.error(
+                    request, 'La fecha de fin no puede ser anterior a la fecha de inicio.')
                 return render(request, 'reservas/alquiler_presencial_detalle.html', {
                     'maquina': maquina,
                     'proxima_disponibilidad': proxima_disponibilidad,
                     'form': form
                 })
-            
+
             # Validar que la reserva no exceda los 7 días
             duracion = (fecha_fin - fecha_inicio).days + 1
             if duracion > 7:
-                messages.error(request, 'La reserva no puede exceder los 7 días.')
+                messages.error(
+                    request, 'La reserva no puede exceder los 7 días.')
                 return render(request, 'reservas/alquiler_presencial_detalle.html', {
                     'maquina': maquina,
                     'proxima_disponibilidad': proxima_disponibilidad,
                     'form': form
                 })
-            
+
             # Verificar si hay otras reservas que se solapan
             reservas_previas = Reserva.objects.filter(
                 maquina=maquina,
@@ -2037,43 +2040,48 @@ def alquiler_presencial_detalle(request, id_maquina):
             ).exclude(
                 estado='cancelada'
             ).order_by('fecha_inicio')
-            
+
             # Verificar cada reserva previa
             for reserva_prev in reservas_previas:
                 # Verificar si la nueva reserva se solapa con una reserva existente
                 if (
                     (fecha_inicio >= reserva_prev.fecha_inicio and fecha_inicio <= reserva_prev.fecha_fin) or
                     (fecha_fin >= reserva_prev.fecha_inicio and fecha_fin <= reserva_prev.fecha_fin) or
-                    (fecha_inicio <= reserva_prev.fecha_inicio and fecha_fin >= reserva_prev.fecha_fin)
+                    (fecha_inicio <= reserva_prev.fecha_inicio and fecha_fin >=
+                     reserva_prev.fecha_fin)
                 ):
-                    fin_mantenimiento = reserva_prev.fecha_fin + timezone.timedelta(days=2)
-                    messages.error(request, f'La máquina está reservada del {reserva_prev.fecha_inicio.strftime("%d/%m/%Y")} al {reserva_prev.fecha_fin.strftime("%d/%m/%Y")} y estará en mantenimiento hasta el {fin_mantenimiento.strftime("%d/%m/%Y")}.')
+                    fin_mantenimiento = reserva_prev.fecha_fin + \
+                        timezone.timedelta(days=2)
+                    messages.error(
+                        request, f'La máquina está reservada del {reserva_prev.fecha_inicio.strftime("%d/%m/%Y")} al {reserva_prev.fecha_fin.strftime("%d/%m/%Y")} y estará en mantenimiento hasta el {fin_mantenimiento.strftime("%d/%m/%Y")}.')
                     return render(request, 'reservas/alquiler_presencial_detalle.html', {
                         'maquina': maquina,
                         'proxima_disponibilidad': proxima_disponibilidad,
                         'form': form
                     })
-                
+
                 # Verificar período de mantenimiento
-                fin_mantenimiento = reserva_prev.fecha_fin + timezone.timedelta(days=2)
+                fin_mantenimiento = reserva_prev.fecha_fin + \
+                    timezone.timedelta(days=2)
                 if fecha_inicio <= fin_mantenimiento and fecha_inicio > reserva_prev.fecha_fin:
-                    messages.error(request, f'La máquina estará en mantenimiento hasta el {fin_mantenimiento.strftime("%d/%m/%Y")}.')
+                    messages.error(
+                        request, f'La máquina estará en mantenimiento hasta el {fin_mantenimiento.strftime("%d/%m/%Y")}.')
                     return render(request, 'reservas/alquiler_presencial_detalle.html', {
                         'maquina': maquina,
                         'proxima_disponibilidad': proxima_disponibilidad,
                         'form': form
                     })
-            
+
             reserva = form.save(commit=False)
             reserva.cliente = cliente
             reserva.maquina = maquina
             reserva.empleado_gestor = request.user  # Registrar el empleado que gestiona
-            
+
             # Calcular el monto total
             dias = (form.cleaned_data['fecha_fin'] -
                     form.cleaned_data['fecha_inicio']).days + 1
             reserva.monto_total = maquina.precio_por_dia * dias
-            
+
             try:
                 with transaction.atomic():
                     reserva.save()
@@ -2100,7 +2108,8 @@ def alquiler_presencial_detalle(request, id_maquina):
                             fail_silently=False,
                         )
                     except Exception as e:
-                        print(f"Error al enviar email de confirmación: {str(e)}")
+                        print(
+                            f"Error al enviar email de confirmación: {str(e)}")
                         # No fallar la transacción si el email no se envía
                     messages.success(
                         request, f'Alquiler presencial creado y pagado exitosamente. Número de alquiler: {reserva.numero_reserva} para el cliente {cliente.get_full_name()}. Se ha enviado un email de confirmación con el código de retiro.')
@@ -2117,7 +2126,8 @@ def alquiler_presencial_detalle(request, id_maquina):
             for field, errors in form.errors.items():
                 if field != '__all__':
                     for error in errors:
-                        messages.error(request, f'{form.fields[field].label}: {error}')
+                        messages.error(
+                            request, f'{form.fields[field].label}: {error}')
     else:
         initial_data = {
             'maquina': maquina.id,
@@ -2136,12 +2146,13 @@ def alquiler_presencial_detalle(request, id_maquina):
 @user_passes_test(lambda u: u.perfil.is_empleado or u.perfil.is_dueno)
 def pagar_reserva_presencial(request, reserva_id):
     reserva = get_object_or_404(Reserva, id=reserva_id)
-    
+
     # Verificar que el empleado actual es el gestor de esta reserva
     if reserva.empleado_gestor != request.user:
-        messages.error(request, 'No tienes permisos para gestionar esta reserva.')
+        messages.error(
+            request, 'No tienes permisos para gestionar esta reserva.')
         return redirect('historial_reservas')
-    
+
     tarjetas = TarjetaCredito.objects.filter(usuario=request.user).order_by(
         '-es_predeterminada', '-fecha_creacion')
     form = TarjetaCreditoForm()
@@ -2206,7 +2217,8 @@ def pagar_reserva_presencial(request, reserva_id):
                         # Pago exitoso
                         reserva.estado = 'pagada'
                         reserva.save()
-                        messages.success(request, f'Pago realizado con éxito para el cliente {reserva.cliente.get_full_name()}')
+                        messages.success(
+                            request, f'Pago realizado con éxito para el cliente {reserva.cliente.get_full_name()}')
                         return redirect('historial_reservas')
                     else:
                         # Para cualquier otra tarjeta, simular pago exitoso
@@ -2220,7 +2232,7 @@ def pagar_reserva_presencial(request, reserva_id):
                     messages.error(request, 'Tarjeta no encontrada')
             else:
                 messages.error(request, 'Selecciona una tarjeta válida')
-    
+
     preference = generar_preference_mercadopago(request, reserva_id)
     context = {
         'reserva': reserva,
@@ -2239,7 +2251,7 @@ def seleccionar_maquinaria_alquiler_presencial(request):
     maquinas = Maquina.objects.exclude(
         estado__in=['en_revision', 'mantenimiento']
     ).order_by('nombre')
-    
+
     # Filtrar por búsqueda si se proporciona
     busqueda = request.GET.get('busqueda', '').strip()
     if busqueda:
@@ -2249,32 +2261,32 @@ def seleccionar_maquinaria_alquiler_presencial(request):
             Q(marca__icontains=busqueda) |
             Q(modelo__icontains=busqueda)
         )
-    
+
     # Filtrar por tipo si se proporciona
     tipo = request.GET.get('tipo')
     if tipo:
         maquinas = maquinas.filter(tipo=tipo)
-    
+
     # Calcular disponibilidad para cada máquina
     maquinas_info = []
     for maquina in maquinas:
         proxima_disponibilidad = None
         if not maquina.esta_disponible():
             proxima_disponibilidad = maquina.get_proxima_disponibilidad()
-        
+
         maquinas_info.append({
             'maquina': maquina,
             'proxima_disponibilidad': proxima_disponibilidad,
             'disponible_ahora': maquina.esta_disponible()
         })
-    
+
     context = {
         'maquinas_info': maquinas_info,
         'tipos': Maquina.TIPO_CHOICES,
         'busqueda': busqueda,
         'tipo_seleccionado': tipo,
     }
-    
+
     return render(request, 'reservas/seleccionar_maquinaria_alquiler_presencial.html', context)
 
 
@@ -2302,7 +2314,8 @@ def cancelar_alquiler(request, reserva_id):
         [reserva.cliente.email],
         html_message=mensaje
     )
-    messages.error(request, f'Se canceló el alquiler {reserva.numero_reserva} con éxito.')
+    messages.error(
+        request, f'Se canceló el alquiler {reserva.numero_reserva} con éxito.')
     return redirect('mis_alquileres')
 
 
