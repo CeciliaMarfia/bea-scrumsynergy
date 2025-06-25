@@ -691,7 +691,7 @@
 
     <!-- Sección de Preguntas/Comentarios -->
     <div class="preguntas-box" style="margin-top: 3rem;">
-      <h2>Preguntas y Comentarios</h2>
+      <h2>Preguntas</h2>
       {% if mostrar_form_pregunta %}
       <form method="post" class="mb-4">
         {% csrf_token %}
@@ -714,7 +714,7 @@
               <strong>{{ pregunta.texto }}</strong><br>
               <small>Enviada por {{ pregunta.usuario.get_full_name|default:pregunta.usuario.username }} el {{ pregunta.fecha_creacion|date:"d/m/Y H:i" }}</small>
               {% if pregunta.respuesta %}
-                <div class="mt-2 alert alert-info"><strong>Respuesta:</strong> {{ pregunta.respuesta }}</div>
+                <div class="mt-2" style="color:#fff;"><strong>Respuesta:</strong> {{ pregunta.respuesta }}</div>
               {% endif %}
               {% if mostrar_form_respuesta and not pregunta.respuesta %}
                 <a href="{% url 'responder_pregunta' pregunta.id %}" class="btn btn-sm btn-success ms-2">Responder</a>
