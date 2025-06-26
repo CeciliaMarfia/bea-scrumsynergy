@@ -198,26 +198,48 @@
 }
 
 .estado-badge {
-    display: inline-block;
-    padding: 0.8rem 1.5rem;
-    border-radius: 0.8rem;
-    font-weight: bold;
-    text-align: center;
-    margin: 1rem 0;
-    width: fit-content;
-    font-size: 1.2rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    width: 100%;
+    justify-content: center;
 }
 
-.estado-badge.disponible {
-    background-color: rgba(46, 204, 113, 0.3);
+.estado-badge i {
+    font-size: 1.1rem;
+}
+
+.estado-disponible {
+    background-color: rgba(40, 167, 69, 0.2);
     color: #2ecc71;
-    border: 2px solid #2ecc71;
+    border: 1px solid rgba(46, 204, 113, 0.3);
 }
 
-.estado-badge.reservado {
-    background-color: rgba(231, 76, 60, 0.3);
-    color: #ff6b6b;
-    border: 2px solid #ff6b6b;
+.estado-suspendida {
+    background-color: rgba(231, 76, 60, 0.2);
+    color: #e74c3c;
+    border: 1px solid rgba(231, 76, 60, 0.3);
+}
+
+.estado-reservada {
+    background-color: rgba(241, 196, 15, 0.2);
+    color: #f1c40f;
+    border: 1px solid rgba(241, 196, 15, 0.3);
+}
+
+.estado-alquilada {
+    background-color: rgba(52, 152, 219, 0.2);
+    color: #3498db;
+    border: 1px solid rgba(52, 152, 219, 0.3);
+}
+
+.estado-mantenimiento {
+    background-color: rgba(155, 89, 182, 0.2);
+    color: #9b59b6;
+    border: 1px solid rgba(155, 89, 182, 0.3);
 }
 
 .proxima-disponibilidad {
@@ -571,10 +593,15 @@
             <div class="info-grid">
                 <div class="info-item">
                     <span class="info-label">Estado</span>
-                    <div class="estado-badge {% if maquina.esta_disponible %}disponible{% else %}reservado{% endif %}">
-                        <i class="fas {% if maquina.esta_disponible %}fa-check-circle{% else %}fa-clock{% endif %}"></i>
-                        {% if maquina.esta_disponible %}Disponible{% else %}Reservada{% endif %}
-                </div>
+                    <div class="estado-badge estado-{{ maquina.estado }}">
+                        <i class="fas {% if maquina.estado == 'disponible' %}fa-check-circle
+                                    {% elif maquina.estado == 'suspendida' %}fa-ban
+                                    {% elif maquina.estado == 'reservada' %}fa-clock
+                                    {% elif maquina.estado == 'alquilada' %}fa-handshake
+                                    {% elif maquina.estado == 'mantenimiento' %}fa-tools
+                                    {% endif %}"></i>
+                        {{ maquina.get_estado_display }}
+                    </div>
                 </div>
                 <div class="info-item">
                     <span class="info-label">Precio por día</span>

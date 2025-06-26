@@ -117,9 +117,9 @@ class Maquina(models.Model):
 
     ESTADO_CHOICES = [
         ('disponible', 'Disponible'),
-        ('reservado', 'Reservado'),
-        ('alquilado', 'Alquilado'),
-        ('en_revision', 'En Revisión'),
+        ('suspendida', 'Suspendida'),
+        ('reservada', 'Reservada'),
+        ('alquilada', 'Alquilada'),
         ('mantenimiento', 'En Mantenimiento'),
     ]
 
@@ -424,7 +424,7 @@ class Reserva(models.Model):
 
         # Actualizar el estado de la máquina solo si es una nueva reserva o se está cancelando
         if self.pk is None:  # Nueva reserva
-            self.maquina.estado = 'reservado'
+            self.maquina.estado = 'reservada'
             self.maquina.save()
         elif self.estado == 'cancelada':  # Cancelación
             # Verificar si hay otras reservas activas para esta máquina

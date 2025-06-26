@@ -192,7 +192,9 @@
           <th>Marca</th>
           <th>Modelo</th>
           <th>Estado</th>
+          {% if user.perfil.is_dueno %}
           <th>Acciones</th>
+          {% endif %}
         </tr>
       </thead>
       <tbody>
@@ -202,7 +204,14 @@
           <td>{{ maquina.nombre }}</td>
           <td>{{ maquina.marca }}</td>
           <td>{{ maquina.modelo }}</td>
-          <td>{{ maquina.get_estado_display }}</td>
+          <td>
+            <select class="form-control estado-select" data-maquina-id="{{ maquina.id }}" onchange="actualizarEstado(this)">
+              {% for value, label in maquina.ESTADO_CHOICES %}
+                <option value="{{ value }}" {% if maquina.estado == value %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </td>
+          {% if user.perfil.is_dueno %}
           <td>
             <a href="{% url 'editar_maquinaria' maquina.id %}" class="btn-editar">
               <i class="fas fa-edit"></i> Editar
@@ -211,10 +220,11 @@
               <i class="fas fa-trash"></i> Eliminar
             </a>
           </td>
+          {% endif %}
         </tr>
         {% empty %}
         <tr>
-          <td colspan="6" class="text-center">No hay maquinaria registrada</td>
+          <td colspan="{% if user.perfil.is_dueno %}6{% else %}5{% endif %}" class="text-center">No hay maquinaria registrada</td>
         </tr>
         {% endfor %}
       </tbody>
@@ -227,6 +237,54 @@ function confirmarEliminacion(maquinaId) {
   if (confirm('¿Está seguro que desea eliminar esta maquinaria?')) {
     // Aquí iría la lógica de eliminación cuando implementemos esa funcionalidad
   }
+}
+
+function actualizarEstado(selectElement) {
+  const maquinaId = selectElement.dataset.maquinaId;
+  const nuevoEstado = selectElement.value;
+  
+  fetch(`/actualizar_estado_maquina/${maquinaId}/`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': getCookie('csrftoken')
+    },
+    body: JSON.stringify({
+      estado: nuevoEstado
+    })
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('Error al actualizar el estado');
+    }
+    return response.json();
+  })
+  .then(data => {
+    // Mostrar mensaje de éxito
+    alert('Estado actualizado correctamente');
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('Error al actualizar el estado');
+    // Revertir el cambio en el select
+    selectElement.value = selectElement.getAttribute('data-estado-original');
+  });
+}
+
+// Función para obtener el token CSRF
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
 }
 </script>
 {% endblock %} 

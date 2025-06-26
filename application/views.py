@@ -42,6 +42,7 @@ from django.core.exceptions import PermissionDenied
 from django.core.exceptions import ValidationError
 from geopy.exc import GeocoderUnavailable, GeocoderTimedOut
 import os
+from django.views.decorators.http import require_http_methods
 load_dotenv
 MP_ACCESS_TOKEN = os.getenv('MP_ACCESS_TOKEN')
 
@@ -688,8 +689,8 @@ def reservar_maquinaria(request, maquina_id):
             try:
                 with transaction.atomic():
                     reserva.save()
-                    # Cambiar el estado de la máquina a 'alquilado'
-                    maquina.estado = 'alquilado'
+                    # Cambiar el estado de la máquina a 'reservada'
+                    maquina.estado = 'reservada'
                     maquina.save()
                     messages.success(
                         request, f'Reserva creada exitosamente. Número de reserva: {reserva.numero_reserva}')
@@ -713,15 +714,15 @@ def reservar_maquinaria(request, maquina_id):
 
 
 def lista_maquinaria(request):
-    # Obtener todas las máquinas (no solo las disponibles)
-    maquinas = Maquina.objects.all()
+    # Obtener todas las máquinas excepto las suspendidas
+    maquinas = Maquina.objects.exclude(estado='suspendida')
 
     # Nueva funcionalidad: búsqueda por nombre
     busqueda_nombre = request.GET.get('busqueda_nombre', '').strip()
     resultados_busqueda = None
     mensaje_busqueda = None
     if busqueda_nombre:
-        resultados_busqueda = Maquina.objects.filter(
+        resultados_busqueda = Maquina.objects.exclude(estado='suspendida').filter(
             nombre__icontains=busqueda_nombre)
         if not resultados_busqueda.exists():
             mensaje_busqueda = f"No hay resultados para '{busqueda_nombre}'"
@@ -743,19 +744,19 @@ def lista_maquinaria(request):
 
     # Obtener valores únicos para los filtros
     tipos = Maquina.TIPO_CHOICES
-    ubicaciones = Maquina.objects.values_list(
+    ubicaciones = Maquina.objects.exclude(estado='suspendida').values_list(
         'ubicacion', flat=True).distinct()
 
-    # Calcular conteos para los filtros (ahora incluye todas las máquinas)
+    # Calcular conteos para los filtros (ahora excluye máquinas suspendidas)
     tipos_con_conteo = {}
     for tipo_value, tipo_label in tipos:
-        tipos_con_conteo[tipo_value] = Maquina.objects.filter(
+        tipos_con_conteo[tipo_value] = Maquina.objects.exclude(estado='suspendida').filter(
             tipo=tipo_value).count()
 
     ubicaciones_con_conteo = {}
     for ubi in ubicaciones:
         if ubi:  # Solo si la ubicación no es None o vacía
-            ubicaciones_con_conteo[ubi] = Maquina.objects.filter(
+            ubicaciones_con_conteo[ubi] = Maquina.objects.exclude(estado='suspendida').filter(
                 ubicacion=ubi).count()
 
     # Calcular próxima disponibilidad para cada máquina
@@ -818,59 +819,26 @@ def mis_reservas(request):
 
 
 def detalle_maquinaria(request, maquina_id):
-    from .forms import ResponderPreguntaForm
-    maquina = get_object_or_404(Maquina, id=maquina_id)
-    proxima_disponibilidad = maquina.get_proxima_disponibilidad()
-    preguntas = Pregunta.objects.filter(
-        maquina=maquina).order_by('-fecha_creacion')
+    try:
+        maquina = Maquina.objects.get(id=maquina_id)
+        
+        # Si la máquina está suspendida y el usuario no es dueño, redirigir al catálogo
+        if maquina.estado == 'suspendida' and not (request.user.is_authenticated and request.user.perfil.is_dueno):
+            messages.warning(request, 'Esta máquina no está disponible actualmente.')
+            return redirect('lista_maquinaria')
 
-    mostrar_form_pregunta = request.user.is_authenticated and hasattr(
-        request.user, 'perfil') and request.user.perfil.is_cliente
-    mostrar_form_respuesta = request.user.is_authenticated and hasattr(
-        request.user, 'perfil') and (request.user.perfil.is_empleado or request.user.perfil.is_dueno)
+        proxima_disponibilidad = None
+        if not maquina.esta_disponible():
+            proxima_disponibilidad = maquina.get_proxima_disponibilidad()
 
-    form_respuesta = None
-    pregunta_responder_id = None
-
-    # Manejo de preguntas (solo clientes)
-    if request.method == 'POST' and mostrar_form_pregunta and 'texto' in request.POST:
-        texto = request.POST.get('texto', '').strip()
-        if not texto:
-            messages.error(
-                request, 'El campo de pregunta no puede estar vacío.')
-        else:
-            Pregunta.objects.create(
-                usuario=request.user, maquina=maquina, texto=texto)
-            messages.success(request, '¡Pregunta añadida correctamente!')
-            return redirect('detalle_maquinaria', maquina_id=maquina.id)
-
-    # Manejo de respuestas (solo empleados/dueños)
-    if request.method == 'POST' and mostrar_form_respuesta and 'respuesta' in request.POST:
-        pregunta_responder_id = request.POST.get('pregunta_id')
-        pregunta_a_responder = Pregunta.objects.filter(
-            id=pregunta_responder_id, maquina=maquina).first()
-        if pregunta_a_responder and not pregunta_a_responder.respuesta:
-            form_respuesta = ResponderPreguntaForm(
-                request.POST, instance=pregunta_a_responder)
-            if form_respuesta.is_valid():
-                form_respuesta.save()
-                messages.success(
-                    request, '¡Pregunta respondida correctamente!')
-                return redirect('detalle_maquinaria', maquina_id=maquina.id)
-        else:
-            form_respuesta = ResponderPreguntaForm(
-                instance=pregunta_a_responder)
-
-    context = {
-        'maquina': maquina,
-        'proxima_disponibilidad': proxima_disponibilidad,
-        'preguntas': preguntas,
-        'mostrar_form_pregunta': mostrar_form_pregunta,
-        'mostrar_form_respuesta': mostrar_form_respuesta,
-        'form_respuesta': form_respuesta,
-        'pregunta_responder_id': pregunta_responder_id,
-    }
-    return render(request, 'listados/detalle_maquinaria.html', context)
+        context = {
+            'maquina': maquina,
+            'proxima_disponibilidad': proxima_disponibilidad,
+        }
+        return render(request, 'listados/detalle_maquinaria.html', context)
+    except Maquina.DoesNotExist:
+        messages.error(request, 'La máquina solicitada no existe.')
+        return redirect('lista_maquinaria')
 
 
 @login_required
@@ -1593,7 +1561,7 @@ def responder_pregunta(request, pregunta_id):
 
 
 @login_required
-@user_passes_test(is_owner)
+@user_passes_test(lambda u: u.perfil.is_dueno or u.perfil.is_empleado)
 def lista_maquinaria_admin(request):
     # Obtener todas las máquinas
     maquinas = Maquina.objects.all().order_by('codigo')
@@ -1845,8 +1813,8 @@ def alquilar_maquinaria_detalle(request, id_maquina):
             try:
                 with transaction.atomic():
                     reserva.save()
-                    # Cambiar el estado de la máquina a 'alquilado'
-                    maquina.estado = 'alquilado'
+                    # Cambiar el estado de la máquina a 'reservada'
+                    maquina.estado = 'reservada'
                     maquina.save()
                     messages.success(
                         request, f'Alquiler creado exitosamente. Número de alquiler: {reserva.numero_reserva}')
@@ -2311,7 +2279,7 @@ def seleccionar_maquinaria_alquiler_presencial(request):
     """Vista para que empleados/dueños seleccionen maquinaria para alquiler presencial"""
     # Obtener todas las máquinas disponibles (no suspendidas)
     maquinas = Maquina.objects.exclude(
-        estado__in=['en_revision', 'mantenimiento']
+        estado__in=['suspendida', 'mantenimiento']
     ).order_by('nombre')
 
     # Filtrar por búsqueda si se proporciona
@@ -2456,3 +2424,22 @@ def valorar_empleado(request, reserva_id):
         'reserva': reserva,
         'valoracion_existente': valoracion_existente
     })
+
+
+@login_required
+@user_passes_test(lambda u: u.perfil.is_dueno or u.perfil.is_empleado)
+@require_http_methods(["POST"])
+def actualizar_estado_maquina(request, maquina_id):
+    try:
+        data = json.loads(request.body)
+        nuevo_estado = data.get('estado')
+        
+        maquina = Maquina.objects.get(id=maquina_id)
+        maquina.estado = nuevo_estado
+        maquina.save()
+        
+        return JsonResponse({'status': 'success'})
+    except Maquina.DoesNotExist:
+        return JsonResponse({'error': 'Máquina no encontrada'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
