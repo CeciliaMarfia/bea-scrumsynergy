@@ -679,17 +679,20 @@ def reservar_maquinaria(request, maquina_id):
             reserva.estado = 'pendiente_pago'  # Estado de la reserva
             if request.user.perfil.is_empleado:
                 reserva.empleado_gestor = request.user
-            dias = (form.cleaned_data['fecha_fin'] - form.cleaned_data['fecha_inicio']).days + 1
+            dias = (form.cleaned_data['fecha_fin'] -
+                    form.cleaned_data['fecha_inicio']).days + 1
             reserva.monto_total = maquina.precio_por_dia * dias
             try:
                 with transaction.atomic():
                     reserva.save()
                     maquina.estado = 'reservada'
                     maquina.save()
-                    messages.success(request, f'Reserva creada exitosamente. Número de reserva: {reserva.numero_reserva}')
+                    messages.success(
+                        request, f'Reserva creada exitosamente. Número de reserva: {reserva.numero_reserva}')
                     return redirect('mis_reservas')
             except Exception as e:
-                messages.error(request, 'Error al crear la reserva. Por favor, intente nuevamente.')
+                messages.error(
+                    request, 'Error al crear la reserva. Por favor, intente nuevamente.')
                 return redirect('detalle_maquinaria', maquina_id=maquina.id)
     else:
         initial_data = {
@@ -819,9 +822,11 @@ def detalle_maquinaria(request, maquina_id):
     from .models import Pregunta
     try:
         maquina = Maquina.objects.get(id=maquina_id)
+
         # Si la máquina está suspendida y el usuario no es dueño, redirigir al catálogo
         if maquina.estado == 'suspendida' and not (request.user.is_authenticated and request.user.perfil.is_dueno):
-            messages.warning(request, 'Esta máquina no está disponible actualmente.')
+            messages.warning(
+                request, 'Esta máquina no está disponible actualmente.')
             return redirect('lista_maquinaria')
 
         proxima_disponibilidad = None
@@ -834,13 +839,17 @@ def detalle_maquinaria(request, maquina_id):
             if request.method == 'POST':
                 texto = request.POST.get('texto', '').strip()
                 if texto:
-                    Pregunta.objects.create(usuario=request.user, maquina=maquina, texto=texto)
-                    messages.success(request, '¡Pregunta enviada correctamente!')
+                    Pregunta.objects.create(
+                        usuario=request.user, maquina=maquina, texto=texto)
+                    messages.success(
+                        request, '¡Pregunta enviada correctamente!')
                     return redirect('detalle_maquinaria', maquina_id=maquina.id)
                 else:
-                    messages.error(request, 'El campo de pregunta no puede estar vacío.')
+                    messages.error(
+                        request, 'El campo de pregunta no puede estar vacío.')
 
-        preguntas = Pregunta.objects.filter(maquina=maquina).order_by('-fecha_creacion')
+        preguntas = Pregunta.objects.filter(
+            maquina=maquina).order_by('-fecha_creacion')
         context = {
             'maquina': maquina,
             'proxima_disponibilidad': proxima_disponibilidad,
@@ -977,7 +986,8 @@ def procesar_pago(request, reserva_id):
 @login_required
 def pagar_reserva(request, reserva_id):
     reserva = get_object_or_404(Reserva, id=reserva_id)
-    tarjetas = TarjetaCredito.objects.filter(usuario=request.user).order_by('-es_predeterminada', '-fecha_creacion')
+    tarjetas = TarjetaCredito.objects.filter(usuario=request.user).order_by(
+        '-es_predeterminada', '-fecha_creacion')
     form = TarjetaCreditoForm()
 
     if request.method == 'POST':
@@ -1020,13 +1030,16 @@ def pagar_reserva(request, reserva_id):
             tarjeta_id = request.POST.get('tarjeta_id')
             if tarjeta_id:
                 try:
-                    tarjeta = TarjetaCredito.objects.get(id=tarjeta_id, usuario=request.user)
+                    tarjeta = TarjetaCredito.objects.get(
+                        id=tarjeta_id, usuario=request.user)
                     numero_tarjeta = tarjeta.numero_tarjeta
                     if numero_tarjeta == '1111111111111111':
-                        messages.error(request, 'La tarjeta tiene fondos insuficientes')
+                        messages.error(
+                            request, 'La tarjeta tiene fondos insuficientes')
                         return redirect('pagar_reserva', reserva_id=reserva.id)
                     elif numero_tarjeta == '2222222222222222':
-                        messages.error(request, 'Falló la conexión con el banco')
+                        messages.error(
+                            request, 'Falló la conexión con el banco')
                         return redirect('pagar_reserva', reserva_id=reserva.id)
                     elif numero_tarjeta == '3333333333333333':
                         # Pago exitoso
@@ -1049,9 +1062,11 @@ def pagar_reserva(request, reserva_id):
         elif 'eliminar_tarjeta' in request.POST:
             tarjeta_id = request.POST.get('tarjeta_id')
             try:
-                tarjeta = TarjetaCredito.objects.get(id=tarjeta_id, usuario=request.user)
+                tarjeta = TarjetaCredito.objects.get(
+                    id=tarjeta_id, usuario=request.user)
                 tarjeta.delete()
-                messages.success(request, 'La tarjeta se eliminó correctamente.')
+                messages.success(
+                    request, 'La tarjeta se eliminó correctamente.')
                 return redirect('pagar_reserva', reserva_id=reserva.id)
             except TarjetaCredito.DoesNotExist:
                 messages.error(
@@ -1788,7 +1803,8 @@ def alquilar_maquinaria_detalle(request, id_maquina):
     proxima_disponibilidad = maquina.get_proxima_disponibilidad()
 
     if maquina.estado == 'en_revision' or maquina.estado == 'mantenimiento':
-        messages.error(request, 'La máquina está suspendida temporalmente y no puede ser alquilada.')
+        messages.error(
+            request, 'La máquina está suspendida temporalmente y no puede ser alquilada.')
         return redirect('detalle_maquinaria', maquina_id=maquina.id)
 
     if request.method == 'POST':
@@ -1807,7 +1823,8 @@ def alquilar_maquinaria_detalle(request, id_maquina):
             reserva.estado = 'pendiente_pago'  # Estado inicial
             if request.user.perfil.is_empleado:
                 reserva.empleado_gestor = request.user
-            dias = (form.cleaned_data['fecha_fin'] - form.cleaned_data['fecha_inicio']).days + 1
+            dias = (form.cleaned_data['fecha_fin'] -
+                    form.cleaned_data['fecha_inicio']).days + 1
             reserva.monto_total = maquina.precio_por_dia * dias
             # Generar número de alquiler con prefijo ALQ
             from django.utils import timezone
@@ -1818,10 +1835,12 @@ def alquilar_maquinaria_detalle(request, id_maquina):
                     reserva.save()
                     maquina.estado = 'alquilada'
                     maquina.save()
-                    messages.success(request, f'Alquiler creado exitosamente. Número de alquiler: {reserva.numero_reserva}')
+                    messages.success(
+                        request, f'Alquiler creado exitosamente. Número de alquiler: {reserva.numero_reserva}')
                     return redirect('mis_alquileres')
             except Exception as e:
-                messages.error(request, 'Error al crear el alquiler. Por favor, intente nuevamente.')
+                messages.error(
+                    request, 'Error al crear el alquiler. Por favor, intente nuevamente.')
                 return redirect('detalle_maquinaria', maquina_id=maquina.id)
         else:
             for error in form.non_field_errors():
@@ -1999,7 +2018,8 @@ def alquiler_presencial_detalle(request, id_maquina):
             # Validar que la fecha de inicio no sea anterior a hoy
             if fecha_inicio < hoy:
                 # Solo error de formulario, no messages.error
-                form.add_error('fecha_inicio', 'La fecha de inicio debe ser igual o posterior a la fecha actual.')
+                form.add_error(
+                    'fecha_inicio', 'La fecha de inicio debe ser igual o posterior a la fecha actual.')
                 return render(request, 'reservas/alquiler_presencial_detalle.html', {
                     'maquina': maquina,
                     'proxima_disponibilidad': proxima_disponibilidad,
@@ -2008,7 +2028,8 @@ def alquiler_presencial_detalle(request, id_maquina):
 
             # Validar que la fecha de fin no sea anterior a la fecha de inicio
             if fecha_fin < fecha_inicio:
-                form.add_error('fecha_fin', 'La fecha de fin no puede ser anterior a la fecha de inicio.')
+                form.add_error(
+                    'fecha_fin', 'La fecha de fin no puede ser anterior a la fecha de inicio.')
                 return render(request, 'reservas/alquiler_presencial_detalle.html', {
                     'maquina': maquina,
                     'proxima_disponibilidad': proxima_disponibilidad,
@@ -2018,7 +2039,8 @@ def alquiler_presencial_detalle(request, id_maquina):
             # Validar que la reserva no exceda los 7 días
             duracion = (fecha_fin - fecha_inicio).days + 1
             if duracion > 7:
-                form.add_error('fecha_fin', 'La reserva no puede exceder los 7 días.')
+                form.add_error(
+                    'fecha_fin', 'La reserva no puede exceder los 7 días.')
                 return render(request, 'reservas/alquiler_presencial_detalle.html', {
                     'maquina': maquina,
                     'proxima_disponibilidad': proxima_disponibilidad,
@@ -2039,23 +2061,32 @@ def alquiler_presencial_detalle(request, id_maquina):
                 if (
                     (fecha_inicio >= reserva_prev.fecha_inicio and fecha_inicio <= reserva_prev.fecha_fin) or
                     (fecha_fin >= reserva_prev.fecha_inicio and fecha_fin <= reserva_prev.fecha_fin) or
-                    (fecha_inicio <= reserva_prev.fecha_inicio and fecha_fin >= reserva_prev.fecha_fin)
+                    (fecha_inicio <= reserva_prev.fecha_inicio and fecha_fin >=
+                     reserva_prev.fecha_fin)
                 ):
-                    fin_mantenimiento = reserva_prev.fecha_fin + timezone.timedelta(days=2)
-                    fecha_reserva_inicio = reserva_prev.fecha_inicio.strftime("%d/%m/%Y")
-                    fecha_reserva_fin = reserva_prev.fecha_fin.strftime("%d/%m/%Y")
-                    fecha_mantenimiento = fin_mantenimiento.strftime("%d/%m/%Y")
-                    form.add_error('fecha_inicio', f'La máquina está reservada del {fecha_reserva_inicio} al {fecha_reserva_fin} y estará en mantenimiento hasta el {fecha_mantenimiento}.')
+                    fin_mantenimiento = reserva_prev.fecha_fin + \
+                        timezone.timedelta(days=2)
+                    fecha_reserva_inicio = reserva_prev.fecha_inicio.strftime(
+                        "%d/%m/%Y")
+                    fecha_reserva_fin = reserva_prev.fecha_fin.strftime(
+                        "%d/%m/%Y")
+                    fecha_mantenimiento = fin_mantenimiento.strftime(
+                        "%d/%m/%Y")
+                    form.add_error(
+                        'fecha_inicio', f'La máquina está reservada del {fecha_reserva_inicio} al {fecha_reserva_fin} y estará en mantenimiento hasta el {fecha_mantenimiento}.')
                     return render(request, 'reservas/alquiler_presencial_detalle.html', {
                         'maquina': maquina,
                         'proxima_disponibilidad': proxima_disponibilidad,
                         'form': form
                     })
 
-                fin_mantenimiento = reserva_prev.fecha_fin + timezone.timedelta(days=2)
+                fin_mantenimiento = reserva_prev.fecha_fin + \
+                    timezone.timedelta(days=2)
                 if fecha_inicio <= fin_mantenimiento and fecha_inicio > reserva_prev.fecha_fin:
-                    fecha_mantenimiento = fin_mantenimiento.strftime("%d/%m/%Y")
-                    form.add_error('fecha_inicio', f'La máquina estará en mantenimiento hasta el {fecha_mantenimiento}.')
+                    fecha_mantenimiento = fin_mantenimiento.strftime(
+                        "%d/%m/%Y")
+                    form.add_error(
+                        'fecha_inicio', f'La máquina estará en mantenimiento hasta el {fecha_mantenimiento}.')
                     return render(request, 'reservas/alquiler_presencial_detalle.html', {
                         'maquina': maquina,
                         'proxima_disponibilidad': proxima_disponibilidad,
@@ -2083,11 +2114,11 @@ def alquiler_presencial_detalle(request, id_maquina):
                     reserva.maquina.save()
                     # Enviar email de confirmación al cliente
                     subject = f'Confirmación de Alquiler Presencial - {reserva.numero_reserva}'
-                    
+
                     # Generar la URL completa para valorar empleado
                     from django.contrib.sites.shortcuts import get_current_site
                     from django.urls import reverse
-                    
+
                     # Usar el dominio configurado en settings o localhost para desarrollo
                     try:
                         current_site = get_current_site(request)
@@ -2096,9 +2127,9 @@ def alquiler_presencial_detalle(request, id_maquina):
                             domain = '127.0.0.1:8000'
                     except:
                         domain = '127.0.0.1:8000'
-                    
+
                     valorar_url = f"http://{domain}/valorar-empleado/{reserva.id}/"
-                    
+
                     html_message = render_to_string('emails/confirmacion_alquiler_presencial.html', {
                         'reserva': reserva,
                         'valorar_url': valorar_url,
@@ -2349,20 +2380,22 @@ def historial_alquileres(request):
 @login_required
 def valorar_empleado(request, reserva_id):
     reserva = get_object_or_404(Reserva, id=reserva_id, cliente=request.user)
-    
+
     # Verificar que la reserva tenga un empleado gestor
     if not reserva.empleado_gestor:
-        messages.error(request, 'Esta reserva no tiene un empleado asignado para valorar.')
+        messages.error(
+            request, 'Esta reserva no tiene un empleado asignado para valorar.')
         return redirect('mis_alquileres')
-    
+
     # Verificar que la reserva esté pagada
     if reserva.estado != 'pagada':
-        messages.error(request, 'Solo puedes valorar empleados de alquileres pagados.')
+        messages.error(
+            request, 'Solo puedes valorar empleados de alquileres pagados.')
         return redirect('mis_alquileres')
-    
+
     # Verificar si el usuario ya ha valorado este empleado para esta reserva
     valoracion_existente = ValoracionEmpleado.objects.filter(
-        cliente=request.user, 
+        cliente=request.user,
         empleado=reserva.empleado_gestor,
         reserva=reserva
     ).first()
@@ -2384,18 +2417,20 @@ def valorar_empleado(request, reserva_id):
                 valoracion.empleado = reserva.empleado_gestor
                 valoracion.reserva = reserva
                 valoracion.save()
-                
-                print(f"DEBUG: Valoración guardada exitosamente - ID: {valoracion.id}")
+
+                print(
+                    f"DEBUG: Valoración guardada exitosamente - ID: {valoracion.id}")
                 print(f"DEBUG: Cliente: {valoracion.cliente.username}")
                 print(f"DEBUG: Empleado: {valoracion.empleado.username}")
                 print(f"DEBUG: Reserva: {valoracion.reserva.numero_reserva}")
                 print(f"DEBUG: Estrellas: {valoracion.estrellas}")
-                
+
                 messages.success(request, '¡Gracias por tu valoración!')
                 return redirect('mis_alquileres')
             except Exception as e:
                 print(f"ERROR al guardar valoración: {str(e)}")
-                messages.error(request, f'Error al guardar la valoración: {str(e)}')
+                messages.error(
+                    request, f'Error al guardar la valoración: {str(e)}')
         else:
             print(f"ERROR en formulario: {form.errors}")
             for field, errors in form.errors.items():
@@ -2419,11 +2454,11 @@ def actualizar_estado_maquina(request, maquina_id):
     try:
         data = json.loads(request.body)
         nuevo_estado = data.get('estado')
-        
+
         maquina = Maquina.objects.get(id=maquina_id)
         maquina.estado = nuevo_estado
         maquina.save()
-        
+
         return JsonResponse({'status': 'success'})
     except Maquina.DoesNotExist:
         return JsonResponse({'error': 'Máquina no encontrada'}, status=404)
@@ -2436,7 +2471,8 @@ def actualizar_estado_maquina(request, maquina_id):
 def historial_maquinaria(request, maquina_id):
     from .models import Maquina, Reserva
     maquina = get_object_or_404(Maquina, id=maquina_id)
-    alquileres = Reserva.objects.filter(maquina=maquina).order_by('-fecha_inicio')
+    alquileres = Reserva.objects.filter(
+        maquina=maquina).order_by('-fecha_inicio')
     return render(request, 'reservas/historial_maquinaria.html', {
         'alquileres': alquileres,
         'maquina': maquina
