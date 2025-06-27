@@ -386,10 +386,10 @@ def registrar_maquinaria(request):
 @login_required
 @user_passes_test(is_owner_or_employee)
 def historial_reservas(request):
-    # Filtrar solo reservas activas (pendientes de pago y pagadas)
     reservas = Reserva.objects.filter(
+        maquina__estado='reservada',
         estado__in=['pendiente_pago', 'pagada']
-    ).order_by('fecha_inicio')  # Ordenar por fecha de inicio
+    ).order_by('fecha_inicio')
     return render(request, 'reservas/historial.html', {'reservas': reservas})
 
 
@@ -676,28 +676,20 @@ def reservar_maquinaria(request, maquina_id):
             reserva = form.save(commit=False)
             reserva.cliente = request.user
             reserva.maquina = maquina
-
-            # Si quien crea la reserva es un empleado, registrarlo como gestor
+            reserva.estado = 'pendiente_pago'  # Estado de la reserva
             if request.user.perfil.is_empleado:
                 reserva.empleado_gestor = request.user
-
-            # Calcular el monto total
-            dias = (form.cleaned_data['fecha_fin'] -
-                    form.cleaned_data['fecha_inicio']).days + 1
+            dias = (form.cleaned_data['fecha_fin'] - form.cleaned_data['fecha_inicio']).days + 1
             reserva.monto_total = maquina.precio_por_dia * dias
-
             try:
                 with transaction.atomic():
                     reserva.save()
-                    # Cambiar el estado de la máquina a 'reservada'
                     maquina.estado = 'reservada'
                     maquina.save()
-                    messages.success(
-                        request, f'Reserva creada exitosamente. Número de reserva: {reserva.numero_reserva}')
+                    messages.success(request, f'Reserva creada exitosamente. Número de reserva: {reserva.numero_reserva}')
                     return redirect('mis_reservas')
             except Exception as e:
-                messages.error(
-                    request, 'Error al crear la reserva. Por favor, intente nuevamente.')
+                messages.error(request, 'Error al crear la reserva. Por favor, intente nuevamente.')
                 return redirect('detalle_maquinaria', maquina_id=maquina.id)
     else:
         initial_data = {
@@ -807,14 +799,19 @@ def lista_maquinaria(request):
 
 @login_required
 def mis_reservas(request):
-    # Obtener solo las reservas reales (excluyendo errores)
     reservas = Reserva.objects.filter(
         cliente=request.user,
-        numero_reserva__isnull=False  # Asegurarse de que tenga número de reserva
-    ).order_by('-fecha_reserva')
-
+        maquina__estado='reservada',
+        estado__in=['pendiente_pago', 'pagada']
+    ).order_by('-fecha_inicio')
+    reservas_canceladas = Reserva.objects.filter(
+        cliente=request.user,
+        estado='cancelada',
+        maquina__estado='reservada'
+    ).order_by('-fecha_inicio')
     return render(request, 'reserva/mis_reservas.html', {
-        'reservas': reservas
+        'reservas': reservas,
+        'reservas_canceladas': reservas_canceladas
     })
 
 
@@ -1751,15 +1748,15 @@ def eliminar_imagen(request, imagen_id):
 
 @login_required
 def mis_alquileres(request):
-    # Alquileres activos
     alquileres = Reserva.objects.filter(
         cliente=request.user,
+        maquina__estado='alquilada',
         estado__in=['pendiente_pago', 'pagada']
     ).order_by('-fecha_inicio')
-    # Alquileres cancelados
     alquileres_cancelados = Reserva.objects.filter(
         cliente=request.user,
-        estado='cancelada'
+        estado='cancelada',
+        maquina__estado='alquilada'
     ).order_by('-fecha_inicio')
     return render(request, 'reservas/mis_alquileres.html', {
         'reservas': alquileres,
@@ -1787,12 +1784,10 @@ def alquilar_maquinaria_detalle(request, id_maquina):
     proxima_disponibilidad = maquina.get_proxima_disponibilidad()
 
     if maquina.estado == 'en_revision' or maquina.estado == 'mantenimiento':
-        messages.error(
-            request, 'La máquina está suspendida temporalmente y no puede ser alquilada.')
+        messages.error(request, 'La máquina está suspendida temporalmente y no puede ser alquilada.')
         return redirect('detalle_maquinaria', maquina_id=maquina.id)
 
     if request.method == 'POST':
-        # Creamos el formulario manualmente porque el template no lo renderiza como {{ form }}
         fecha_inicio = request.POST.get('fecha_inicio')
         fecha_fin = request.POST.get('fecha_fin')
         data = {
@@ -1805,26 +1800,26 @@ def alquilar_maquinaria_detalle(request, id_maquina):
             reserva = form.save(commit=False)
             reserva.cliente = request.user
             reserva.maquina = maquina
+            reserva.estado = 'pendiente_pago'  # Estado inicial
             if request.user.perfil.is_empleado:
                 reserva.empleado_gestor = request.user
-            dias = (form.cleaned_data['fecha_fin'] -
-                    form.cleaned_data['fecha_inicio']).days + 1
+            dias = (form.cleaned_data['fecha_fin'] - form.cleaned_data['fecha_inicio']).days + 1
             reserva.monto_total = maquina.precio_por_dia * dias
+            # Generar número de alquiler con prefijo ALQ
+            from django.utils import timezone
+            now = timezone.now()
+            reserva.numero_reserva = f"ALQ{now.strftime('%Y%m%d%H%M%S')}{request.user.id}"
             try:
                 with transaction.atomic():
                     reserva.save()
-                    # Cambiar el estado de la máquina a 'reservada'
-                    maquina.estado = 'reservada'
+                    maquina.estado = 'alquilada'
                     maquina.save()
-                    messages.success(
-                        request, f'Alquiler creado exitosamente. Número de alquiler: {reserva.numero_reserva}')
+                    messages.success(request, f'Alquiler creado exitosamente. Número de alquiler: {reserva.numero_reserva}')
                     return redirect('mis_alquileres')
             except Exception as e:
-                messages.error(
-                    request, 'Error al crear el alquiler. Por favor, intente nuevamente.')
+                messages.error(request, 'Error al crear el alquiler. Por favor, intente nuevamente.')
                 return redirect('detalle_maquinaria', maquina_id=maquina.id)
         else:
-            # Solo mostrar errores generales como mensajes
             for error in form.non_field_errors():
                 messages.error(request, error)
     else:
@@ -2340,11 +2335,10 @@ def cancelar_alquiler(request, reserva_id):
 @login_required
 @user_passes_test(is_owner_or_employee)
 def historial_alquileres(request):
-    # Filtrar solo alquileres activos (máquinas con estado 'alquilado')
     alquileres = Reserva.objects.filter(
-        maquina__estado='alquilado',
+        maquina__estado='alquilada',
         estado__in=['pendiente_pago', 'pagada']
-    ).order_by('fecha_inicio')  # Ordenar por fecha de inicio
+    ).order_by('fecha_inicio')
     return render(request, 'reservas/historial_alquileres.html', {'alquileres': alquileres})
 
 

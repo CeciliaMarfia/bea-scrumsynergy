@@ -220,19 +220,15 @@
         <div class="reserva-card">
             <div class="reserva-header">
                 <div class="maquina-nombre">{{ reserva.maquina.nombre }}</div>
-                {% if reserva.estado == 'pagada' %}
-                    <div class="estado-reserva estado-pagada">
+                <div class="estado-reserva {% if reserva.estado == 'pagada' %}estado-pagada{% elif reserva.estado == 'pendiente_pago' %}estado-activa{% else %}estado-activa{% endif %}">
+                    {% if reserva.estado == 'pagada' %}
+                        Pagada
+                    {% elif reserva.estado == 'pendiente_pago' %}
+                        Pendiente de pago
+                    {% else %}
                         {{ reserva.get_estado_display }}
-                    </div>
-                {% elif reserva.estado == 'pendiente_pago' %}
-                    <div class="estado-reserva estado-activa">
-                        {{ reserva.get_estado_display }}
-                    </div>
-                {% else %}
-                    <div class="estado-reserva estado-activa">
-                        {{ reserva.get_estado_display }}
-                    </div>
-                {% endif %}
+                    {% endif %}
+                </div>
             </div>
             <div class="reserva-info">
                 <div class="info-item">
@@ -252,18 +248,10 @@
                     <span class="info-value">${{ reserva.monto_total }}</span>
                 </div>
             </div>
-            <div class="botones-accion">
+            <div class="botones-accion" style="display: flex; gap: 0.5rem;">
                 {% if reserva.estado == 'pendiente_pago' %}
                   <a href="{% url 'pagar_reserva' reserva.id %}" class="btn-pagar">
                     <i class="fas fa-credit-card"></i> Pagar Alquiler
-                  </a>
-                {% endif %}
-                {% if reserva.estado == 'pagada' and reserva.empleado_gestor %}
-                  <a href="{% url 'valorar_empleado' reserva.id %}" class="btn-valorar">
-                    <i class="fas fa-star"></i> Valorar Empleado
-                  </a>
-                  <a href="{% url 'calificar_maquina' reserva.maquina.id %}?from=alquileres" class="btn-valorar">
-                    <i class="fas fa-star"></i> Calificar Maquinaria
                   </a>
                 {% endif %}
                 <form method="post" action="{% url 'cancelar_alquiler' reserva.id %}" class="form-cancelar-alquiler" style="display:inline;">
