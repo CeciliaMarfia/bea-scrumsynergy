@@ -1034,14 +1034,20 @@ def pagar_reserva(request, reserva_id):
                         reserva.save()
                         messages.success(
                             request, f'Pago realizado con éxito para el cliente {reserva.cliente.get_full_name()}')
-                        return redirect('mis_reservas')
+                        if reserva.maquina.estado == 'alquilada':
+                            return redirect('mis_alquileres')
+                        else:
+                            return redirect('mis_reservas')
                     else:
                         # Para cualquier otra tarjeta, simular pago exitoso
                         reserva.estado = 'pagada'
                         reserva.save()
                         messages.success(
                             request, f'Pago realizado exitosamente para el cliente {reserva.cliente.get_full_name()}')
-                        return redirect('mis_reservas')
+                        if reserva.maquina.estado == 'alquilada':
+                            return redirect('mis_alquileres')
+                        else:
+                            return redirect('mis_reservas')
                 except TarjetaCredito.DoesNotExist:
                     messages.error(request, 'Tarjeta no encontrada')
             else:
@@ -1497,7 +1503,7 @@ def registrar_devolucion(request):
                 messages.error(request, 'Máquina no encontrada.')
                 return render(request, 'registrar_devolucion.html', {'form': form})
 
-            if maquina.estado != 'alquilado':
+            if maquina.estado != 'alquilada':
                 messages.error(
                     request, 'La máquina no se encuentra en estado "alquilada".')
                 return render(request, 'registrar_devolucion.html', {'form': form})
@@ -1507,7 +1513,7 @@ def registrar_devolucion(request):
                 maquina=maquina, estado='pagada').order_by('-fecha_fin').first()
             if not reserva:
                 messages.error(
-                    request, 'No se encontró una reserva activa para esta máquina.')
+                    request, 'No se encontró un alquiler activo para esta máquina.')
                 return render(request, 'registrar_devolucion.html', {'form': form})
 
             # Verificar si la devolución es en término
@@ -1518,7 +1524,7 @@ def registrar_devolucion(request):
                 reserva.estado = 'finalizada'
                 reserva.save()
                 messages.success(
-                    request, 'Devolución registrada con éxito. La maquinaria pasa a estado de revisión.')
+                    request, 'Devolución registrada con éxito. La maquinaria pasa a estado "En Mantenimiento".')
             else:
                 # Escenario 2: Devolución fuera de término
                 maquina.estado = 'en_revision'
@@ -1529,7 +1535,7 @@ def registrar_devolucion(request):
                 dias_retraso = (fecha_devolucion - reserva.fecha_fin).days
                 recargo = Decimal('0.10') * reserva.monto_total * dias_retraso
                 messages.warning(
-                    request, f'Devolución fuera de término. Se aplica un recargo de ${recargo:.2f} por {dias_retraso} días de retraso.')
+                    request, f'La devolución del alquiler fue entregada fuera de término. Se aplica un recargo de ${recargo:.2f} por {dias_retraso} días de retraso.')
             return redirect('registrar_devolucion')
     else:
         form = RegistrarDevolucionForm()
@@ -2078,8 +2084,8 @@ def alquiler_presencial_detalle(request, id_maquina):
                     # Marcar la reserva como pagada directamente (pago presencial)
                     reserva.estado = 'pagada'
                     reserva.save()
-                    # Cambiar el estado de la máquina a 'alquilado'
-                    reserva.maquina.estado = 'alquilado'
+                    # Cambiar el estado de la máquina a 'alquilada'
+                    reserva.maquina.estado = 'alquilada'
                     reserva.maquina.save()
                     # Enviar email de confirmación al cliente
                     subject = f'Confirmación de Alquiler Presencial - {reserva.numero_reserva}'
