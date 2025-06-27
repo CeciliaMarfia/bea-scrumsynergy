@@ -664,7 +664,11 @@
     {% endif %}
 
     <div class="text-end mt-4">
-        {% if user.is_authenticated %}
+        {% if user.is_authenticated and user.perfil.is_dueno %}
+            <a href="{% url 'calificar_maquina' maquina.id %}" class="btn-">
+                <i class="fas fa-star"></i>  Calificar Maquinaria
+            </a>
+        {% elif user.is_authenticated and user.perfil.is_empleado %}
             <a href="{% url 'calificar_maquina' maquina.id %}" class="btn-">
                 <i class="fas fa-star"></i>  Calificar Maquinaria
             </a>
@@ -743,8 +747,18 @@
               {% if pregunta.respuesta %}
                 <div class="mt-2" style="color:#fff;"><strong>Respuesta:</strong> {{ pregunta.respuesta }}</div>
               {% endif %}
-              {% if mostrar_form_respuesta and not pregunta.respuesta %}
-                <a href="{% url 'responder_pregunta' pregunta.id %}" class="btn btn-sm btn-success ms-2">Responder</a>
+              {% if user.is_authenticated and user.perfil.is_dueno %}
+                {% if not pregunta.respuesta %}
+                  <a href="{% url 'responder_pregunta' pregunta.id %}" class="btn btn-sm btn-success ms-2">Responder</a>
+                {% endif %}
+                <form action="{% url 'eliminar_pregunta' pregunta.id %}" method="post" style="display:inline;">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-danger ms-2" onclick="return confirm('¿Seguro que deseas eliminar esta pregunta?');">Eliminar</button>
+                </form>
+              {% elif user.is_authenticated and user.perfil.is_empleado %}
+                {% if not pregunta.respuesta %}
+                  <a href="{% url 'responder_pregunta' pregunta.id %}" class="btn btn-sm btn-success ms-2">Responder</a>
+                {% endif %}
                 <form action="{% url 'eliminar_pregunta' pregunta.id %}" method="post" style="display:inline;">
                   {% csrf_token %}
                   <button type="submit" class="btn btn-sm btn-danger ms-2" onclick="return confirm('¿Seguro que deseas eliminar esta pregunta?');">Eliminar</button>

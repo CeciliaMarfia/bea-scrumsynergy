@@ -816,9 +816,9 @@ def mis_reservas(request):
 
 
 def detalle_maquinaria(request, maquina_id):
+    from .models import Pregunta
     try:
         maquina = Maquina.objects.get(id=maquina_id)
-        
         # Si la máquina está suspendida y el usuario no es dueño, redirigir al catálogo
         if maquina.estado == 'suspendida' and not (request.user.is_authenticated and request.user.perfil.is_dueno):
             messages.warning(request, 'Esta máquina no está disponible actualmente.')
@@ -828,9 +828,24 @@ def detalle_maquinaria(request, maquina_id):
         if not maquina.esta_disponible():
             proxima_disponibilidad = maquina.get_proxima_disponibilidad()
 
+        mostrar_form_pregunta = False
+        if request.user.is_authenticated and hasattr(request.user, 'perfil') and request.user.perfil.is_cliente:
+            mostrar_form_pregunta = True
+            if request.method == 'POST':
+                texto = request.POST.get('texto', '').strip()
+                if texto:
+                    Pregunta.objects.create(usuario=request.user, maquina=maquina, texto=texto)
+                    messages.success(request, '¡Pregunta enviada correctamente!')
+                    return redirect('detalle_maquinaria', maquina_id=maquina.id)
+                else:
+                    messages.error(request, 'El campo de pregunta no puede estar vacío.')
+
+        preguntas = Pregunta.objects.filter(maquina=maquina).order_by('-fecha_creacion')
         context = {
             'maquina': maquina,
             'proxima_disponibilidad': proxima_disponibilidad,
+            'mostrar_form_pregunta': mostrar_form_pregunta,
+            'preguntas': preguntas,
         }
         return render(request, 'listados/detalle_maquinaria.html', context)
     except Maquina.DoesNotExist:
@@ -1014,14 +1029,18 @@ def pagar_reserva(request, reserva_id):
                         messages.error(request, 'Falló la conexión con el banco')
                         return redirect('pagar_reserva', reserva_id=reserva.id)
                     elif numero_tarjeta == '3333333333333333':
+                        # Pago exitoso
                         reserva.estado = 'pagada'
                         reserva.save()
-                        messages.success(request, 'Pago realizado con éxito')
+                        messages.success(
+                            request, f'Pago realizado con éxito para el cliente {reserva.cliente.get_full_name()}')
                         return redirect('mis_reservas')
                     else:
+                        # Para cualquier otra tarjeta, simular pago exitoso
                         reserva.estado = 'pagada'
                         reserva.save()
-                        messages.success(request, 'Pago realizado exitosamente')
+                        messages.success(
+                            request, f'Pago realizado exitosamente para el cliente {reserva.cliente.get_full_name()}')
                         return redirect('mis_reservas')
                 except TarjetaCredito.DoesNotExist:
                     messages.error(request, 'Tarjeta no encontrada')
@@ -1035,7 +1054,8 @@ def pagar_reserva(request, reserva_id):
                 messages.success(request, 'La tarjeta se eliminó correctamente.')
                 return redirect('pagar_reserva', reserva_id=reserva.id)
             except TarjetaCredito.DoesNotExist:
-                messages.error(request, 'No se pudo eliminar la tarjeta. Intente nuevamente.')
+                messages.error(
+                    request, 'No se pudo eliminar la tarjeta. Intente nuevamente.')
                 return redirect('pagar_reserva', reserva_id=reserva.id)
 
     preference = generar_preference_mercadopago(request, reserva_id)
