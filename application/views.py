@@ -1999,8 +1999,8 @@ def alquiler_presencial_detalle(request, id_maquina):
 
             # Validar que la fecha de inicio no sea anterior a hoy
             if fecha_inicio < hoy:
-                messages.error(
-                    request, 'La fecha de inicio debe ser igual o posterior a la fecha actual.')
+                # Solo error de formulario, no messages.error
+                form.add_error('fecha_inicio', 'La fecha de inicio debe ser igual o posterior a la fecha actual.')
                 return render(request, 'reservas/alquiler_presencial_detalle.html', {
                     'maquina': maquina,
                     'proxima_disponibilidad': proxima_disponibilidad,
@@ -2009,8 +2009,7 @@ def alquiler_presencial_detalle(request, id_maquina):
 
             # Validar que la fecha de fin no sea anterior a la fecha de inicio
             if fecha_fin < fecha_inicio:
-                messages.error(
-                    request, 'La fecha de fin no puede ser anterior a la fecha de inicio.')
+                form.add_error('fecha_fin', 'La fecha de fin no puede ser anterior a la fecha de inicio.')
                 return render(request, 'reservas/alquiler_presencial_detalle.html', {
                     'maquina': maquina,
                     'proxima_disponibilidad': proxima_disponibilidad,
@@ -2020,8 +2019,7 @@ def alquiler_presencial_detalle(request, id_maquina):
             # Validar que la reserva no exceda los 7 días
             duracion = (fecha_fin - fecha_inicio).days + 1
             if duracion > 7:
-                messages.error(
-                    request, 'La reserva no puede exceder los 7 días.')
+                form.add_error('fecha_fin', 'La reserva no puede exceder los 7 días.')
                 return render(request, 'reservas/alquiler_presencial_detalle.html', {
                     'maquina': maquina,
                     'proxima_disponibilidad': proxima_disponibilidad,
@@ -2037,31 +2035,28 @@ def alquiler_presencial_detalle(request, id_maquina):
                 estado='cancelada'
             ).order_by('fecha_inicio')
 
-            # Verificar cada reserva previa
             for reserva_prev in reservas_previas:
                 # Verificar si la nueva reserva se solapa con una reserva existente
                 if (
                     (fecha_inicio >= reserva_prev.fecha_inicio and fecha_inicio <= reserva_prev.fecha_fin) or
                     (fecha_fin >= reserva_prev.fecha_inicio and fecha_fin <= reserva_prev.fecha_fin) or
-                    (fecha_inicio <= reserva_prev.fecha_inicio and fecha_fin >=
-                     reserva_prev.fecha_fin)
+                    (fecha_inicio <= reserva_prev.fecha_inicio and fecha_fin >= reserva_prev.fecha_fin)
                 ):
-                    fin_mantenimiento = reserva_prev.fecha_fin + \
-                        timezone.timedelta(days=2)
-                    messages.error(
-                        request, f'La máquina está reservada del {reserva_prev.fecha_inicio.strftime("%d/%m/%Y")} al {reserva_prev.fecha_fin.strftime("%d/%m/%Y")} y estará en mantenimiento hasta el {fin_mantenimiento.strftime("%d/%m/%Y")}.')
+                    fin_mantenimiento = reserva_prev.fecha_fin + timezone.timedelta(days=2)
+                    fecha_reserva_inicio = reserva_prev.fecha_inicio.strftime("%d/%m/%Y")
+                    fecha_reserva_fin = reserva_prev.fecha_fin.strftime("%d/%m/%Y")
+                    fecha_mantenimiento = fin_mantenimiento.strftime("%d/%m/%Y")
+                    form.add_error('fecha_inicio', f'La máquina está reservada del {fecha_reserva_inicio} al {fecha_reserva_fin} y estará en mantenimiento hasta el {fecha_mantenimiento}.')
                     return render(request, 'reservas/alquiler_presencial_detalle.html', {
                         'maquina': maquina,
                         'proxima_disponibilidad': proxima_disponibilidad,
                         'form': form
                     })
 
-                # Verificar período de mantenimiento
-                fin_mantenimiento = reserva_prev.fecha_fin + \
-                    timezone.timedelta(days=2)
+                fin_mantenimiento = reserva_prev.fecha_fin + timezone.timedelta(days=2)
                 if fecha_inicio <= fin_mantenimiento and fecha_inicio > reserva_prev.fecha_fin:
-                    messages.error(
-                        request, f'La máquina estará en mantenimiento hasta el {fin_mantenimiento.strftime("%d/%m/%Y")}.')
+                    fecha_mantenimiento = fin_mantenimiento.strftime("%d/%m/%Y")
+                    form.add_error('fecha_inicio', f'La máquina estará en mantenimiento hasta el {fecha_mantenimiento}.')
                     return render(request, 'reservas/alquiler_presencial_detalle.html', {
                         'maquina': maquina,
                         'proxima_disponibilidad': proxima_disponibilidad,
@@ -2136,15 +2131,8 @@ def alquiler_presencial_detalle(request, id_maquina):
                     request, 'Error al crear el alquiler presencial. Por favor, intente nuevamente.')
                 return redirect('detalle_maquinaria', maquina_id=maquina.id)
         else:
-            # Solo mostrar errores generales como mensajes
-            for error in form.non_field_errors():
-                messages.error(request, error)
-            # Mostrar errores de campos específicos
-            for field, errors in form.errors.items():
-                if field != '__all__':
-                    for error in errors:
-                        messages.error(
-                            request, f'{form.fields[field].label}: {error}')
+            # Solo mostrar errores del formulario, no usar messages.error
+            pass
     else:
         initial_data = {
             'maquina': maquina.id,

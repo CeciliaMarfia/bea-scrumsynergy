@@ -382,16 +382,20 @@ class ReservaMaquinariaForm(forms.ModelForm):
             for reserva in reservas_existentes:
                 # Verificar solapamiento directo con la reserva
                 if (fecha_inicio <= reserva.fecha_fin and fecha_fin >= reserva.fecha_inicio):
+                    fecha_reserva_inicio = reserva.fecha_inicio.strftime("%d/%m/%Y")
+                    fecha_reserva_fin = reserva.fecha_fin.strftime("%d/%m/%Y")
+                    fecha_mantenimiento = (reserva.fecha_fin + timezone.timedelta(days=2)).strftime("%d/%m/%Y")
                     raise forms.ValidationError(
-                        f'La máquina está reservada del {reserva.fecha_inicio.strftime("%d/%m/%Y")} al {reserva.fecha_fin.strftime("%d/%m/%Y")} y estará en mantenimiento hasta el {(reserva.fecha_fin + timezone.timedelta(days=2)).strftime("%d/%m/%Y")}.')
+                        f'La máquina está reservada del {fecha_reserva_inicio} al {fecha_reserva_fin} y estará en mantenimiento hasta el {fecha_mantenimiento}.')
 
                 # Verificar período de mantenimiento (2 días después de cada reserva)
                 # La nueva reserva debe comenzar al menos 3 días después de la fecha de fin
                 fecha_disponible = reserva.fecha_fin + \
                     timezone.timedelta(days=3)
                 if fecha_inicio <= fecha_disponible and fecha_inicio > reserva.fecha_fin:
+                    fecha_mantenimiento = fecha_disponible.strftime("%d/%m/%Y")
                     raise forms.ValidationError(
-                        f'La máquina estará disponible a partir del {fecha_disponible.strftime("%d/%m/%Y")}.')
+                        f'La máquina estará disponible a partir del {fecha_mantenimiento}.')
 
         return cleaned_data
 
@@ -758,12 +762,19 @@ class AlquilerPresencialForm(forms.ModelForm):
             'class': 'form-control',
             'placeholder': 'ejemplo@email.com'
         }),
-        help_text='Ingrese el email del cliente para registrar el alquiler en su historial'
+        help_text='Ingrese el email del cliente para registrar el alquiler en su historial',
+        error_messages={
+            'required': 'Complete este campo',
+            'invalid': 'Ingrese un email válido.'
+        }
     )
     maquina = forms.ModelChoiceField(
         queryset=Maquina.objects.all(),
         widget=forms.HiddenInput(),
-        required=True
+        required=True,
+        error_messages={
+            'required': 'Complete este campo'
+        }
     )
 
     class Meta:
@@ -772,6 +783,16 @@ class AlquilerPresencialForm(forms.ModelForm):
         widgets = {
             'fecha_inicio': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'fecha_fin': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+        }
+        error_messages = {
+            'fecha_inicio': {
+                'required': 'Complete este campo',
+                'invalid': 'Ingrese una fecha válida.'
+            },
+            'fecha_fin': {
+                'required': 'Complete este campo',
+                'invalid': 'Ingrese una fecha válida.'
+            },
         }
 
     def clean(self):
@@ -823,15 +844,19 @@ class AlquilerPresencialForm(forms.ModelForm):
             for reserva in reservas_existentes:
                 # Verificar solapamiento directo con la reserva
                 if (fecha_inicio <= reserva.fecha_fin and fecha_fin >= reserva.fecha_inicio):
+                    fecha_reserva_inicio = reserva.fecha_inicio.strftime("%d/%m/%Y")
+                    fecha_reserva_fin = reserva.fecha_fin.strftime("%d/%m/%Y")
+                    fecha_mantenimiento = (reserva.fecha_fin + timezone.timedelta(days=2)).strftime("%d/%m/%Y")
                     raise forms.ValidationError(
-                        f'La máquina está reservada del {reserva.fecha_inicio.strftime("%d/%m/%Y")} al {reserva.fecha_fin.strftime("%d/%m/%Y")} y estará en mantenimiento hasta el {(reserva.fecha_fin + timezone.timedelta(days=2)).strftime("%d/%m/%Y")}.')
+                        f'La máquina está reservada del {fecha_reserva_inicio} al {fecha_reserva_fin} y estará en mantenimiento hasta el {fecha_mantenimiento}.')
 
                 # Verificar período de mantenimiento (2 días después de cada reserva)
                 # La nueva reserva debe comenzar al menos 3 días después de la fecha de fin
                 fecha_disponible = reserva.fecha_fin + \
                     timezone.timedelta(days=3)
                 if fecha_inicio <= fecha_disponible and fecha_inicio > reserva.fecha_fin:
+                    fecha_mantenimiento = fecha_disponible.strftime("%d/%m/%Y")
                     raise forms.ValidationError(
-                        f'La máquina estará disponible a partir del {fecha_disponible.strftime("%d/%m/%Y")}.')
+                        f'La máquina estará disponible a partir del {fecha_mantenimiento}.')
 
         return cleaned_data

@@ -26,7 +26,7 @@
 
 .back-btn {
     display: inline-block;
-    background-color: #546469;
+    background-color: #d16c44;
     color: white;
     padding: 0.7rem 1.2rem;
     border-radius: 0.6rem;
@@ -39,7 +39,7 @@
 }
 
 .back-btn:hover {
-    background-color: #3d484c;
+    background-color: #bd5c1c;
     color: white;
     text-decoration: none;
 }
@@ -97,10 +97,12 @@
 
 .form-section {
     background-color: rgba(255, 255, 255, 0.1);
-    padding: 2rem;
+    color: white;
     border-radius: 0.8rem;
     margin-bottom: 2rem;
     backdrop-filter: blur(10px);
+    box-shadow: none;
+    padding: 2rem;
 }
 
 .form-section h5 {
@@ -116,24 +118,21 @@
 }
 
 .form-control {
-    background-color: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background-color: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
     border-radius: 0.5rem;
     padding: 0.8rem;
-    transition: border-color 0.3s ease;
     color: white;
     width: 100%;
 }
 
 .form-control:focus {
-    border-color: #d16c44;
-    box-shadow: 0 0 0 0.2rem rgba(209, 108, 68, 0.25);
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: rgba(255,255,255,0.2);
     color: white;
 }
 
 .form-control::placeholder {
-    color: rgba(255, 255, 255, 0.6);
+    color: #888;
 }
 
 .form-text {
@@ -231,12 +230,12 @@
 }
 
 .btn-primary {
-    background-color: #d16c44;
+    background-color: #259e25;
     color: white;
 }
 
 .btn-primary:hover {
-    background-color: #b95a33;
+    background-color: #237c23;
     color: white;
 }
 
@@ -310,6 +309,32 @@
         padding: 1.5rem;
     }
 }
+
+.alert.alert-info {
+    background-color: rgba(254, 254, 5, 0.1);
+    color: #ebb600;
+    border: 1px solid #ebb600;
+}
+
+.alert.alert-info i {
+    color: #ebb600;
+}
+
+.invalid-feedback, .invalid-feedback.d-block {
+    background-color: rgba(255, 102, 51, 0.2);
+    color: white !important;
+    border-radius: 0.8rem;
+    margin-bottom: 0.5rem;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 0 6px rgba(0, 0, 0, 0.13);
+    padding: 0.25rem 0.7rem;
+    border: 1px solid rgba(255, 102, 51, 0.4);
+    font-weight: 600;
+    font-size: 0.92rem;
+    margin-top: 0.15rem;
+    display: inline-block;
+}
+
 {% endblock %}
 
 {% block content %}
@@ -373,26 +398,42 @@
         <!-- Formulario de alquiler -->
         <div class="form-section">
             <h5><i class="fas fa-edit"></i> Datos del Cliente y Alquiler</h5>
+
+            {# Mostrar errores generales del formulario #}
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    <ul class="mb-0">
+                        {% for error in form.non_field_errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
             <form method="post" class="needs-validation" novalidate>
                 {% csrf_token %}
-                
                 <!-- Campo oculto para la máquina -->
                 <input type="hidden" name="maquina" value="{{ maquina.id }}">
-                
                 <!-- Email del cliente -->
                 <div class="mb-3">
                     <label for="email_cliente" class="form-label">
                         <i class="fas fa-envelope"></i> Email del Cliente *
                     </label>
                     <input type="email" 
-                           class="form-control" 
+                           class="form-control{% if form.email_cliente.errors %} is-invalid{% endif %}" 
                            id="email_cliente" 
                            name="email_cliente" 
                            placeholder="ejemplo@email.com"
+                           value="{{ form.email_cliente.value|default_if_none:'' }}"
                            required>
                     <div class="form-text">
                         Ingrese el email del cliente para registrar el alquiler en su historial
                     </div>
+                    {% if form.email_cliente.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.email_cliente.errors %}{{ error }}<br>{% endfor %}
+                        </div>
+                    {% endif %}
                 </div>
 
                 <!-- Cartel informativo de próxima disponibilidad -->
@@ -411,12 +452,17 @@
                                 <i class="fas fa-calendar-plus"></i> Fecha de Inicio *
                             </label>
                             <input type="date" 
-                                   class="form-control" 
+                                   class="form-control{% if form.fecha_inicio.errors %} is-invalid{% endif %}" 
                                    id="fecha_inicio" 
                                    name="fecha_inicio"
-                                   value="{{ proxima_disponibilidad|date:'Y-m-d' }}"
+                                   value="{{ form.fecha_inicio.value|default_if_none:proxima_disponibilidad|date:'Y-m-d' }}"
                                    min="{{ proxima_disponibilidad|date:'Y-m-d' }}"
                                    required>
+                            {% if form.fecha_inicio.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.fecha_inicio.errors %}{{ error }}<br>{% endfor %}
+                                </div>
+                            {% endif %}
                         </div>
                     </div>
                     <div class="col-md-6">
@@ -425,13 +471,19 @@
                                 <i class="fas fa-calendar-minus"></i> Fecha de Fin *
                             </label>
                             <input type="date" 
-                                   class="form-control" 
+                                   class="form-control{% if form.fecha_fin.errors %} is-invalid{% endif %}" 
                                    id="fecha_fin" 
                                    name="fecha_fin"
+                                   value="{{ form.fecha_fin.value|default_if_none:'' }}"
                                    required>
                             <div class="form-text">
                                 La fecha de fin debe ser igual o posterior a la fecha de inicio
                             </div>
+                            {% if form.fecha_fin.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.fecha_fin.errors %}{{ error }}<br>{% endfor %}
+                                </div>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -521,7 +573,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Validar fecha de inicio
         if (fechaInicio < hoy) {
-            errores.push('La fecha de inicio debe ser igual o posterior a hoy.');
+            errores.push('La fecha de inicio debe ser igual o posterior a la fecha actual.');
             isValid = false;
         }
         // Validar fecha de fin
