@@ -962,15 +962,13 @@ def procesar_pago(request, reserva_id):
 @login_required
 def pagar_reserva(request, reserva_id):
     reserva = get_object_or_404(Reserva, id=reserva_id)
-    tarjetas = TarjetaCredito.objects.filter(usuario=request.user).order_by(
-        '-es_predeterminada', '-fecha_creacion')
+    tarjetas = TarjetaCredito.objects.filter(usuario=request.user).order_by('-es_predeterminada', '-fecha_creacion')
     form = TarjetaCreditoForm()
 
     if request.method == 'POST':
         if 'agregar_tarjeta' in request.POST:
             form = TarjetaCreditoForm(request.POST)
             if form.is_valid():
-                # Verificar si ya existe una tarjeta con los mismos últimos 4 dígitos y titular
                 numero_tarjeta = form.cleaned_data.get('numero_tarjeta')
                 nombre_titular = form.cleaned_data.get('nombre_titular')
                 ultimos_digitos = numero_tarjeta[-4:]
@@ -988,7 +986,7 @@ def pagar_reserva(request, reserva_id):
                         'tarjetas': tarjetas,
                         'form': form,
                         'preference_id': generar_preference_mercadopago(request, reserva_id)["id"],
-                        'show_card_form': True  # Para mantener el formulario visible
+                        'show_card_form': True
                     }
                     return render(request, 'reservas/pagar_reserva.html', context)
 
@@ -1007,35 +1005,24 @@ def pagar_reserva(request, reserva_id):
             tarjeta_id = request.POST.get('tarjeta_id')
             if tarjeta_id:
                 try:
-                    tarjeta = TarjetaCredito.objects.get(
-                        id=tarjeta_id, usuario=request.user)
-
-                    # Obtener el número completo de la tarjeta
+                    tarjeta = TarjetaCredito.objects.get(id=tarjeta_id, usuario=request.user)
                     numero_tarjeta = tarjeta.numero_tarjeta
-
-                    # Validación específica según el número de tarjeta
                     if numero_tarjeta == '1111111111111111':
-                        messages.error(
-                            request, 'La tarjeta tiene fondos insuficientes')
+                        messages.error(request, 'La tarjeta tiene fondos insuficientes')
                         return redirect('pagar_reserva', reserva_id=reserva.id)
                     elif numero_tarjeta == '2222222222222222':
-                        messages.error(
-                            request, 'Falló la conexión con el banco')
+                        messages.error(request, 'Falló la conexión con el banco')
                         return redirect('pagar_reserva', reserva_id=reserva.id)
                     elif numero_tarjeta == '3333333333333333':
-                        # Pago exitoso
                         reserva.estado = 'pagada'
                         reserva.save()
                         messages.success(request, 'Pago realizado con éxito')
                         return redirect('mis_reservas')
                     else:
-                        # Para cualquier otra tarjeta, simular pago exitoso
                         reserva.estado = 'pagada'
                         reserva.save()
-                        messages.success(
-                            request, 'Pago realizado exitosamente')
+                        messages.success(request, 'Pago realizado exitosamente')
                         return redirect('mis_reservas')
-
                 except TarjetaCredito.DoesNotExist:
                     messages.error(request, 'Tarjeta no encontrada')
             else:
@@ -1043,15 +1030,12 @@ def pagar_reserva(request, reserva_id):
         elif 'eliminar_tarjeta' in request.POST:
             tarjeta_id = request.POST.get('tarjeta_id')
             try:
-                tarjeta = TarjetaCredito.objects.get(
-                    id=tarjeta_id, usuario=request.user)
+                tarjeta = TarjetaCredito.objects.get(id=tarjeta_id, usuario=request.user)
                 tarjeta.delete()
-                messages.success(
-                    request, 'La tarjeta se eliminó correctamente.')
+                messages.success(request, 'La tarjeta se eliminó correctamente.')
                 return redirect('pagar_reserva', reserva_id=reserva.id)
             except TarjetaCredito.DoesNotExist:
-                messages.error(
-                    request, 'No se pudo eliminar la tarjeta. Intente nuevamente.')
+                messages.error(request, 'No se pudo eliminar la tarjeta. Intente nuevamente.')
                 return redirect('pagar_reserva', reserva_id=reserva.id)
 
     preference = generar_preference_mercadopago(request, reserva_id)
