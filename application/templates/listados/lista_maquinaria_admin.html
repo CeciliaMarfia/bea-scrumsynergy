@@ -61,7 +61,16 @@
 .table tbody tr:hover {
   background-color: #f8f9fa;
 }
+/* En tu archivo CSS */
+.btn-hover-effect {
+  transition: all 0.3s ease;
+}
 
+.btn-hover-effect:hover {
+  background-color: #138496 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
 .btn-editar {
   background-color: #28a745;
   color: white;
@@ -217,7 +226,7 @@
               <a href="{% url 'editar_maquinaria' maquina.id %}" class="btn-editar">
                 <i class="fas fa-edit"></i> Editar
               </a>
-              <a href="{% url 'historial_maquinaria' maquina.id %}" class="btn btn-info" style="background-color:#17a2b8; color:white; display: inline-flex; align-items: center; gap: 0.5rem;">
+              <a href="{% url 'historial_maquinaria' maquina.id %}" class="btn btn-info btn-hover-effect" style="background-color:#17a2b8; color:white; display: inline-flex; align-items: center; gap: 0.5rem;">
                 <i class="fas fa-history"></i> Historial
               </a>
               <a href="#" class="btn-eliminar" onclick="confirmarEliminacion({{ maquina.id }})">
