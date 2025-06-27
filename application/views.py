@@ -2431,3 +2431,15 @@ def actualizar_estado_maquina(request, maquina_id):
         return JsonResponse({'error': 'Máquina no encontrada'}, status=404)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+@user_passes_test(lambda u: u.perfil.is_dueno or u.perfil.is_empleado)
+def historial_maquinaria(request, maquina_id):
+    from .models import Maquina, Reserva
+    maquina = get_object_or_404(Maquina, id=maquina_id)
+    alquileres = Reserva.objects.filter(maquina=maquina).order_by('-fecha_inicio')
+    return render(request, 'reservas/historial_maquinaria.html', {
+        'alquileres': alquileres,
+        'maquina': maquina
+    })

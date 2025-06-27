@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block styles %}
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+.form-card {
+    background: white;
+    border-radius: 1.5rem;
+    padding: 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-top: 2rem;
+}
+.header-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+}
+.title-section {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+}
+.btn-volver {
+    display: inline-block;
+    background-color: #546469;
+    color: white;
+    padding: 0.8rem 1.2rem;
+    border-radius: 0.6rem;
+    text-decoration: none;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+.btn-volver:hover {
+    background-color: #3d484c;
+    color: white;
+    transform: translateY(-2px);
+}
+.table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-bottom: 1rem;
+}
+.table th,
+.table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid #dee2e6;
+}
+.table th {
+    background-color: #f8f9fa;
+    color: #546469;
+    font-weight: 600;
+}
+.badge {
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+}
+.bg-success {
+    background-color: #28a745;
+    color: white;
+}
+.bg-warning {
+    background-color: #ffc107;
+    color: black;
+}
+.bg-danger {
+    background-color: #dc3545;
+    color: white;
+}
+.bg-secondary {
+    background-color: #6c757d;
+    color: white;
+}
+.table-responsive {
+    overflow-x: auto;
+    border-radius: 0.6rem;
+    background-color: white;
+}
+.no-reservas {
+    background-color: #e7f3fe;
+    color: #c94e28;;
+    border: 1px solid #bce8f1;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    margin-top: 20px;
+}
+.no-reservas i {
+  font-size: 30px;
+  margin-bottom: 10px;
+  display: block;
+  color: #c94e28;;
+}
+@media (max-width: 768px) {
+    .container {
+        padding: 1rem;
+    }
+    .form-card {
+        padding: 1.5rem;
+    }
+    .table th,
+    .table td {
+        padding: 0.75rem;
+    }
+}
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="form-card">
+        <div class="header-container">
+            <div class="title-section">
+                <a href="{% url 'lista_maquinaria_admin' %}" class="btn-volver">
+                    <i class="fas fa-arrow-left"></i> Volver al Listado
+                </a>
+                <h2>Historial de Alquileres de "{{ maquina.nombre }}"</h2>
+            </div>
+        </div>
+        {% if alquileres %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Número de Alquiler</th>
+                            <th>Cliente</th>
+                            <th>Fecha Inicio</th>
+                            <th>Fecha Fin</th>
+                            <th>Estado</th>
+                            <th>Monto</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for alquiler in alquileres %}
+                        <tr>
+                            <td><strong>{{ alquiler.numero_reserva }}</strong></td>
+                            <td>{{ alquiler.cliente.get_full_name }}</td>
+                            <td>{{ alquiler.fecha_inicio|date:"d/m/Y" }}</td>
+                            <td>{{ alquiler.fecha_fin|date:"d/m/Y" }}</td>
+                            <td>
+                                {% if alquiler.estado == 'pendiente_pago' %}
+                                    <span class="badge bg-warning">Pendiente de pago</span>
+                                {% elif alquiler.estado == 'pagada' %}
+                                    <span class="badge bg-success">Pagada</span>
+                                {% elif alquiler.estado == 'cancelada' %}
+                                    <span class="badge bg-danger">Cancelada</span>
+                                {% elif alquiler.estado == 'finalizada' %}
+                                    <span class="badge bg-secondary">Finalizada</span>
+                                {% endif %}
+                            </td>
+                            <td>${{ alquiler.monto_total }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div style="text-align:center; margin: 40px 0;">
+                <i class="fas fa-info-circle" style="font-size:2.5rem; color:#c94e28;"></i>
+                <h3 style="margin: 1rem 0 0.5rem 0; color:#222; font-size:2.2rem;">No hay alquileres registrados para esta máquina</h3>
+                <p style="color:#c94e28; font-size:1.25rem;">Esta máquina aún no tiene historial de alquileres.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %} 
