@@ -1536,7 +1536,7 @@ def registrar_devolucion(request):
                 # Escenario 1: Devolución en término
                 maquina.estado = 'mantenimiento'
                 maquina.save()
-                reserva.estado = 'finalizada'
+                reserva.estado = 'devuelta'
                 reserva.save()
                 messages.success(
                     request, 'Devolución registrada con éxito. La maquinaria pasa a estado "En Mantenimiento".')
@@ -1544,7 +1544,7 @@ def registrar_devolucion(request):
                 # Escenario 2: Devolución fuera de término
                 maquina.estado = 'mantenimiento'
                 maquina.save()
-                reserva.estado = 'finalizada'
+                reserva.estado = 'devuelta'
                 reserva.save()
                 # Aplica recargo (ejemplo: 10% del monto total por día de retraso)
                 dias_retraso = (fecha_devolucion - reserva.fecha_fin).days
@@ -1791,13 +1791,21 @@ def mis_alquileres(request):
         maquina__estado='alquilada',
         estado__in=['pendiente_pago', 'pagada']
     ).order_by('-fecha_inicio')
+    
+    alquileres_devueltos = Reserva.objects.filter(
+        cliente=request.user,
+        estado='devuelta'
+    ).order_by('-fecha_inicio')
+    
     alquileres_cancelados = Reserva.objects.filter(
         cliente=request.user,
         estado='cancelada',
         maquina__estado='alquilada'
     ).order_by('-fecha_inicio')
+    
     return render(request, 'reservas/mis_alquileres.html', {
         'reservas': alquileres,
+        'alquileres_devueltos': alquileres_devueltos,
         'alquileres_cancelados': alquileres_cancelados
     })
 
@@ -2403,7 +2411,7 @@ def valorar_empleado(request, reserva_id):
     # Verificar que la reserva tenga un empleado gestor
     if not reserva.empleado_gestor:
         messages.error(
-            request, 'Esta reserva no tiene un empleado asignado para valorar.')
+            request, 'Este Alquiler no tiene un empleado asignado para valorar.')
         return redirect('mis_alquileres')
 
     # Verificar que la reserva esté pagada

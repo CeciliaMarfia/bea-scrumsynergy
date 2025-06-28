@@ -152,6 +152,8 @@
                                     <span class="badge bg-danger">Cancelada</span>
                                 {% elif alquiler.estado == 'finalizada' %}
                                     <span class="badge bg-secondary">Finalizada</span>
+                                {% elif alquiler.estado == 'devuelta' %}
+                                    <span class="badge bg-secondary">Finalizado</span>
                                 {% endif %}
                             </td>
                             <td>${{ alquiler.monto_total }}</td>

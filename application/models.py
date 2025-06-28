@@ -309,6 +309,7 @@ class Reserva(models.Model):
         ('pagada', 'Pagada'),
         ('cancelada', 'Cancelada'),
         ('finalizada', 'Finalizada'),
+        ('devuelta', 'Devuelta'),
     ]
 
     numero_reserva = models.CharField(max_length=20, unique=True)

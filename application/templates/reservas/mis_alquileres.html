@@ -60,6 +60,11 @@
     border: 1px solid rgba(220, 53, 69, 0.9);
     color: #fff;
 }
+.estado-devuelta {
+    background-color: rgba(108, 117, 125, 0.8);
+    border: 1px solid rgba(108, 117, 125, 0.9);
+    color: #fff;
+}
 .reserva-info {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -214,7 +219,7 @@
         </a>
     </div>
     
-    {% if reservas or alquileres_cancelados %}
+    {% if reservas or alquileres_cancelados or alquileres_devueltos %}
     <div class="reservas-container">
         {% for reserva in reservas %}
         <div class="reserva-card">
@@ -263,6 +268,44 @@
             </div>
         </div>
         {% endfor %}
+        
+        {% for reserva in alquileres_devueltos %}
+        <div class="reserva-card" style="opacity:0.8;">
+            <div class="reserva-header">
+                <div class="maquina-nombre">{{ reserva.maquina.nombre }}</div>
+                <div class="estado-reserva estado-devuelta">
+                    Devuelta
+                </div>
+            </div>
+            <div class="reserva-info">
+                <div class="info-item">
+                    <span class="info-label">Número de alquiler</span>
+                    <span class="info-value">{{ reserva.numero_reserva }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Fecha de inicio</span>
+                    <span class="info-value">{{ reserva.fecha_inicio|date:"d/m/Y" }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Fecha de fin</span>
+                    <span class="info-value">{{ reserva.fecha_fin|date:"d/m/Y" }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Total</span>
+                    <span class="info-value">${{ reserva.monto_total }}</span>
+                </div>
+            </div>
+            <div class="botones-accion" style="display: flex; gap: 0.5rem;">
+                <a href="{% url 'calificar_maquina' reserva.maquina.id %}" class="btn-valorar">
+                    <i class="fas fa-star"></i> Calificar Maquinaria
+                </a>
+                <a href="{% url 'valorar_empleado' reserva.id %}" class="btn-valorar" style="background-color:#007bff;">
+                    <i class="fas fa-user"></i> Calificar Empleado
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+        
         {% for reserva in alquileres_cancelados %}
         <div class="reserva-card" style="opacity:0.7;">
             <div class="reserva-header">
