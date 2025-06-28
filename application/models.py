@@ -153,6 +153,7 @@ class Maquina(models.Model):
     permisos_requeridos = models.TextField(blank=True, null=True)
     estado = models.CharField(
         max_length=20, choices=ESTADO_CHOICES, default='disponible')
+    eliminado = models.BooleanField(default=False)
 
     def __str__(self):
         return f'{self.nombre} ({self.marca} - {self.modelo})'
@@ -167,9 +168,10 @@ class Maquina(models.Model):
         Una máquina está disponible si:
         1. Su estado base es 'disponible'
         2. No tiene reservas activas que se superpongan con la fecha actual o futuras
+        3. No está eliminada
         """
-        # Verificar si el estado base de la máquina es disponible
-        if self.estado != 'disponible':
+        # Verificar si el estado base de la máquina es disponible y no está eliminada
+        if self.estado != 'disponible' or self.eliminado:
             return False
 
         # Verificar si hay reservas activas actuales o futuras
@@ -189,6 +191,9 @@ class Maquina(models.Model):
         Si la máquina está reservada hasta el día X, estará disponible el día X + 3
         (considerando los 2 días de mantenimiento).
         """
+        if self.eliminado:
+            return None
+
         hoy = timezone.now().date()
 
         # Obtener todas las reservas activas futuras ordenadas por fecha de fin

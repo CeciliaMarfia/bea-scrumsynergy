@@ -248,8 +248,8 @@
 
 <script>
 function confirmarEliminacion(maquinaId) {
-  if (confirm('¿Está seguro que desea eliminar esta maquinaria?')) {
-    // Aquí iría la lógica de eliminación cuando implementemos esa funcionalidad
+  if (confirm('¿Está seguro que desea eliminar esta maquinaria? La maquinaria dejará de aparecer en los listados pero se mantendrá su historial de reservas y alquileres.')) {
+    window.location.href = `/eliminar_maquinaria/${maquinaId}/`;
   }
 }
 
