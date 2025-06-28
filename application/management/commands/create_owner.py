@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
 from django.db import transaction
-from application.models import Role, Perfil
+from application.models import Role, Perfil, Maquina
 from datetime import date
 
 
@@ -42,3 +42,17 @@ class Command(BaseCommand):
         except Exception as e:
             self.stdout.write(self.style.ERROR(
                 f'Error creating owner user: {str(e)}'))
+
+    def handle_corregir_estados(self, *args, **options):
+        cambios = 0
+        for maquina in Maquina.objects.all():
+            estado_original = maquina.estado
+            if estado_original != estado_original.lower():
+                maquina.estado = estado_original.lower()
+                maquina.save()
+                cambios += 1
+                self.stdout.write(self.style.SUCCESS(f"Corregido: {estado_original} -> {maquina.estado} (ID: {maquina.id})"))
+        if cambios == 0:
+            self.stdout.write(self.style.SUCCESS('No se encontraron estados incorrectos.'))
+        else:
+            self.stdout.write(self.style.SUCCESS(f'Se corrigieron {cambios} máquinas.'))

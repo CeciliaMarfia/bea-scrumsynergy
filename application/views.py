@@ -709,15 +709,15 @@ def reservar_maquinaria(request, maquina_id):
 
 
 def lista_maquinaria(request):
-    # Obtener todas las máquinas excepto las suspendidas
-    maquinas = Maquina.objects.exclude(estado='suspendida')
+    # Obtener todas las máquinas excepto las suspendidas y eliminadas
+    maquinas = Maquina.objects.exclude(estado='suspendida').exclude(eliminado=True)
 
     # Nueva funcionalidad: búsqueda por nombre
     busqueda_nombre = request.GET.get('busqueda_nombre', '').strip()
     resultados_busqueda = None
     mensaje_busqueda = None
     if busqueda_nombre:
-        resultados_busqueda = Maquina.objects.exclude(estado='suspendida').filter(
+        resultados_busqueda = Maquina.objects.exclude(estado='suspendida').exclude(eliminado=True).filter(
             nombre__icontains=busqueda_nombre)
         if not resultados_busqueda.exists():
             mensaje_busqueda = f"No hay resultados para '{busqueda_nombre}'"
@@ -739,19 +739,19 @@ def lista_maquinaria(request):
 
     # Obtener valores únicos para los filtros
     tipos = Maquina.TIPO_CHOICES
-    ubicaciones = Maquina.objects.exclude(estado='suspendida').values_list(
+    ubicaciones = Maquina.objects.exclude(estado='suspendida').exclude(eliminado=True).values_list(
         'ubicacion', flat=True).distinct()
 
-    # Calcular conteos para los filtros (ahora excluye máquinas suspendidas)
+    # Calcular conteos para los filtros (ahora excluye máquinas suspendidas y eliminadas)
     tipos_con_conteo = {}
     for tipo_value, tipo_label in tipos:
-        tipos_con_conteo[tipo_value] = Maquina.objects.exclude(estado='suspendida').filter(
+        tipos_con_conteo[tipo_value] = Maquina.objects.exclude(estado='suspendida').exclude(eliminado=True).filter(
             tipo=tipo_value).count()
 
     ubicaciones_con_conteo = {}
     for ubi in ubicaciones:
         if ubi:  # Solo si la ubicación no es None o vacía
-            ubicaciones_con_conteo[ubi] = Maquina.objects.exclude(estado='suspendida').filter(
+            ubicaciones_con_conteo[ubi] = Maquina.objects.exclude(estado='suspendida').exclude(eliminado=True).filter(
                 ubicacion=ubi).count()
 
     # Calcular próxima disponibilidad para cada máquina
@@ -1047,14 +1047,20 @@ def pagar_reserva(request, reserva_id):
                         reserva.save()
                         messages.success(
                             request, f'Pago realizado con éxito para el cliente {reserva.cliente.get_full_name()}')
-                        return redirect('mis_reservas')
+                        if reserva.maquina.estado == 'alquilada':
+                            return redirect('mis_alquileres')
+                        else:
+                            return redirect('mis_reservas')
                     else:
                         # Para cualquier otra tarjeta, simular pago exitoso
                         reserva.estado = 'pagada'
                         reserva.save()
                         messages.success(
                             request, f'Pago realizado exitosamente para el cliente {reserva.cliente.get_full_name()}')
-                        return redirect('mis_reservas')
+                        if reserva.maquina.estado == 'alquilada':
+                            return redirect('mis_alquileres')
+                        else:
+                            return redirect('mis_reservas')
                 except TarjetaCredito.DoesNotExist:
                     messages.error(request, 'Tarjeta no encontrada')
             else:
@@ -1512,7 +1518,7 @@ def registrar_devolucion(request):
                 messages.error(request, 'Máquina no encontrada.')
                 return render(request, 'registrar_devolucion.html', {'form': form})
 
-            if maquina.estado != 'alquilado':
+            if maquina.estado != 'alquilada':
                 messages.error(
                     request, 'La máquina no se encuentra en estado "alquilada".')
                 return render(request, 'registrar_devolucion.html', {'form': form})
@@ -1522,7 +1528,7 @@ def registrar_devolucion(request):
                 maquina=maquina, estado='pagada').order_by('-fecha_fin').first()
             if not reserva:
                 messages.error(
-                    request, 'No se encontró una reserva activa para esta máquina.')
+                    request, 'No se encontró un alquiler activo para esta máquina.')
                 return render(request, 'registrar_devolucion.html', {'form': form})
 
             # Verificar si la devolución es en término
@@ -1533,7 +1539,7 @@ def registrar_devolucion(request):
                 reserva.estado = 'finalizada'
                 reserva.save()
                 messages.success(
-                    request, 'Devolución registrada con éxito. La maquinaria pasa a estado de revisión.')
+                    request, 'Devolución registrada con éxito. La maquinaria pasa a estado "En Mantenimiento".')
             else:
                 # Escenario 2: Devolución fuera de término
                 maquina.estado = 'en_revision'
@@ -1544,7 +1550,7 @@ def registrar_devolucion(request):
                 dias_retraso = (fecha_devolucion - reserva.fecha_fin).days
                 recargo = Decimal('0.10') * reserva.monto_total * dias_retraso
                 messages.warning(
-                    request, f'Devolución fuera de término. Se aplica un recargo de ${recargo:.2f} por {dias_retraso} días de retraso.')
+                    request, f'La devolución del alquiler fue entregada fuera de término. Se aplica un recargo de ${recargo:.2f} por {dias_retraso} días de retraso.')
             return redirect('registrar_devolucion')
     else:
         form = RegistrarDevolucionForm()
@@ -1579,9 +1585,22 @@ def responder_pregunta(request, pregunta_id):
 @login_required
 @user_passes_test(lambda u: u.perfil.is_dueno or u.perfil.is_empleado)
 def lista_maquinaria_admin(request):
-    # Obtener todas las máquinas
-    maquinas = Maquina.objects.all().order_by('codigo')
+    # Obtener todas las máquinas no eliminadas
+    maquinas = Maquina.objects.filter(eliminado=False).order_by('codigo')
     return render(request, 'listados/lista_maquinaria_admin.html', {'maquinas': maquinas})
+
+
+@login_required
+@user_passes_test(lambda u: u.perfil.is_dueno)
+def eliminar_maquinaria(request, maquina_id):
+    maquina = get_object_or_404(Maquina, id=maquina_id)
+    
+    # Realizar borrado lógico
+    maquina.eliminado = True
+    maquina.save()
+    
+    messages.success(request, 'Maquinaria eliminada exitosamente.')
+    return redirect('lista_maquinaria_admin')
 
 
 @login_required
@@ -2109,8 +2128,8 @@ def alquiler_presencial_detalle(request, id_maquina):
                     # Marcar la reserva como pagada directamente (pago presencial)
                     reserva.estado = 'pagada'
                     reserva.save()
-                    # Cambiar el estado de la máquina a 'alquilado'
-                    reserva.maquina.estado = 'alquilado'
+                    # Cambiar el estado de la máquina a 'alquilada'
+                    reserva.maquina.estado = 'alquilada'
                     reserva.maquina.save()
                     # Enviar email de confirmación al cliente
                     subject = f'Confirmación de Alquiler Presencial - {reserva.numero_reserva}'
@@ -2295,10 +2314,10 @@ def pagar_reserva_presencial(request, reserva_id):
 @user_passes_test(lambda u: u.perfil.is_empleado or u.perfil.is_dueno)
 def seleccionar_maquinaria_alquiler_presencial(request):
     """Vista para que empleados/dueños seleccionen maquinaria para alquiler presencial"""
-    # Obtener todas las máquinas disponibles (no suspendidas)
+    # Obtener todas las máquinas disponibles (no suspendidas y no eliminadas)
     maquinas = Maquina.objects.exclude(
         estado__in=['suspendida', 'mantenimiento']
-    ).order_by('nombre')
+    ).exclude(eliminado=True).order_by('nombre')
 
     # Filtrar por búsqueda si se proporciona
     busqueda = request.GET.get('busqueda', '').strip()
