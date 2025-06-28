@@ -1534,7 +1534,7 @@ def registrar_devolucion(request):
             # Verificar si la devolución es en término
             if fecha_devolucion <= reserva.fecha_fin:
                 # Escenario 1: Devolución en término
-                maquina.estado = 'en_revision'
+                maquina.estado = 'mantenimiento'
                 maquina.save()
                 reserva.estado = 'finalizada'
                 reserva.save()
@@ -1542,7 +1542,7 @@ def registrar_devolucion(request):
                     request, 'Devolución registrada con éxito. La maquinaria pasa a estado "En Mantenimiento".')
             else:
                 # Escenario 2: Devolución fuera de término
-                maquina.estado = 'en_revision'
+                maquina.estado = 'mantenimiento'
                 maquina.save()
                 reserva.estado = 'finalizada'
                 reserva.save()

@@ -6,38 +6,50 @@ from datetime import date
 
 
 class Command(BaseCommand):
-    help = 'Creates the owner user with predefined credentials'
+    help = 'Create owner user with default credentials'
+
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--corregir-estados',
+            action='store_true',
+            help='Corregir estados incorrectos de las máquinas',
+        )
 
     def handle(self, *args, **kwargs):
+        if kwargs['corregir_estados']:
+            self.handle_corregir_estados(*args, **kwargs)
+            return
+
         try:
             with transaction.atomic():
-                # Create or get the owner role
-                owner_role, _ = Role.objects.get_or_create(name=Role.DUENO)
+                # Crear el usuario dueño
+                owner_user = User.objects.create_user(
+                    username='owner',
+                    email='owner@example.com',
+                    password='owner123',
+                    first_name='Owner',
+                    last_name='User'
+                )
 
-                # Create the owner user if it doesn't exist
-                owner_email = 'cecilia.marfia172084@alumnos.info.unlp.edu.ar'
-                if not User.objects.filter(email=owner_email).exists():
-                    owner = User.objects.create_user(
-                        username=owner_email,
-                        email=owner_email,
-                        password='owner123',  # You should change this password after first login
-                        first_name='Roberto',
-                        last_name='Paredes',
-                        is_staff=True,  # Give admin site access
-                    )
+                # Crear el rol de dueño si no existe
+                owner_role, created = Role.objects.get_or_create(name=Role.DUENO)
 
-                    # Update the owner's profile
-                    owner.perfil.role = owner_role
-                    owner.perfil.email_verificado = True
-                    owner.perfil.fecha_nacimiento = date(
-                        1980, 1, 1)  # Example birth date
-                    owner.perfil.save()
+                # Crear el perfil del dueño
+                owner_profile = Perfil.objects.create(
+                    usuario=owner_user,
+                    role=owner_role,
+                    email_verificado=True
+                )
 
-                    self.stdout.write(self.style.SUCCESS(
-                        'Owner user created successfully'))
-                else:
-                    self.stdout.write(self.style.WARNING(
-                        'Owner user already exists'))
+                self.stdout.write(
+                    self.style.SUCCESS('Owner user created successfully!')
+                )
+                self.stdout.write(
+                    self.style.SUCCESS('Username: owner')
+                )
+                self.stdout.write(
+                    self.style.SUCCESS('Password: owner123')
+                )
 
         except Exception as e:
             self.stdout.write(self.style.ERROR(
