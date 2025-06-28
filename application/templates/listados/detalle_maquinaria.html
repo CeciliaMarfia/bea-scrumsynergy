@@ -663,18 +663,6 @@
     </div>
     {% endif %}
 
-    <div class="text-end mt-4">
-        {% if user.is_authenticated and user.perfil.is_dueno %}
-            <a href="{% url 'calificar_maquina' maquina.id %}" class="btn-">
-                <i class="fas fa-star"></i>  Calificar Maquinaria
-            </a>
-        {% elif user.is_authenticated and user.perfil.is_empleado %}
-            <a href="{% url 'calificar_maquina' maquina.id %}" class="btn-">
-                <i class="fas fa-star"></i>  Calificar Maquinaria
-            </a>
-        {% endif %}
-    </div>
-
     <div class="calificaciones-section">
         <h3 class="info-title">Calificaciones y Comentarios</h3>
         

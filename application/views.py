@@ -1794,7 +1794,8 @@ def mis_alquileres(request):
     
     alquileres_devueltos = Reserva.objects.filter(
         cliente=request.user,
-        estado='devuelta'
+        estado='devuelta',
+        numero_reserva__startswith='ALQ'  # Solo alquileres, no reservas
     ).order_by('-fecha_inicio')
     
     alquileres_cancelados = Reserva.objects.filter(
@@ -2411,7 +2412,7 @@ def valorar_empleado(request, reserva_id):
     # Verificar que la reserva tenga un empleado gestor
     if not reserva.empleado_gestor:
         messages.error(
-            request, 'Este Alquiler no tiene un empleado asignado para valorar.')
+            request, 'Esta reserva no tiene un empleado asignado para valorar.')
         return redirect('mis_alquileres')
 
     # Verificar que la reserva esté pagada
