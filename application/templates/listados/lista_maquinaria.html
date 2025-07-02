@@ -371,16 +371,16 @@
     text-align: center;
 }
 
-.estado-badge.disponible {
-    background-color: rgba(40, 167, 69, 0.2);
-    color: #2ecc71;
+.estado-disponible {
+    background-color: rgba(39, 217, 80, 0.2);
+    color: #4eed92;
     border: 1px solid rgba(46, 204, 113, 0.3);
 }
 
-.estado-badge.reservada {
-    background-color: rgba(231, 76, 60, 0.2);
-    color: #e74c3c;
-    border: 1px solid rgba(231, 76, 60, 0.3);
+.estado-reservada {
+    background-color: rgba(241, 196, 15, 0.2);
+    color: #f0cf4d;
+    border: 1px solid rgba(241, 196, 15, 0.3);
 }
 
 .proxima-disponibilidad {
@@ -691,8 +691,6 @@
                                 </a>
                                 {% if user.is_authenticated and user.perfil.is_cliente %}
                                     {% if info.maquina.esta_disponible %}
-                                        <a href="{% url 'reservar_maquinaria' info.maquina.id %}" class="btn-reservar">
-                                            <i class="fas fa-calendar-plus"></i> Reservar
                                 </a>
                                     {% endif %}
                             {% endif %}

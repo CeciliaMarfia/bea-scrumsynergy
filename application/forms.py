@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, PasswordChangeForm
 from django.contrib.auth.models import User
-from datetime import date
+from datetime import date, datetime
 from .models import Perfil, PermisoEspecial, Reserva, TarjetaCredito, Maquina, Pregunta, Calificacion, ValoracionEmpleado
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
@@ -10,6 +10,7 @@ from django.db import transaction
 from django.contrib.auth import password_validation
 from django.conf import settings
 import re
+import datetime
 
 # Diccionario global de mensajes de error en español
 PASSWORD_ERROR_MESSAGES = {
@@ -353,8 +354,14 @@ class ReservaMaquinariaForm(forms.ModelForm):
         maquina = cleaned_data.get('maquina')
 
         if fecha_inicio and fecha_fin and maquina:
-            # Validar que la fecha de inicio no sea anterior a la fecha actual
-            if fecha_inicio < timezone.now().date():
+            # Forzar comparación de fechas como strings YYYY-MM-DD para evitar problemas de huso horario
+            hoy_str = datetime.date.today().strftime('%Y-%m-%d')
+            if isinstance(fecha_inicio, str):
+                fecha_inicio_str = fecha_inicio
+            else:
+                fecha_inicio_str = fecha_inicio.strftime('%Y-%m-%d')
+            # Validar que la fecha de inicio no sea anterior a hoy
+            if fecha_inicio_str < hoy_str:
                 raise forms.ValidationError(
                     'La fecha de inicio debe ser igual o posterior a la fecha actual.')
 
@@ -390,9 +397,8 @@ class ReservaMaquinariaForm(forms.ModelForm):
 
                 # Verificar período de mantenimiento (2 días después de cada reserva)
                 # La nueva reserva debe comenzar al menos 3 días después de la fecha de fin
-                fecha_disponible = reserva.fecha_fin + \
-                    timezone.timedelta(days=3)
-                if fecha_inicio <= fecha_disponible and fecha_inicio > reserva.fecha_fin:
+                fecha_disponible = reserva.fecha_fin + timezone.timedelta(days=3)
+                if fecha_inicio < fecha_disponible and fecha_inicio > reserva.fecha_fin:
                     fecha_mantenimiento = fecha_disponible.strftime("%d/%m/%Y")
                     raise forms.ValidationError(
                         f'La máquina estará disponible a partir del {fecha_mantenimiento}.')
@@ -475,17 +481,17 @@ class TarjetaCreditoForm(forms.ModelForm):
 
             # Crear una fecha con el último día del mes
             if mes == 12:
-                fecha = timezone.datetime(
-                    anio + 1, 1, 1) - timezone.timedelta(days=1)
+                fecha = datetime.datetime(
+                    anio + 1, 1, 1) - datetime.timedelta(days=1)
             else:
-                fecha = timezone.datetime(
-                    anio, mes + 1, 1) - timezone.timedelta(days=1)
+                fecha = datetime.datetime(
+                    anio, mes + 1, 1) - datetime.timedelta(days=1)
 
             # Convertir a date para comparar
             fecha = fecha.date()
 
             # La tarjeta vence el último día del mes
-            if fecha < timezone.now().date():
+            if fecha < datetime.date.today():
                 raise ValidationError(
                     'La tarjeta está vencida. Por favor ingrese otra fecha')
 
@@ -815,8 +821,14 @@ class AlquilerPresencialForm(forms.ModelForm):
                     'No existe un cliente registrado con ese email. El cliente debe estar registrado en el sistema.')
 
         if fecha_inicio and fecha_fin and maquina:
-            # Validar que la fecha de inicio no sea anterior a la fecha actual
-            if fecha_inicio < timezone.now().date():
+            # Forzar comparación de fechas como strings YYYY-MM-DD para evitar problemas de huso horario
+            hoy_str = datetime.date.today().strftime('%Y-%m-%d')
+            if isinstance(fecha_inicio, str):
+                fecha_inicio_str = fecha_inicio
+            else:
+                fecha_inicio_str = fecha_inicio.strftime('%Y-%m-%d')
+            # Validar que la fecha de inicio no sea anterior a hoy
+            if fecha_inicio_str < hoy_str:
                 raise forms.ValidationError(
                     'La fecha de inicio debe ser igual o posterior a la fecha actual.')
 
@@ -846,15 +858,14 @@ class AlquilerPresencialForm(forms.ModelForm):
                 if (fecha_inicio <= reserva.fecha_fin and fecha_fin >= reserva.fecha_inicio):
                     fecha_reserva_inicio = reserva.fecha_inicio.strftime("%d/%m/%Y")
                     fecha_reserva_fin = reserva.fecha_fin.strftime("%d/%m/%Y")
-                    fecha_mantenimiento = (reserva.fecha_fin + timezone.timedelta(days=2)).strftime("%d/%m/%Y")
+                    fecha_mantenimiento = (reserva.fecha_fin + datetime.timedelta(days=2)).strftime("%d/%m/%Y")
                     raise forms.ValidationError(
                         f'La máquina está reservada del {fecha_reserva_inicio} al {fecha_reserva_fin} y estará en mantenimiento hasta el {fecha_mantenimiento}.')
 
                 # Verificar período de mantenimiento (2 días después de cada reserva)
-                # La nueva reserva debe comenzar al menos 3 días después de la fecha de fin
-                fecha_disponible = reserva.fecha_fin + \
-                    timezone.timedelta(days=3)
-                if fecha_inicio <= fecha_disponible and fecha_inicio > reserva.fecha_fin:
+                # La nueva reserva debe comenzar el mismo día o después de fecha_disponible
+                fecha_disponible = reserva.fecha_fin + datetime.timedelta(days=3)
+                if fecha_inicio > reserva.fecha_fin and fecha_inicio < fecha_disponible:
                     fecha_mantenimiento = fecha_disponible.strftime("%d/%m/%Y")
                     raise forms.ValidationError(
                         f'La máquina estará disponible a partir del {fecha_mantenimiento}.')

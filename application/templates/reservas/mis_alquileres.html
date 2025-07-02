@@ -265,6 +265,11 @@
                     <i class="fas fa-times"></i> Cancelar Alquiler
                   </button>
                 </form>
+                {% if reserva.id in reservas_valorables %}
+                  <a href="{% url 'valorar_empleado' reserva.id %}" class="btn-valorar">
+                    <i class="fas fa-user-check"></i> Valorar Atención del Empleado
+                  </a>
+                {% endif %}
             </div>
         </div>
         {% endfor %}

@@ -28,7 +28,7 @@ from .services import BancoService
 from django.http import HttpResponse, JsonResponse
 from django.core.paginator import Paginator
 from django.db.models import Q
-from datetime import datetime, timedelta
+import datetime
 import json
 import stripe
 import requests
@@ -1803,11 +1803,25 @@ def mis_alquileres(request):
         estado='cancelada',
         maquina__estado='alquilada'
     ).order_by('-fecha_inicio')
-    
+
+    # --- NUEVO: calcular qué reservas pueden ser valoradas ---
+    from application.models import ValoracionEmpleado
+    reservas_valorables = set()
+    for reserva in alquileres:
+        if (
+            reserva.numero_reserva.startswith('ALQ') and
+            reserva.estado == 'pagada' and
+            reserva.empleado_gestor is not None and
+            not ValoracionEmpleado.objects.filter(cliente=request.user, empleado=reserva.empleado_gestor, reserva=reserva).exists()
+        ):
+            reservas_valorables.add(reserva.id)
+    # --- FIN NUEVO ---
+
     return render(request, 'reservas/mis_alquileres.html', {
         'reservas': alquileres,
         'alquileres_devueltos': alquileres_devueltos,
-        'alquileres_cancelados': alquileres_cancelados
+        'alquileres_cancelados': alquileres_cancelados,
+        'reservas_valorables': reservas_valorables,  # nuevo contexto
     })
 
 
@@ -1882,7 +1896,9 @@ def alquilar_maquinaria_detalle(request, id_maquina):
 
     return render(request, 'reservas/alquilar_maquinaria_detalle.html', {
         'maquina': maquina,
-        'proxima_disponibilidad': proxima_disponibilidad
+        'proxima_disponibilidad': proxima_disponibilidad,
+        'form': form,
+        'today': datetime.date.today(),
     })
 
 
@@ -2041,11 +2057,10 @@ def alquiler_presencial_detalle(request, id_maquina):
             # Validaciones adicionales de fechas
             fecha_inicio = form.cleaned_data['fecha_inicio']
             fecha_fin = form.cleaned_data['fecha_fin']
-            hoy = timezone.now().date()
+            hoy = datetime.date.today()
 
             # Validar que la fecha de inicio no sea anterior a hoy
             if fecha_inicio < hoy:
-                # Solo error de formulario, no messages.error
                 form.add_error(
                     'fecha_inicio', 'La fecha de inicio debe ser igual o posterior a la fecha actual.')
                 return render(request, 'reservas/alquiler_presencial_detalle.html', {
@@ -2089,17 +2104,12 @@ def alquiler_presencial_detalle(request, id_maquina):
                 if (
                     (fecha_inicio >= reserva_prev.fecha_inicio and fecha_inicio <= reserva_prev.fecha_fin) or
                     (fecha_fin >= reserva_prev.fecha_inicio and fecha_fin <= reserva_prev.fecha_fin) or
-                    (fecha_inicio <= reserva_prev.fecha_inicio and fecha_fin >=
-                     reserva_prev.fecha_fin)
+                    (fecha_inicio <= reserva_prev.fecha_inicio and fecha_fin >= reserva_prev.fecha_fin)
                 ):
-                    fin_mantenimiento = reserva_prev.fecha_fin + \
-                        timezone.timedelta(days=2)
-                    fecha_reserva_inicio = reserva_prev.fecha_inicio.strftime(
-                        "%d/%m/%Y")
-                    fecha_reserva_fin = reserva_prev.fecha_fin.strftime(
-                        "%d/%m/%Y")
-                    fecha_mantenimiento = fin_mantenimiento.strftime(
-                        "%d/%m/%Y")
+                    fin_mantenimiento = reserva_prev.fecha_fin + datetime.timedelta(days=2)
+                    fecha_reserva_inicio = reserva_prev.fecha_inicio.strftime("%d/%m/%Y")
+                    fecha_reserva_fin = reserva_prev.fecha_fin.strftime("%d/%m/%Y")
+                    fecha_mantenimiento = fin_mantenimiento.strftime("%d/%m/%Y")
                     form.add_error(
                         'fecha_inicio', f'La máquina está reservada del {fecha_reserva_inicio} al {fecha_reserva_fin} y estará en mantenimiento hasta el {fecha_mantenimiento}.')
                     return render(request, 'reservas/alquiler_presencial_detalle.html', {
@@ -2108,11 +2118,9 @@ def alquiler_presencial_detalle(request, id_maquina):
                         'form': form
                     })
 
-                fin_mantenimiento = reserva_prev.fecha_fin + \
-                    timezone.timedelta(days=2)
+                fin_mantenimiento = reserva_prev.fecha_fin + datetime.timedelta(days=2)
                 if fecha_inicio <= fin_mantenimiento and fecha_inicio > reserva_prev.fecha_fin:
-                    fecha_mantenimiento = fin_mantenimiento.strftime(
-                        "%d/%m/%Y")
+                    fecha_mantenimiento = fin_mantenimiento.strftime("%d/%m/%Y")
                     form.add_error(
                         'fecha_inicio', f'La máquina estará en mantenimiento hasta el {fecha_mantenimiento}.')
                     return render(request, 'reservas/alquiler_presencial_detalle.html', {
@@ -2125,6 +2133,10 @@ def alquiler_presencial_detalle(request, id_maquina):
             reserva.cliente = cliente
             reserva.maquina = maquina
             reserva.empleado_gestor = request.user  # Registrar el empleado que gestiona
+
+            # Asignar número de reserva presencial (ALQ...)
+            now = datetime.datetime.now()
+            reserva.numero_reserva = f"ALQ{now.strftime('%Y%m%d%H%M%S')}{cliente.id}"
 
             # Calcular el monto total
             dias = (form.cleaned_data['fecha_fin'] -
@@ -2201,7 +2213,8 @@ def alquiler_presencial_detalle(request, id_maquina):
     return render(request, 'reservas/alquiler_presencial_detalle.html', {
         'maquina': maquina,
         'proxima_disponibilidad': proxima_disponibilidad,
-        'form': form
+        'form': form,
+        'today': datetime.date.today(),
     })
 
 

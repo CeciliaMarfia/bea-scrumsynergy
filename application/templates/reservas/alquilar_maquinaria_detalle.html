@@ -172,12 +172,12 @@
         {% endif %}
         
         <!-- Cartel informativo de próxima disponibilidad -->
-                {% if proxima_disponibilidad %}
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle"></i>
-                        <strong>Recordatorio:</strong> Esta máquina estará disponible para alquilar a partir del <strong>{{ proxima_disponibilidad|date:"d/m/Y" }}</strong>
-                    </div>
-                {% endif %}
+        {% if proxima_disponibilidad and proxima_disponibilidad > today %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                <strong>Recordatorio:</strong> Esta máquina estará disponible para alquilar a partir del <strong>{{ proxima_disponibilidad|date:"d/m/Y" }}</strong>
+            </div>
+        {% endif %}
         
         <form method="post" style="margin-top: 2rem;">
             {% csrf_token %}
@@ -198,4 +198,43 @@
         </form>
     </div>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(event) {
+        let isValid = true;
+        let errores = [];
+        const fechaInicioInput = document.getElementById('fecha_inicio');
+        const fechaFinInput = document.getElementById('fecha_fin');
+        const fechaInicioStr = fechaInicioInput.value;
+        const fechaFinStr = fechaFinInput.value;
+        const hoyStr = new Date().toISOString().split('T')[0];
+
+        // Validar fecha de inicio (comparar strings YYYY-MM-DD)
+        if (fechaInicioStr < hoyStr) {
+            errores.push('La fecha de inicio debe ser igual o posterior a la fecha actual.');
+            isValid = false;
+        }
+        // Validar fecha de fin
+        if (fechaFinStr < fechaInicioStr) {
+            errores.push('La fecha de fin no puede ser anterior a la fecha de inicio.');
+            isValid = false;
+        }
+        // Validar duración máxima
+        if (fechaInicioStr && fechaFinStr) {
+            const inicio = new Date(fechaInicioStr);
+            const fin = new Date(fechaFinStr);
+            const dias = Math.floor((fin - inicio) / (1000 * 60 * 60 * 24)) + 1;
+            if (dias > 7) {
+                errores.push('La reserva no puede exceder los 7 días.');
+                isValid = false;
+            }
+        }
+        if (!isValid) {
+            event.preventDefault();
+            alert(errores.join('\n'));
+        }
+    });
+});
+</script>
 {% endblock %} 

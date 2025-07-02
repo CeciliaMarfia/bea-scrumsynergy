@@ -349,22 +349,37 @@
 
         <!-- Confirmación de alquiler exitoso -->
         {% if alquiler_exitoso %}
-        <div class="alert alert-success" style="background-color: rgba(40, 167, 69, 0.2); border-color: rgba(40, 167, 69, 0.3); color: #28a745; padding: 1.5rem; border-radius: 0.8rem; margin-bottom: 2rem;">
+        <div class="alert alert-success" 
+            style="background-color: rgba(40, 167, 69, 0.15); border: 1px solid rgba(40, 167, 69, 0.3); padding: 1.5rem; border-radius: 0.8rem; margin-bottom: 2rem;">
+
             <div style="display: flex; align-items: center; gap: 1rem;">
-                <i class="fas fa-check-circle" style="font-size: 2rem;"></i>
+                <i class="fas fa-check-circle" style="font-size: 2rem; color: hsl(144, 60%, 40%);"></i>
+
                 <div>
-                    <h4 style="margin: 0 0 0.5rem 0; color: #28a745;"> Alquiler Registrado Exitosamente</h4>
-                    <p style="margin: 0 0 0.5rem 0;"><strong>Número de alquiler:</strong> {{ reserva_creada.numero_reserva }}</p>
+                    <h4 style="margin-bottom: 0.5rem; color: hwb(144 62% 17%); font-weight: 700;">
+                        Alquiler Registrado Exitosamente
+                    </h4>
+                    <p style="margin: 0;">
+                        <strong style="color: hwb(144 54% 16%);">
+                            Número de alquiler:
+                        </strong> 
+                        <span style="color: #ffffff; font-weight: 600;">
+                            {{ reserva_creada.numero_reserva }}
+                        </span>
+                    </p>
                 </div>
             </div>
+
             <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(40, 167, 69, 0.3);">
-                <p style="margin: 0; font-size: 0.9rem;">
+                <p style="margin: 0; font-size: 0.9rem; color: hsl(144, 70%, 65%);">
                     <i class="fas fa-info-circle"></i> 
                     Se ha enviado un email de confirmación al cliente con todos los detalles del alquiler y el código de retiro.
                 </p>
             </div>
         </div>
         {% endif %}
+
+
 
         <!-- Información de la máquina -->
         <div class="maquina-info">
@@ -437,7 +452,7 @@
                 </div>
 
                 <!-- Cartel informativo de próxima disponibilidad -->
-                {% if proxima_disponibilidad %}
+                {% if proxima_disponibilidad and proxima_disponibilidad > today %}
                     <div class="alert alert-info">
                         <i class="fas fa-info-circle"></i>
                         <strong>Recordatorio:</strong> Esta máquina estará disponible para alquilar a partir del <strong>{{ proxima_disponibilidad|date:"d/m/Y" }}</strong>
@@ -566,23 +581,22 @@ document.addEventListener('DOMContentLoaded', function() {
         let errores = [];
         const fechaInicioInput = document.getElementById('fecha_inicio');
         const fechaFinInput = document.getElementById('fecha_fin');
-        const fechaInicio = new Date(fechaInicioInput.value);
-        const fechaFin = new Date(fechaFinInput.value);
         const hoy = new Date();
         hoy.setHours(0, 0, 0, 0);
-        
+        const fechaInicioStr = fechaInicioInput.value;
+
         // Validar fecha de inicio
-        if (fechaInicio < hoy) {
+        if (fechaInicioStr < hoy.toISOString().split('T')[0]) {
             errores.push('La fecha de inicio debe ser igual o posterior a la fecha actual.');
             isValid = false;
         }
         // Validar fecha de fin
-        if (fechaFin < fechaInicio) {
+        if (fechaFinInput.value && fechaFinInput.value < fechaInicioInput.value) {
             errores.push('La fecha de fin no puede ser anterior a la fecha de inicio.');
             isValid = false;
         }
         // Validar duración máxima
-        const dias = Math.floor((fechaFin - fechaInicio) / (1000 * 60 * 60 * 24)) + 1;
+        const dias = Math.floor((new Date(fechaFinInput.value) - new Date(fechaInicioInput.value)) / (1000 * 60 * 60 * 24)) + 1;
         if (dias > 7) {
             errores.push('La reserva no puede exceder los 7 días.');
             isValid = false;
