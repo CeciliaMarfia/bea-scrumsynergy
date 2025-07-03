@@ -121,7 +121,6 @@ class Maquina(models.Model):
         ('reservada', 'Reservada'),
         ('alquilada', 'Alquilada'),
         ('mantenimiento', 'En Mantenimiento'),
-        ('en_revision', 'En Revisión'),
     ]
 
     TIPO_CANCELACION_CHOICES = [
