@@ -99,4 +99,5 @@ urlpatterns = [
     path('preguntas-frecuentes/', views.preguntas_frecuentes, name='preguntas_frecuentes'),
     path('contacto/', views.contacto, name='contacto'),
     path('cancelar-alquiler/<int:reserva_id>/', views.cancelar_alquiler, name='cancelar_alquiler'),
+    path('responder_consulta_contacto/<int:consulta_id>/', views.responder_consulta_contacto, name='responder_consulta_contacto'),
 ]

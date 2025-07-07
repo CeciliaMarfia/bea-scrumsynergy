@@ -6,7 +6,7 @@ from django.contrib.auth.forms import UserCreationForm
 import os
 from django.conf import settings
 from .machinery.forms import AltaMaquinariaForm, RegistrarDevolucionForm
-from .models import Maquina, HomeVideo, PermisoEspecial, Perfil, Reserva, ImagenMaquina, Pago, TarjetaCredito, Role, Sucursal, Pregunta, Calificacion, ValoracionEmpleado
+from .models import Maquina, HomeVideo, PermisoEspecial, Perfil, Reserva, ImagenMaquina, Pago, TarjetaCredito, Role, Sucursal, Pregunta, Calificacion, ValoracionEmpleado, ConsultaContacto
 from django.core.mail import send_mail, EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
@@ -2100,46 +2100,65 @@ def preguntas_frecuentes(request):
 
 
 def contacto(request):
-    if request.method == 'POST':
-        form = ContactForm(request.POST)
-        if form.is_valid():
-            nombre = form.cleaned_data['nombre']
-            apellidos = form.cleaned_data['apellidos']
-            correo = form.cleaned_data['correo_electronico']
-            telefono = form.cleaned_data['telefono']
-            consulta = form.cleaned_data['consulta']
+    user = request.user if request.user.is_authenticated else None
+    es_cliente = user and hasattr(user, 'perfil') and user.perfil.is_cliente
+    es_empleado_o_dueno = user and hasattr(user, 'perfil') and (user.perfil.is_empleado or user.perfil.is_dueno)
 
-            # Construir el mensaje
-            mensaje = f"""
-            Nuevo mensaje de contacto:
+    if es_cliente:
+        if request.method == 'POST':
+            form = ContactForm(request.POST)
+            if form.is_valid():
+                nombre = form.cleaned_data['nombre']
+                apellidos = form.cleaned_data['apellidos']
+                correo = form.cleaned_data['correo_electronico']
+                telefono = form.cleaned_data['telefono']
+                consulta = form.cleaned_data['consulta']
 
-            Nombre: {nombre} {apellidos}
-            Correo: {correo}
-            Teléfono: {telefono}
-
-            Consulta:
-            {consulta}
-            """
-
-            # Enviar el correo
-            try:
-                send_mail(
-                    subject='Nuevo mensaje de contacto - Bob el Alquilador',
-                    message=mensaje,
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=['morearias456@gmail.com'],
-                    fail_silently=False,
+                # Guardar en la base de datos
+                ConsultaContacto.objects.create(
+                    nombre=nombre,
+                    apellidos=apellidos,
+                    correo_electronico=correo,
+                    telefono=telefono,
+                    consulta=consulta,
+                    usuario=user if user.is_authenticated else None
                 )
-                messages.success(
-                    request, 'Tu mensaje ha sido enviado correctamente. Nos pondremos en contacto contigo pronto.')
-                return redirect('contacto')
-            except Exception as e:
-                messages.error(
-                    request, 'Hubo un error al enviar el mensaje. Por favor, intenta nuevamente.')
-    else:
-        form = ContactForm()
 
-    return render(request, 'contacto.html', {'form': form})
+                # Enviar el correo (opcional, puedes dejarlo o quitarlo)
+                try:
+                    mensaje = f"""
+                    Nuevo mensaje de contacto:
+                    Nombre: {nombre} {apellidos}
+                    Correo: {correo}
+                    Teléfono: {telefono}
+                    Consulta:
+                    {consulta}
+                    """
+                    send_mail(
+                        subject='Nuevo mensaje de contacto - Bob el Alquilador',
+                        message=mensaje,
+                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        recipient_list=['morearias456@gmail.com'],
+                        fail_silently=False,
+                    )
+                    messages.success(
+                        request, 'Tu mensaje ha sido enviado correctamente. Nos pondremos en contacto contigo pronto.')
+                    return redirect('contacto')
+                except Exception as e:
+                    messages.error(
+                        request, 'Hubo un error al enviar el mensaje. Por favor, intenta nuevamente.')
+        else:
+            form = ContactForm()
+        return render(request, 'contacto.html', {'form': form, 'es_cliente': True, 'es_empleado_o_dueno': False})
+
+    elif es_empleado_o_dueno:
+        # Mostrar la lista de consultas recibidas
+        consultas = ConsultaContacto.objects.all()
+        return render(request, 'contacto.html', {'consultas': consultas, 'es_empleado_o_dueno': True, 'es_cliente': False})
+    else:
+        # Usuario anónimo o sin perfil válido
+        messages.error(request, 'Debes iniciar sesión para acceder a esta sección.')
+        return redirect('login')
 
 
 @login_required
@@ -2681,3 +2700,32 @@ def historial_maquinaria(request, maquina_id):
         'alquileres': alquileres,
         'maquina': maquina
     })
+
+
+@login_required
+@user_passes_test(lambda u: u.perfil.is_empleado or u.perfil.is_dueno)
+@require_POST
+def responder_consulta_contacto(request, consulta_id):
+    from django.core.mail import send_mail
+    from django.conf import settings
+    respuesta = request.POST.get('respuesta', '').strip()
+    consulta = get_object_or_404(ConsultaContacto, id=consulta_id)
+    if not respuesta:
+        messages.error(request, 'La respuesta no puede estar vacía.')
+        return redirect('contacto')
+    consulta.respuesta = respuesta
+    consulta.respondida = True
+    consulta.save()
+    # Enviar mail al cliente
+    try:
+        send_mail(
+            subject='Respuesta a tu consulta - Bob el Alquilador',
+            message=f"Hola {consulta.nombre},\n\nTu consulta: {consulta.consulta}\n\nRespuesta: {respuesta}\n\nGracias por contactarnos.",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[consulta.correo_electronico],
+            fail_silently=False,
+        )
+        messages.success(request, 'Respuesta enviada correctamente al cliente.')
+    except Exception as e:
+        messages.error(request, 'La respuesta se guardó pero hubo un error al enviar el correo al cliente.')
+    return redirect('contacto')

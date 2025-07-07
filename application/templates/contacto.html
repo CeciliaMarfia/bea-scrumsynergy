@@ -41,18 +41,25 @@
         }
 
         .contact-form-container {
-            max-width: 350px;
-            width: 100%;
-            padding: 30px;
+            max-width: 900px;
+            min-width: 500px;
+            width: 80vw;
+            min-height: 400px;
+            max-height: 600px;
+            padding: 35px 40px;
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(15px);
-            border-radius: 16px;
+            border-radius: 20px;
             box-shadow: 
-                0 15px 35px rgba(0, 0, 0, 0.3),
-                0 5px 15px rgba(0, 0, 0, 0.2),
-                inset 0 1px 0 rgba(255, 255, 255, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.25);
+                0 10px 25px rgba(0, 0, 0, 0.25),
+                0 3px 8px rgba(0, 0, 0, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.15);
+            border: 1.5px solid rgba(255, 255, 255, 0.18);
             animation: fadeInUp 0.8s ease-out;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
         }
 
         .contact-title {
@@ -224,48 +231,82 @@
             font-size: 14px;
             display: none;
         }
+
+        .contact-form-container-form {
+            max-width: 420px;
+            min-width: 320px;
+            width: 95vw;
+            min-height: 350px;
+            max-height: 600px;
+            padding: 30px 20px;
+        }
+        .contact-form-container-consultas {
+            max-width: 900px;
+            min-width: 500px;
+            width: 80vw;
+            min-height: 400px;
+            max-height: 600px;
+            padding: 35px 40px;
+        }
     </style>
 </head>
 <body>
     <a href="javascript:history.back()" class="btn-volver">
         <i class="fas fa-arrow-left"></i> Volver a la página anterior
     </a>
-    <div class="contact-form-container">
+    <div class="contact-form-container {% if es_cliente %}contact-form-container-form{% else %}contact-form-container-consultas{% endif %}">
         <h2 class="contact-title">Contactarme con Bob el Alquilador</h2>
         <p class="contact-subtitle">Contactanos y te asesoramos</p>
 
-        <div class="success-message" id="successMessage">
-            ¡Mensaje enviado correctamente! Te contactaremos pronto.
-        </div>
-
-        <form id="contactForm">
-            <div class="form-group">
-                <label for="nombre" class="form-label">Nombre<span class="required">*</span></label>
-                <input type="text" class="form-control" id="nombre" name="nombre" required>
+        {% if es_cliente and messages %}
+            <div class="messages" style="width:100%; max-width: 600px; margin: 0 auto 24px auto;">
+                {% for message in messages %}
+                    <div class="alert alert-success-transparent" style="text-align:left; font-size:1.15rem; border-radius:16px; padding: 1.2rem 2.5rem; margin-bottom:0;">
+                        {{ message }}
+                    </div>
+                {% endfor %}
             </div>
+        {% endif %}
 
-            <div class="form-group">
-                <label for="apellidos" class="form-label">Apellidos<span class="required">*</span></label>
-                <input type="text" class="form-control" id="apellidos" name="apellidos" required>
+        {% if es_cliente %}
+            <form method="post" style="max-width: 350px; margin: 0 auto; width: 100%;">
+                {% csrf_token %}
+                <div style="color:white;">{{ form.nombre.label_tag }}</div>
+                {{ form.nombre }}
+                <div style="color:white; margin-top: 1rem;">{{ form.apellidos.label_tag }}</div>
+                {{ form.apellidos }}
+                <div style="color:white; margin-top: 1rem;">{{ form.correo_electronico.label_tag }}</div>
+                {{ form.correo_electronico }}
+                <div style="color:white; margin-top: 1rem;">{{ form.telefono.label_tag }}</div>
+                {{ form.telefono }}
+                <div style="color:white; margin-top: 1rem;">{{ form.consulta.label_tag }}</div>
+                {{ form.consulta }}
+                <button type="submit" class="btn-enviar" style="margin-top: 0.7rem; display: block; margin-left: auto; margin-right: auto; width: auto;">
+                    <i class="fas fa-paper-plane"></i> Enviar
+                </button>
+            </form>
+        {% elif es_empleado_o_dueno %}
+            <h3 style="color:white; margin-bottom: 1rem;">Consultas recibidas</h3>
+            <div style="max-height: 900px; min-width: 900px; width: 100%; overflow-y: auto;">
+                {% for consulta in consultas %}
+                    <div style="background:rgba(255,255,255,0.08);border-radius:10px;padding:2.5rem 3rem;margin-bottom:2rem;border:1px solid #ccc; min-width:800px; max-width:1400px; width:100%; box-sizing:border-box;">
+                        <div style="color:#b95a33;font-weight:bold; font-size:1.2rem;">{{ consulta.nombre }} {{ consulta.apellidos }} &lt;{{ consulta.correo_electronico }}&gt; - {{ consulta.fecha_envio|date:'d/m/Y H:i' }}</div>
+                        <div style="color:white;margin-top:1.2rem; font-size:1.2rem; word-break:break-word; min-height:120px;">{{ consulta.consulta }}</div>
+                        {% if consulta.respuesta %}
+                            <div style="margin-top:1.2rem;color:#2ecc40;font-size:1.1rem;"><b>Respuesta:</b> {{ consulta.respuesta }}</div>
+                        {% else %}
+                            <form method="post" action="{% url 'responder_consulta_contacto' consulta.id %}" style="margin-top:1.2rem;">
+                                {% csrf_token %}
+                                <textarea name="respuesta" class="form-control" rows="6" style="min-width:500px; max-width:100%; font-size:1.1rem; min-height:120px; margin-bottom: 1.5rem;" placeholder="Escribe tu respuesta aquí..." required></textarea>
+                                <button type="submit" class="btn-enviar" style="margin-top:0.7rem;">Responder</button>
+                            </form>
+                        {% endif %}
+                    </div>
+                {% empty %}
+                    <div style="color:white;">No hay consultas recibidas.</div>
+                {% endfor %}
             </div>
-
-            <div class="form-group">
-                <label for="correo_electronico" class="form-label">Correo electrónico<span class="required">*</span></label>
-                <input type="email" class="form-control" id="correo_electronico" name="correo_electronico" required>
-            </div>
-
-            <div class="form-group">
-                <label for="telefono" class="form-label">Teléfono<span class="required">*</span></label>
-                <input type="tel" class="form-control" id="telefono" name="telefono" required>
-            </div>
-
-            <div class="form-group">
-                <label for="consulta" class="form-label">Escriba aquí su consulta<span class="required">*</span></label>
-                <textarea class="form-control" id="consulta" name="consulta" rows="4" placeholder="Describe tu consulta aquí..." required></textarea>
-            </div>
-
-            <button type="submit" class="btn-enviar"><i class="fas fa-paper-plane"></i> Enviar</button>
-        </form>
+        {% endif %}
     </div>
 
     <script>

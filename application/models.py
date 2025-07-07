@@ -624,3 +624,23 @@ class ValoracionEmpleado(models.Model):
     def get_valoraciones_ordenadas(self):
         """Obtiene las valoraciones del empleado ordenadas por fecha"""
         return ValoracionEmpleado.objects.filter(empleado=self.empleado).order_by('-fecha_creacion')
+
+
+class ConsultaContacto(models.Model):
+    nombre = models.CharField(max_length=100)
+    apellidos = models.CharField(max_length=100)
+    correo_electronico = models.EmailField()
+    telefono = models.CharField(max_length=20)
+    consulta = models.TextField()
+    fecha_envio = models.DateTimeField(auto_now_add=True)
+    respondida = models.BooleanField(default=False)
+    respuesta = models.TextField(blank=True, null=True)
+    usuario = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='consultas_contacto')
+
+    class Meta:
+        verbose_name = 'Consulta de contacto'
+        verbose_name_plural = 'Consultas de contacto'
+        ordering = ['-fecha_envio']
+
+    def __str__(self):
+        return f'{self.nombre} {self.apellidos} - {self.correo_electronico} ({self.fecha_envio.strftime("%d/%m/%Y %H:%M")})'
