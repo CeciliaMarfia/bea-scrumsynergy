@@ -2142,7 +2142,7 @@ def contacto(request):
                         fail_silently=False,
                     )
                     messages.success(
-                        request, 'Tu mensaje ha sido enviado correctamente. Nos pondremos en contacto contigo pronto.')
+                        request, 'Respuesta enviada correctamente al cliente.')
                     return redirect('contacto')
                 except Exception as e:
                     messages.error(
@@ -2152,9 +2152,13 @@ def contacto(request):
         return render(request, 'contacto.html', {'form': form, 'es_cliente': True, 'es_empleado_o_dueno': False})
 
     elif es_empleado_o_dueno:
-        # Mostrar la lista de consultas recibidas
-        consultas = ConsultaContacto.objects.all()
-        return render(request, 'contacto.html', {'consultas': consultas, 'es_empleado_o_dueno': True, 'es_cliente': False})
+        # Mostrar solo las consultas no respondidas
+        consultas = ConsultaContacto.objects.filter(respondida=False)
+        return render(request, 'contacto.html', {
+            'consultas': consultas,
+            'es_empleado_o_dueno': True,
+            'es_cliente': False,
+        })
     else:
         # Usuario anónimo o sin perfil válido
         messages.error(request, 'Debes iniciar sesión para acceder a esta sección.')
@@ -2708,6 +2712,8 @@ def historial_maquinaria(request, maquina_id):
 def responder_consulta_contacto(request, consulta_id):
     from django.core.mail import send_mail
     from django.conf import settings
+    from django.template.loader import render_to_string
+    from django.utils.html import strip_tags
     respuesta = request.POST.get('respuesta', '').strip()
     consulta = get_object_or_404(ConsultaContacto, id=consulta_id)
     if not respuesta:
@@ -2716,16 +2722,24 @@ def responder_consulta_contacto(request, consulta_id):
     consulta.respuesta = respuesta
     consulta.respondida = True
     consulta.save()
-    # Enviar mail al cliente
+    # Enviar mail al cliente con HTML
     try:
+        html_message = render_to_string('emails/respuesta_consulta.html', {
+            'nombre': consulta.nombre,
+            'consulta': consulta.consulta,
+            'respuesta': respuesta,
+        })
+        plain_message = strip_tags(html_message)
         send_mail(
             subject='Respuesta a tu consulta - Bob el Alquilador',
-            message=f"Hola {consulta.nombre},\n\nTu consulta: {consulta.consulta}\n\nRespuesta: {respuesta}\n\nGracias por contactarnos.",
+            message=plain_message,
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[consulta.correo_electronico],
+            html_message=html_message,
             fail_silently=False,
         )
         messages.success(request, 'Respuesta enviada correctamente al cliente.')
+        return redirect('contacto')
     except Exception as e:
         messages.error(request, 'La respuesta se guardó pero hubo un error al enviar el correo al cliente.')
-    return redirect('contacto')
+        return redirect('contacto')

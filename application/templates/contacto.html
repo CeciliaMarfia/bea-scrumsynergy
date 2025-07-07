@@ -60,6 +60,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: flex-start;
+            margin-top: 60px;
         }
 
         .contact-title {
@@ -236,17 +237,23 @@
             max-width: 420px;
             min-width: 320px;
             width: 95vw;
-            min-height: 350px;
+            min-height: 560px;
             max-height: 600px;
             padding: 30px 20px;
         }
         .contact-form-container-consultas {
-            max-width: 900px;
-            min-width: 500px;
-            width: 80vw;
-            min-height: 400px;
-            max-height: 600px;
-            padding: 35px 40px;
+            max-width: 700px;
+            min-width: 350px;
+            width: 60vw;
+            min-height: 300px;
+            max-height: 500px;
+            padding: 25px 20px;
+        }
+
+        .alert-success-transparent {
+            background-color: rgba(212, 237, 218, 0.7); /* verde claro, más transparente */
+            color: #155724;
+            border: 1px solid #c3e6cb;
         }
     </style>
 </head>
@@ -258,18 +265,18 @@
         <h2 class="contact-title">Contactarme con Bob el Alquilador</h2>
         <p class="contact-subtitle">Contactanos y te asesoramos</p>
 
-        {% if es_cliente and messages %}
-            <div class="messages" style="width:100%; max-width: 600px; margin: 0 auto 24px auto;">
-                {% for message in messages %}
-                    <div class="alert alert-success-transparent" style="text-align:left; font-size:1.15rem; border-radius:16px; padding: 1.2rem 2.5rem; margin-bottom:0;">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            </div>
-        {% endif %}
-
         {% if es_cliente %}
-            <form method="post" style="max-width: 350px; margin: 0 auto; width: 100%;">
+            {% if messages %}
+                <div class="messages" style="width:100%; max-width: 420px; margin: 0 auto 18px auto;">
+                    {% for message in messages %}
+                        <div class="alert alert-success-transparent" style="text-align:left; font-size:1.15rem; border-radius:16px; padding: 1.2rem 2.5rem; margin-bottom:0;">
+                            Tu mensaje ha sido enviado correctamente.<br>
+                            Nos pondremos en contacto contigo pronto.
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            <form method="post" style="max-width: 350px; margin: 0 auto 0 auto; width: 100%;">
                 {% csrf_token %}
                 <div style="color:white;">{{ form.nombre.label_tag }}</div>
                 {{ form.nombre }}
@@ -281,26 +288,33 @@
                 {{ form.telefono }}
                 <div style="color:white; margin-top: 1rem;">{{ form.consulta.label_tag }}</div>
                 {{ form.consulta }}
-                <button type="submit" class="btn-enviar" style="margin-top: 0.7rem; display: block; margin-left: auto; margin-right: auto; width: auto;">
+                <button type="submit" class="btn-enviar" style="margin-top: 0.3rem; display: block; margin-left: auto; margin-right: auto; width: auto; margin-bottom: 0;">
                     <i class="fas fa-paper-plane"></i> Enviar
                 </button>
             </form>
         {% elif es_empleado_o_dueno %}
-            <h3 style="color:white; margin-bottom: 1rem;">Consultas recibidas</h3>
-            <div style="max-height: 900px; min-width: 900px; width: 100%; overflow-y: auto;">
-                {% for consulta in consultas %}
-                    <div style="background:rgba(255,255,255,0.08);border-radius:10px;padding:2.5rem 3rem;margin-bottom:2rem;border:1px solid #ccc; min-width:800px; max-width:1400px; width:100%; box-sizing:border-box;">
-                        <div style="color:#b95a33;font-weight:bold; font-size:1.2rem;">{{ consulta.nombre }} {{ consulta.apellidos }} &lt;{{ consulta.correo_electronico }}&gt; - {{ consulta.fecha_envio|date:'d/m/Y H:i' }}</div>
-                        <div style="color:white;margin-top:1.2rem; font-size:1.2rem; word-break:break-word; min-height:120px;">{{ consulta.consulta }}</div>
-                        {% if consulta.respuesta %}
-                            <div style="margin-top:1.2rem;color:#2ecc40;font-size:1.1rem;"><b>Respuesta:</b> {{ consulta.respuesta }}</div>
-                        {% else %}
-                            <form method="post" action="{% url 'responder_consulta_contacto' consulta.id %}" style="margin-top:1.2rem;">
-                                {% csrf_token %}
-                                <textarea name="respuesta" class="form-control" rows="6" style="min-width:500px; max-width:100%; font-size:1.1rem; min-height:120px; margin-bottom: 1.5rem;" placeholder="Escribe tu respuesta aquí..." required></textarea>
-                                <button type="submit" class="btn-enviar" style="margin-top:0.7rem;">Responder</button>
-                            </form>
+            {% if messages %}
+                <div class="messages" style="width:100%; max-width: 420px; margin: 0 auto 18px auto; display: flex; align-items: center; justify-content: center;">
+                    {% for message in messages %}
+                        {% if 'Respuesta enviada correctamente al cliente.' in message %}
+                            <div class="alert alert-success-transparent" style="text-align:center; font-size:1.15rem; border-radius:16px; padding: 1.2rem 2.5rem; margin-bottom:0; min-width: 220px; min-height: 40px; display: flex; align-items: center; justify-content: center; width: 100%;">
+                                {{ message }}
+                            </div>
                         {% endif %}
+                    {% endfor %}
+                </div>
+            {% endif %}
+            <h3 style="color:white; margin-bottom: 1rem;">Consultas recibidas</h3>
+            <div style="max-height: 500px; min-width: 350px; width: 100%; overflow-y: auto;">
+                {% for consulta in consultas %}
+                    <div style="background:rgba(255,255,255,0.08);border-radius:10px;padding:1.2rem 1.5rem;margin-bottom:1rem;border:1px solid #ccc; min-width:300px; max-width:900px; width:100%; box-sizing:border-box;">
+                        <div style="color:white;font-weight:bold; font-size:1.1rem; margin-bottom:0.5rem;">{{ consulta.nombre }} {{ consulta.apellidos }} &lt;{{ consulta.correo_electronico }}&gt; - {{ consulta.fecha_envio|date:'d/m/Y H:i' }}</div>
+                        <div style="color:white;margin-bottom:0.7rem; font-size:1.1rem; word-break:break-word;">{{ consulta.consulta }}</div>
+                        <form method="post" action="{% url 'responder_consulta_contacto' consulta.id %}" style="margin-top:0.2rem;">
+                            {% csrf_token %}
+                            <textarea name="respuesta" class="form-control" rows="3" style="min-width:200px; max-width:100%; font-size:1rem; margin-bottom:0.5rem;" placeholder="Escribe tu respuesta aquí..." required></textarea>
+                            <button type="submit" class="btn-enviar" style="margin-top:0.2rem;">Responder</button>
+                        </form>
                     </div>
                 {% empty %}
                     <div style="color:white;">No hay consultas recibidas.</div>
