@@ -277,5 +277,5 @@ class AltaMaquinariaForm(forms.ModelForm):
 
 
 class RegistrarDevolucionForm(forms.Form):
-    codigo = forms.CharField(label='ID de la máquina', max_length=100)
+    codigo = forms.CharField(label='Código de la máquina', max_length=100)
     fecha_devolucion = forms.DateField(label='Fecha de devolución', widget=forms.DateInput(attrs={'type': 'date'}))

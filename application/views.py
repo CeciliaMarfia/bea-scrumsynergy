@@ -1745,6 +1745,11 @@ def lista_maquinaria_admin(request):
 def eliminar_maquinaria(request, maquina_id):
     maquina = get_object_or_404(Maquina, id=maquina_id)
 
+    # Validar que la máquina no esté alquilada
+    if maquina.estado == 'alquilada':
+        messages.error(request, 'No se puede eliminar una máquina que está alquilada.')
+        return redirect('lista_maquinaria_admin')
+
     # Realizar borrado lógico
     maquina.eliminado = True
     maquina.save()

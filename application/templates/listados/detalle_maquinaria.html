@@ -203,7 +203,7 @@
     gap: 0.5rem;
     padding: 0.5rem 1rem;
     border-radius: 0.5rem;
-    font-weight: 600;
+    font-weight: 500;
     width: 100%;
     justify-content: center;
 }
@@ -213,8 +213,8 @@
 }
 
 .estado-disponible {
-    background-color: rgba(39, 217, 80, 0.2);
-    color: #4eed92;
+    background-color: rgba(40, 167, 69, 0.2);
+    color: #2ecc71;
     border: 1px solid rgba(46, 204, 113, 0.3);
 }
 
@@ -226,20 +226,20 @@
 
 .estado-reservada {
     background-color: rgba(241, 196, 15, 0.2);
-    color: #f0cf4d;
+    color: #f1c40f;
     border: 1px solid rgba(241, 196, 15, 0.3);
 }
 
 .estado-alquilada {
-    background-color: rgba(59, 155, 219, 0.2);
-    color: #93c9ed;
-    border: 1px solid rgba(21, 97, 148, 0.5);
+    background-color: rgba(52, 152, 219, 0.2);
+    color: #3498db;
+    border: 1px solid rgba(52, 152, 219, 0.3);
 }
 
 .estado-mantenimiento {
-    background-color: rgba(149, 88, 173, 0.2); 
-    color:            #d7a1ed;                
-    border:           1.5px solid rgba(115, 20, 153, 0.5); 
+    background-color: rgba(155, 89, 182, 0.2);
+    color: #9b59b6;
+    border: 1px solid rgba(155, 89, 182, 0.3);
 }
 
 .proxima-disponibilidad {
@@ -662,6 +662,18 @@
         {% endif %}
     </div>
     {% endif %}
+
+    <div class="text-end mt-4">
+        {% if user.is_authenticated and user.perfil.is_dueno %}
+            <a href="{% url 'calificar_maquina' maquina.id %}" class="btn-">
+                <i class="fas fa-star"></i>  Calificar Maquinaria
+            </a>
+        {% elif user.is_authenticated and user.perfil.is_empleado %}
+            <a href="{% url 'calificar_maquina' maquina.id %}" class="btn-">
+                <i class="fas fa-star"></i>  Calificar Maquinaria
+            </a>
+        {% endif %}
+    </div>
 
     <div class="calificaciones-section">
         <h3 class="info-title">Calificaciones y Comentarios</h3>
