@@ -229,7 +229,7 @@
               <a href="{% url 'historial_maquinaria' maquina.id %}" class="btn btn-info btn-hover-effect" style="background-color:#17a2b8; color:white; display: inline-flex; align-items: center; gap: 0.5rem;">
                 <i class="fas fa-history"></i> Historial
               </a>
-              <a href="#" class="btn-eliminar" onclick="manejarEliminacionMaquina({{ maquina.id }}, '{{ maquina.estado|escapejs }}')">
+              <a href="#" class="btn-eliminar" onclick="confirmarEliminacion({{ maquina.id }})">
                 <i class="fas fa-trash"></i> Eliminar
               </a>
             </div>
@@ -299,14 +299,6 @@ function getCookie(name) {
     }
   }
   return cookieValue;
-}
-
-function manejarEliminacionMaquina(maquinaId, estado) {
-  if (estado === 'alquilada') {
-    alert('No se puede eliminar una máquina que está alquilada.');
-    return;
-  }
-  confirmarEliminacion(maquinaId);
 }
 </script>
 {% endblock %} 
