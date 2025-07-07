@@ -25,16 +25,12 @@
         <form method="post" class="sucursal-form">
             {% csrf_token %}
             <div class="form-group">
-                <label for="numero">Número de Sucursal</label>
-                <input type="number" id="numero" name="numero" class="form-control" required min="1" value="{{ sucursal.numero }}">
+                <label for="calle">Calle</label>
+                <input type="text" id="calle" name="calle" class="form-control" required value="{{ sucursal.calle|default:'' }}">
             </div>
             <div class="form-group">
                 <label for="localidad">Localidad</label>
-                <input type="text" id="localidad" name="localidad" class="form-control" required value="{{ sucursal.localidad }}">
-            </div>
-            <div class="form-group">
-                <label for="direccion">Dirección</label>
-                <textarea id="direccion" name="direccion" class="form-control" rows="3" required>{{ sucursal.direccion }}</textarea>
+                <input type="text" id="localidad" name="localidad" class="form-control" required value="{{ sucursal.localidad|default:'' }}">
             </div>
             <div class="form-group">
                 <label class="checkbox-label">
@@ -192,6 +188,12 @@
     border-color: #f5c2c7;
 }
 
+.alert-error {
+    color: #842029;
+    background-color: #f8d7da;
+    border-color: #f5c2c7;
+}
+
 .btn-close {
     background: transparent;
     border: none;
@@ -217,4 +219,4 @@
     }
 }
 </style>
-{% endblock %} 
+{% endblock %}

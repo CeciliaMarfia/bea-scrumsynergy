@@ -41,7 +41,10 @@ from decimal import Decimal
 from django.core.exceptions import PermissionDenied
 from django.core.exceptions import ValidationError
 from geopy.exc import GeocoderUnavailable, GeocoderTimedOut
+from django.contrib import messages
+from .models import Sucursal
 import os
+import re
 from django.views.decorators.http import require_http_methods
 load_dotenv
 MP_ACCESS_TOKEN = os.getenv('MP_ACCESS_TOKEN')
@@ -710,7 +713,8 @@ def reservar_maquinaria(request, maquina_id):
 
 def lista_maquinaria(request):
     # Obtener todas las máquinas excepto las suspendidas y eliminadas
-    maquinas = Maquina.objects.exclude(estado='suspendida').exclude(eliminado=True)
+    maquinas = Maquina.objects.exclude(
+        estado='suspendida').exclude(eliminado=True)
 
     # Nueva funcionalidad: búsqueda por nombre
     busqueda_nombre = request.GET.get('busqueda_nombre', '').strip()
@@ -1202,20 +1206,20 @@ def limpiar_datos(request):
     """
 
     # Eliminar todas las tarjetas
-    TarjetaCredito.objects.all().delete()
+    # TarjetaCredito.objects.all().delete()
 
     # Eliminar todas las reservas
-    Reserva.objects.all().delete()
+    # Reserva.objects.all().delete()
 
     # Eliminar todas las maquinarias y sus imágenes asociadas
-    Maquina.objects.all().delete()
+    # Maquina.objects.all().delete()
 
     # Eliminar todas las sucursales
     Sucursal.objects.all().delete()
 
     # Eliminar todos los usuarios (empleados y clientes) excepto el dueño
-    User.objects.filter(perfil__role__name__in=[
-        Role.EMPLEADO, Role.CLIENTE]).delete()
+    # User.objects.filter(perfil__role__name__in=[
+    #   Role.EMPLEADO, Role.CLIENTE]).delete()
 
     messages.success(
         request, 'Se han eliminado todas las tarjetas, reservas, maquinarias, sucursales y perfiles de usuarios exitosamente.')
@@ -1295,64 +1299,140 @@ def administrar_sucursales(request):
     })
 
 
+def title_case(text):
+    return ' '.join(word.capitalize() for word in text.split())
+
+
+def extraer_numero_altura(calle):
+    numeros = re.findall(r'\d+', calle)
+    return numeros[-1] if numeros else ''
+
+
 @login_required
 def agregar_sucursal(request):
     calle = ''
     localidad = ''
 
     if request.method == 'POST':
-        calle = request.POST.get('calle', '').strip()
-        localidad = request.POST.get('localidad', '').strip()
+        calle_input = request.POST.get('calle', '').strip()
+        localidad_input = request.POST.get('localidad', '').strip()
 
-        if not calle or not localidad:
+        if not calle_input or not localidad_input:
             messages.error(request, 'Todos los campos son obligatorios.')
-            return render(request, 'admin/agregar_sucursal.html', {'calle': calle, 'localidad': localidad})
+            return render(request, 'admin/agregar_sucursal.html', {'calle': calle_input, 'localidad': localidad_input})
 
-        if calle.isdigit() or localidad.isdigit() or len(calle) < 3 or len(localidad) < 3:
+        if len(calle_input) < 3 or len(localidad_input) < 3:
             messages.error(
-                request, 'Calle y/o localidad inválidas')  # (mínimo 3 letras, no solo números).
-            return render(request, 'admin/agregar_sucursal.html', {'calle': calle, 'localidad': localidad})
+                request, 'Calle y localidad deben tener al menos 3 caracteres.')
+            return render(request, 'admin/agregar_sucursal.html', {'calle': calle_input, 'localidad': localidad_input})
 
+        if localidad_input.isdigit():
+            messages.error(request, 'La localidad no puede ser solo números.')
+            return render(request, 'admin/agregar_sucursal.html', {'calle': calle_input, 'localidad': localidad_input})
+
+        # Convertimos a minúsculas para comparación y búsqueda
+        calle = ' '.join(calle_input.lower().split())
+        localidad = ' '.join(localidad_input.lower().split())
+
+        # Validar duplicados por texto
         if Sucursal.objects.filter(calle=calle, localidad=localidad).exists():
             messages.error(
                 request, 'Ya existe una sucursal registrada en esa dirección.')
-            return render(request, 'admin/agregar_sucursal.html', {'calle': calle, 'localidad': localidad})
+            return render(request, 'admin/agregar_sucursal.html', {'calle': calle_input, 'localidad': localidad_input})
 
-        direccion_geocodificar = f"{calle}, {localidad}, Buenos Aires, Argentina"
+        direccion_geocodificar = f"{calle}, {localidad}, Buenos Aires Province, Argentina"
         geolocator = Nominatim(user_agent="bea_scrumsynergy")
 
         try:
             location = geolocator.geocode(
-                direccion_geocodificar, country_codes='ar', timeout=5)
+                direccion_geocodificar,
+                country_codes='ar',
+                timeout=10,
+                exactly_one=True,
+                addressdetails=True
+            )
 
-            if not location or "Argentina" not in location.address:
+            if not location:
                 messages.error(
-                    request, 'No se pudo encontrar la ubicación en Argentina. Verificá los datos.')
-                return render(request, 'admin/agregar_sucursal.html', {'calle': calle, 'localidad': localidad})
+                    request, 'No se pudo encontrar la dirección especificada. Verificá que la calle y localidad sean correctas.')
+                return render(request, 'admin/agregar_sucursal.html', {'calle': calle_input, 'localidad': localidad_input})
 
+            if "Argentina" not in location.address:
+                messages.error(
+                    request, 'La dirección no se encuentra en Argentina.')
+                return render(request, 'admin/agregar_sucursal.html', {'calle': calle_input, 'localidad': localidad_input})
+
+            address_components = location.raw.get('address', {})
+
+            # Extraer último número de altura del input
+            numero_calle_input = extraer_numero_altura(calle)
+            # Extraer números del house_number retornado
+            house_number = address_components.get('house_number', '')
+            house_number_digitos = ''.join(filter(str.isdigit, house_number))
+
+            # Debugging
+            print(f"DEBUG - Número ingresado: {numero_calle_input}")
+            print(f"DEBUG - house_number devuelto: '{house_number}'")
+
+            if numero_calle_input:
+                if not house_number:
+                    messages.error(
+                        request, 'No se pudo validar el número de calle. Verificá la altura de la dirección.')
+                    return render(request, 'admin/agregar_sucursal.html', {'calle': calle_input, 'localidad': localidad_input})
+
+                if numero_calle_input != house_number_digitos:
+                    messages.error(
+                        request, f'El número de calle no coincide con la dirección encontrada. Ingresado: {numero_calle_input}, Encontrado: {house_number_digitos}')
+                    return render(request, 'admin/agregar_sucursal.html', {'calle': calle_input, 'localidad': localidad_input})
+
+            localidad_encontrada = (
+                address_components.get('city') or
+                address_components.get('town') or
+                address_components.get('village') or
+                address_components.get('suburb')
+            )
+            if localidad_encontrada:
+                palabras_input = set(localidad.lower().split())
+                palabras_encontrada = set(localidad_encontrada.lower().split())
+                if not palabras_input.intersection(palabras_encontrada):
+                    messages.error(
+                        request, f'La localidad no coincide con la encontrada por el mapa: {localidad_encontrada}')
+                    return render(request, 'admin/agregar_sucursal.html', {'calle': calle_input, 'localidad': localidad_input})
+
+            # Validar duplicados por coordenadas
+            delta = 0.0001
+            if Sucursal.objects.filter(
+                latitud__range=(location.latitude - delta,
+                                location.latitude + delta),
+                longitud__range=(location.longitude - delta,
+                                 location.longitude + delta)
+            ).exists():
+                messages.error(
+                    request, 'Ya existe una sucursal registrada en esa ubicación exacta.')
+                return render(request, 'admin/agregar_sucursal.html', {'calle': calle_input, 'localidad': localidad_input})
+
+            # Guardar con título para que quede lindo
             nueva_sucursal = Sucursal.objects.create(
-                calle=calle,
-                localidad=localidad,
+                calle=title_case(calle),
+                localidad=title_case(localidad),
                 latitud=location.latitude,
                 longitud=location.longitude,
                 activa=True
             )
+
             messages.success(request, 'Sucursal agregada correctamente.')
             return redirect('administrar_sucursales')
 
         except (GeocoderTimedOut, GeocoderUnavailable, requests.exceptions.ReadTimeout):
             messages.error(
                 request, 'El servicio de mapas está demorando o no responde. Intentá nuevamente.')
-            return render(request, 'admin/agregar_sucursal.html', {'calle': calle, 'localidad': localidad})
+            return render(request, 'admin/agregar_sucursal.html', {'calle': calle_input, 'localidad': localidad_input})
 
-    return render(request, 'admin/agregar_sucursal.html', {'calle': calle, 'localidad': localidad})
+    return render(request, 'admin/agregar_sucursal.html', {'calle': '', 'localidad': ''})
 
 
 @login_required
 def editar_sucursal(request, sucursal_id):
-    """
-    Vista para editar una sucursal existente.
-    """
     if not (request.user.first_name == 'Roberto' or request.user.first_name == 'María'):
         messages.error(request, 'No tienes permiso para realizar esta acción.')
         return redirect('home')
@@ -1360,22 +1440,92 @@ def editar_sucursal(request, sucursal_id):
     sucursal = get_object_or_404(Sucursal, id=sucursal_id)
 
     if request.method == 'POST':
-        sucursal.numero = request.POST.get('numero')
-        sucursal.localidad = request.POST.get('localidad')
-        sucursal.direccion = request.POST.get('direccion')
-        sucursal.activa = request.POST.get('activa') == 'on'
+        calle = request.POST.get('calle', '').strip()
+        localidad = request.POST.get('localidad', '').strip()
+        activa = request.POST.get('activa') == 'on'
+
+        # Normalizar para comparar y validar duplicados
+        calle = ' '.join(calle.lower().split())
+        localidad = ' '.join(localidad.lower().split())
+
+        if not calle or not localidad:
+            messages.error(request, 'Todos los campos son obligatorios.')
+            return render(request, 'admin/editar_sucursal.html', {'sucursal': sucursal})
+
+        if calle.isdigit() or localidad.isdigit() or len(calle) < 3 or len(localidad) < 3:
+            messages.error(request, 'Calle y/o localidad inválidas')
+            return render(request, 'admin/editar_sucursal.html', {'sucursal': sucursal})
+
+        # Validar duplicado textual (excluyendo la sucursal que editamos)
+        if Sucursal.objects.filter(calle=calle, localidad=localidad).exclude(id=sucursal.id).exists():
+            messages.error(
+                request, 'Ya existe una sucursal registrada en esa dirección.')
+            return render(request, 'admin/editar_sucursal.html', {'sucursal': sucursal})
+
+        direccion_geocodificar = f"{calle}, {localidad}, Buenos Aires Province, Argentina"
+        geolocator = Nominatim(user_agent="bea_scrumsynergy")
 
         try:
+            location = geolocator.geocode(
+                direccion_geocodificar,
+                country_codes='ar',
+                timeout=10,
+                exactly_one=True,
+                addressdetails=True
+            )
+
+            if not location:
+                messages.error(
+                    request, 'No se pudo encontrar la dirección especificada. Verificá que la calle y localidad sean correctas.')
+                return render(request, 'admin/editar_sucursal.html', {'sucursal': sucursal})
+
+            if "Argentina" not in location.address:
+                messages.error(
+                    request, 'La dirección no se encuentra en Argentina.')
+                return render(request, 'admin/editar_sucursal.html', {'sucursal': sucursal})
+
+            address_components = location.raw.get('address', {})
+            localidad_encontrada = (
+                address_components.get('city') or
+                address_components.get('town') or
+                address_components.get('village') or
+                address_components.get('suburb')
+            )
+            if localidad_encontrada:
+                palabras_input = set(localidad.lower().split())
+                palabras_encontrada = set(localidad_encontrada.lower().split())
+                if not palabras_input.intersection(palabras_encontrada):
+                    messages.error(
+                        request, f'La localidad no coincide con la encontrada por el mapa: {localidad_encontrada}')
+                    return render(request, 'admin/editar_sucursal.html', {'sucursal': sucursal})
+
+            # Validar duplicado por coordenadas (excluyendo la sucursal actual)
+            if Sucursal.objects.filter(latitud=location.latitude, longitud=location.longitude).exclude(id=sucursal.id).exists():
+                messages.error(
+                    request, 'Ya existe una sucursal registrada en esa ubicación exacta.')
+                return render(request, 'admin/editar_sucursal.html', {'sucursal': sucursal})
+
+            # Guardar cambios
+            sucursal.calle = calle
+            sucursal.localidad = localidad
+            sucursal.latitud = location.latitude
+            sucursal.longitud = location.longitude
+            sucursal.activa = activa
             sucursal.save()
+
             messages.success(request, 'Sucursal actualizada exitosamente.')
             return redirect('administrar_sucursales')
-        except Exception as e:
-            messages.error(
-                request, f'Error al actualizar la sucursal: {str(e)}')
 
-    return render(request, 'admin/editar_sucursal.html', {
-        'sucursal': sucursal
-    })
+        except (GeocoderTimedOut, GeocoderUnavailable, requests.exceptions.ReadTimeout):
+            messages.error(
+                request, 'El servicio de mapas está demorando o no responde. Intentá nuevamente.')
+            return render(request, 'admin/editar_sucursal.html', {'sucursal': sucursal})
+        except Exception:
+            messages.error(
+                request, 'Ocurrió un error inesperado. Intentá nuevamente.')
+            return render(request, 'admin/editar_sucursal.html', {'sucursal': sucursal})
+
+    return render(request, 'admin/editar_sucursal.html', {'sucursal': sucursal})
 
 
 @login_required
@@ -1594,11 +1744,11 @@ def lista_maquinaria_admin(request):
 @user_passes_test(lambda u: u.perfil.is_dueno)
 def eliminar_maquinaria(request, maquina_id):
     maquina = get_object_or_404(Maquina, id=maquina_id)
-    
+
     # Realizar borrado lógico
     maquina.eliminado = True
     maquina.save()
-    
+
     messages.success(request, 'Maquinaria eliminada exitosamente.')
     return redirect('lista_maquinaria_admin')
 
@@ -1791,13 +1941,13 @@ def mis_alquileres(request):
         maquina__estado='alquilada',
         estado__in=['pendiente_pago', 'pagada']
     ).order_by('-fecha_inicio')
-    
+
     alquileres_devueltos = Reserva.objects.filter(
         cliente=request.user,
         estado='devuelta',
         numero_reserva__startswith='ALQ'  # Solo alquileres, no reservas
     ).order_by('-fecha_inicio')
-    
+
     alquileres_cancelados = Reserva.objects.filter(
         cliente=request.user,
         estado='cancelada',
@@ -1812,7 +1962,8 @@ def mis_alquileres(request):
             reserva.numero_reserva.startswith('ALQ') and
             reserva.estado == 'pagada' and
             reserva.empleado_gestor is not None and
-            not ValoracionEmpleado.objects.filter(cliente=request.user, empleado=reserva.empleado_gestor, reserva=reserva).exists()
+            not ValoracionEmpleado.objects.filter(
+                cliente=request.user, empleado=reserva.empleado_gestor, reserva=reserva).exists()
         ):
             reservas_valorables.add(reserva.id)
     # --- FIN NUEVO ---
@@ -2104,12 +2255,17 @@ def alquiler_presencial_detalle(request, id_maquina):
                 if (
                     (fecha_inicio >= reserva_prev.fecha_inicio and fecha_inicio <= reserva_prev.fecha_fin) or
                     (fecha_fin >= reserva_prev.fecha_inicio and fecha_fin <= reserva_prev.fecha_fin) or
-                    (fecha_inicio <= reserva_prev.fecha_inicio and fecha_fin >= reserva_prev.fecha_fin)
+                    (fecha_inicio <= reserva_prev.fecha_inicio and fecha_fin >=
+                     reserva_prev.fecha_fin)
                 ):
-                    fin_mantenimiento = reserva_prev.fecha_fin + datetime.timedelta(days=2)
-                    fecha_reserva_inicio = reserva_prev.fecha_inicio.strftime("%d/%m/%Y")
-                    fecha_reserva_fin = reserva_prev.fecha_fin.strftime("%d/%m/%Y")
-                    fecha_mantenimiento = fin_mantenimiento.strftime("%d/%m/%Y")
+                    fin_mantenimiento = reserva_prev.fecha_fin + \
+                        datetime.timedelta(days=2)
+                    fecha_reserva_inicio = reserva_prev.fecha_inicio.strftime(
+                        "%d/%m/%Y")
+                    fecha_reserva_fin = reserva_prev.fecha_fin.strftime(
+                        "%d/%m/%Y")
+                    fecha_mantenimiento = fin_mantenimiento.strftime(
+                        "%d/%m/%Y")
                     form.add_error(
                         'fecha_inicio', f'La máquina está reservada del {fecha_reserva_inicio} al {fecha_reserva_fin} y estará en mantenimiento hasta el {fecha_mantenimiento}.')
                     return render(request, 'reservas/alquiler_presencial_detalle.html', {
@@ -2118,9 +2274,11 @@ def alquiler_presencial_detalle(request, id_maquina):
                         'form': form
                     })
 
-                fin_mantenimiento = reserva_prev.fecha_fin + datetime.timedelta(days=2)
+                fin_mantenimiento = reserva_prev.fecha_fin + \
+                    datetime.timedelta(days=2)
                 if fecha_inicio <= fin_mantenimiento and fecha_inicio > reserva_prev.fecha_fin:
-                    fecha_mantenimiento = fin_mantenimiento.strftime("%d/%m/%Y")
+                    fecha_mantenimiento = fin_mantenimiento.strftime(
+                        "%d/%m/%Y")
                     form.add_error(
                         'fecha_inicio', f'La máquina estará en mantenimiento hasta el {fecha_mantenimiento}.')
                     return render(request, 'reservas/alquiler_presencial_detalle.html', {
