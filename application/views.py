@@ -976,6 +976,9 @@ def procesar_pago(request, reserva_id):
         pago.save()
 
         messages.success(request, '¡Pago procesado exitosamente!')
+        next_url = request.session.pop('pago_next_url', None)
+        if next_url:
+            return redirect(next_url)
         return redirect('detalle_reserva', reserva_id=reserva.id)
     else:
         # Actualizar el pago como fallido
@@ -984,12 +987,19 @@ def procesar_pago(request, reserva_id):
         pago.save()
 
         messages.error(request, resultado['mensaje'])
+        next_url = request.session.pop('pago_next_url', None)
+        if next_url:
+            return redirect(next_url)
         return redirect('pagar_reserva', reserva_id=reserva.id)
 
 
 @login_required
 def pagar_reserva(request, reserva_id):
     reserva = get_object_or_404(Reserva, id=reserva_id)
+    # Guardar la URL previa si viene como parámetro next
+    next_url = request.GET.get('next')
+    if next_url:
+        request.session['pago_next_url'] = next_url
     tarjetas = TarjetaCredito.objects.filter(usuario=request.user).order_by(
         '-es_predeterminada', '-fecha_creacion')
     form = TarjetaCreditoForm()
@@ -1184,6 +1194,9 @@ def payment_success(request):
     else:
         messages.warning(request, 'No se recibieron los datos del pago.')
 
+    next_url = request.session.pop('pago_next_url', None)
+    if next_url:
+        return redirect(next_url)
     return redirect('mis_reservas')
 
 
@@ -1191,12 +1204,18 @@ def payment_success(request):
 def payment_failure(request):
     messages.error(
         request, 'El pago no pudo ser procesado. Por favor, intenta nuevamente.')
+    next_url = request.session.pop('pago_next_url', None)
+    if next_url:
+        return redirect(next_url)
     return redirect('mis_reservas')
 
 
 @login_required
 def payment_pending(request):
     messages.warning(request, 'Tu pago está pendiente de confirmación.')
+    next_url = request.session.pop('pago_next_url', None)
+    if next_url:
+        return redirect(next_url)
     return redirect('mis_reservas')
 
 

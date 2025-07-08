@@ -247,7 +247,7 @@
 
         <div class="actions">
             {% if reserva.estado == 'pendiente_pago' %}
-            <a href="{% url 'pagar_reserva' reserva.id %}" class="btn-action btn-pagar">
+            <a href="{% url 'pagar_reserva' reserva.id %}?next={{ request.get_full_path }}" class="btn-action btn-pagar">
                 <i class="fas fa-credit-card"></i> Pagar Reserva
             </a>
             {% endif %}
