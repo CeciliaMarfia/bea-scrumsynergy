@@ -815,7 +815,7 @@ class AlquilerPresencialForm(forms.ModelForm):
                 # Verificar que el cliente tiene rol de cliente
                 if not cliente.perfil.is_cliente:
                     raise forms.ValidationError(
-                        'El email ingresado corresponde a un empleado o dueño. Solo se pueden registrar alquileres para clientes.')
+                        'No existe un cliente registrado con ese email. El cliente debe estar registrado en el sistema.')
             except User.DoesNotExist:
                 raise forms.ValidationError(
                     'No existe un cliente registrado con ese email. El cliente debe estar registrado en el sistema.')
