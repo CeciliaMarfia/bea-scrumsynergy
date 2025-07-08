@@ -1050,7 +1050,7 @@ def pagar_reserva(request, reserva_id):
                         reserva.estado = 'pagada'
                         reserva.save()
                         messages.success(
-                            request, f'Pago realizado con éxito para el cliente {reserva.cliente.get_full_name()}')
+                            request, f'Pago realizado con éxito')
                         if reserva.maquina.estado == 'alquilada':
                             return redirect('mis_alquileres')
                         else:
@@ -2480,7 +2480,7 @@ def pagar_reserva_presencial(request, reserva_id):
                         reserva.estado = 'pagada'
                         reserva.save()
                         messages.success(
-                            request, f'Pago realizado con éxito para el cliente {reserva.cliente.get_full_name()}')
+                            request, f'Pago realizado con éxito')
                         return redirect('historial_reservas')
                     else:
                         # Para cualquier otra tarjeta, simular pago exitoso
@@ -2589,7 +2589,7 @@ def cancelar_alquiler(request, reserva_id):
         [reserva.cliente.email],
         html_message=mensaje
     )
-    messages.error(
+    messages.success(
         request, f'Se canceló el alquiler {reserva.numero_reserva} con éxito.')
     return redirect('mis_alquileres')
 
