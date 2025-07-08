@@ -598,7 +598,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Validar duración máxima
         const dias = Math.floor((new Date(fechaFinInput.value) - new Date(fechaInicioInput.value)) / (1000 * 60 * 60 * 24)) + 1;
         if (dias > 7) {
-            errores.push('La reserva no puede exceder los 7 días.');
+            errores.push('El alquiler no puede exceder los 7 días.');
             isValid = false;
         }
         // Mostrar errores en el div

@@ -841,7 +841,7 @@ class AlquilerPresencialForm(forms.ModelForm):
             duracion = (fecha_fin - fecha_inicio).days + 1
             if duracion > 7:
                 raise forms.ValidationError(
-                    'La reserva no puede exceder los 7 días.')
+                    'El alquiler no puede exceder los 7 días.')
 
             # Obtener todas las reservas activas que podrían solaparse
             reservas_existentes = Reserva.objects.filter(
@@ -860,7 +860,7 @@ class AlquilerPresencialForm(forms.ModelForm):
                     fecha_reserva_fin = reserva.fecha_fin.strftime("%d/%m/%Y")
                     fecha_mantenimiento = (reserva.fecha_fin + datetime.timedelta(days=2)).strftime("%d/%m/%Y")
                     raise forms.ValidationError(
-                        f'La máquina está reservada del {fecha_reserva_inicio} al {fecha_reserva_fin} y estará en mantenimiento hasta el {fecha_mantenimiento}.')
+                        f'La máquina está alquilada del {fecha_reserva_inicio} al {fecha_reserva_fin} y estará en mantenimiento hasta el {fecha_mantenimiento}.')
 
                 # Verificar período de mantenimiento (2 días después de cada reserva)
                 # La nueva reserva debe comenzar el mismo día o después de fecha_disponible

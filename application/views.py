@@ -2314,7 +2314,7 @@ def alquiler_presencial_detalle(request, id_maquina):
                     fecha_mantenimiento = fin_mantenimiento.strftime(
                         "%d/%m/%Y")
                     form.add_error(
-                        'fecha_inicio', f'La máquina está reservada del {fecha_reserva_inicio} al {fecha_reserva_fin} y estará en mantenimiento hasta el {fecha_mantenimiento}.')
+                        'fecha_inicio', f'La máquina está alquilada del {fecha_reserva_inicio} al {fecha_reserva_fin} y estará en mantenimiento hasta el {fecha_mantenimiento}.')
                     return render(request, 'reservas/alquiler_presencial_detalle.html', {
                         'maquina': maquina,
                         'proxima_disponibilidad': proxima_disponibilidad,
@@ -2630,13 +2630,7 @@ def valorar_empleado(request, reserva_id):
     # Verificar que la reserva tenga un empleado gestor
     if not reserva.empleado_gestor:
         messages.error(
-            request, 'Esta reserva no tiene un empleado asignado para valorar.')
-        return redirect('mis_alquileres')
-
-    # Verificar que la reserva esté pagada
-    if reserva.estado != 'pagada':
-        messages.error(
-            request, 'Solo puedes valorar empleados de alquileres pagados.')
+            request, 'Este alquiler no tiene un empleado asignado para valorar.')
         return redirect('mis_alquileres')
 
     # Verificar si el usuario ya ha valorado este empleado para esta reserva

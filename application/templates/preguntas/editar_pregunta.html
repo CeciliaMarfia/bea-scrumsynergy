@@ -4,16 +4,199 @@
 {% block title %}Editar Pregunta{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <h2>Editar Pregunta</h2>
-    <form method="post">
-        {% csrf_token %}
-        <div class="form-group">
-            <label for="texto">Pregunta:</label>
-            <textarea name="texto" id="texto" class="form-control" rows="3" required>{{ pregunta.texto }}</textarea>
-        </div>
-        <button type="submit" class="btn btn-primary mt-2">Guardar Cambios</button>
-        <a href="{% url 'preguntas_cliente' %}" class="btn btn-secondary mt-2">Cancelar</a>
-    </form>
+<div class="container">
+    <div class="top-links">
+        <a href="{% url 'preguntas_cliente' %}" class="back-link">
+            <i class="fas fa-arrow-left"></i> Volver a preguntas
+        </a>
+    </div>
+    <div class="form-card">
+        <h2>Editar Pregunta</h2>
+
+        {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <form method="post" class="pregunta-form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="texto">Pregunta</label>
+                <textarea name="texto" id="texto" class="form-control" rows="3" required>{{ pregunta.texto }}</textarea>
+            </div>
+            <button type="submit" class="submit-btn">
+                <i class="fas fa-save"></i> Guardar Cambios
+            </button>
+        </form>
+    </div>
 </div>
-{% endblock %} 
+
+<style>
+.container {
+    padding: 2rem;
+}
+
+.top-links {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.back-link {
+    color: #fff;
+    text-decoration: none;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    background-color: rgba(209, 108, 68, 0.9);
+    padding: 12px 20px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.back-link:hover {
+    transform: translateX(-5px);
+    background-color: #d16c44;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    color: #fff;
+    text-decoration: none;
+}
+
+.form-card {
+    background-color: #fff;
+    border-radius: 1.5rem;
+    padding: 3rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.form-card h2 {
+    color: #546469;
+    margin-bottom: 2rem;
+    text-align: center;
+    font-size: 2rem;
+    font-weight: 600;
+}
+
+.pregunta-form {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #546469;
+    font-weight: 600;
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.8rem;
+    border: 2px solid #e9ecef;
+    border-radius: 0.6rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background-color: #fff;
+    resize: vertical;
+}
+
+.form-control:focus {
+    border-color: #d16c44;
+    outline: none;
+    box-shadow: 0 0 0 0.2rem rgba(209, 108, 68, 0.25);
+}
+
+.submit-btn {
+    width: 100%;
+    background-color: #d16c44;
+    color: #fff;
+    border: none;
+    border-radius: 0.6rem;
+    padding: 1rem;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.submit-btn:hover {
+    background-color: #b95a33;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.alert {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border: 1px solid transparent;
+    border-radius: 0.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.alert-success {
+    color: #0f5132;
+    background-color: #d1e7dd;
+    border-color: #badbcc;
+}
+
+.alert-danger {
+    color: #842029;
+    background-color: #f8d7da;
+    border-color: #f5c2c7;
+}
+
+.alert-error {
+    color: #842029;
+    background-color: #f8d7da;
+    border-color: #f5c2c7;
+}
+
+.btn-close {
+    background: transparent;
+    border: none;
+    font-size: 1.25rem;
+    font-weight: bold;
+    line-height: 1;
+    color: inherit;
+    opacity: 0.5;
+    cursor: pointer;
+}
+
+.btn-close:hover {
+    opacity: 1;
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 1rem;
+    }
+
+    .form-card {
+        padding: 1rem;
+    }
+}
+</style>
+{% endblock %}
