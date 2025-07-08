@@ -8,7 +8,7 @@
 </div>
 <div class="container" style="margin-top: 60px; max-width: 650px;">
     <div class="form-card">
-        <h2>Agregar Nueva Sucursal</h2>
+        <h2>Agregar Nueva Ubicación</h2>
         {% if messages %}
             {% for message in messages %}
                 <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-{{ message.tags }}{% endif %} alert-dismissible fade show text-start d-flex align-items-center" role="alert">
@@ -28,7 +28,7 @@
                 <label for="localidad" class="form-label">Localidad</label>
                 <input type="text" class="form-control" id="localidad" name="localidad" value="{{ localidad }}" placeholder="Ej: La Plata" required>
             </div>
-            <button type="submit" class="submit-btn"><i class="fas fa-map-marker-alt"></i> Agregar Sucursal</button>
+            <button type="submit" class="submit-btn"><i class="fas fa-map-marker-alt"></i> Agregar Ubicación</button>
             <a href="{% url 'administrar_sucursales' %}" class="btn-cancelar">Cancelar</a>
         </form>
     </div>

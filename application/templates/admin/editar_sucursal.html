@@ -5,11 +5,11 @@
 <div class="container">
     <div class="top-links">
         <a href="{% url 'administrar_sucursales' %}" class="back-link">
-            <i class="fas fa-arrow-left"></i> Volver a sucursales
+            <i class="fas fa-arrow-left"></i> Volver a ubicaciones
         </a>
     </div>
     <div class="form-card">
-        <h2>Editar Sucursal</h2>
+        <h2>Editar Ubicación</h2>
 
         {% if messages %}
             <div class="messages">
@@ -31,12 +31,6 @@
             <div class="form-group">
                 <label for="localidad">Localidad</label>
                 <input type="text" id="localidad" name="localidad" class="form-control" required value="{{ sucursal.localidad|default:'' }}">
-            </div>
-            <div class="form-group">
-                <label class="checkbox-label">
-                    <input type="checkbox" name="activa" {% if sucursal.activa %}checked{% endif %}>
-                    Sucursal Activa
-                </label>
             </div>
             <button type="submit" class="submit-btn">
                 <i class="fas fa-save"></i> Guardar Cambios

@@ -8,12 +8,12 @@
             <i class="fas fa-arrow-left"></i> Volver al inicio
         </a>
         <a href="{% url 'agregar_sucursal' %}" class="add-link">
-            <i class="fas fa-plus"></i> Agregar Sucursal
+            <i class="fas fa-plus"></i> Agregar Ubicación
         </a>
     </div>
 
     <div class="admin-card">
-        <h2>Administrar Sucursales</h2>
+        <h2>Administrar Ubicaciones</h2>
 
         {% if messages %}
             <div class="messages">
@@ -33,7 +33,6 @@
                     <thead>
                         <tr>
                             <th>Dirección</th>
-                            <th>Estado</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
@@ -41,11 +40,6 @@
                         {% for sucursal in sucursales %}
                         <tr>
                             <td>{{ sucursal.get_direccion_completa }}</td>
-                            <td>
-                                <span class="status-badge {% if sucursal.activa %}active{% else %}inactive{% endif %}">
-                                    {{ sucursal.activa|yesno:"Activa,Inactiva" }}
-                                </span>
-                            </td>
                             <td>
                                 <div class="action-buttons">
                                     <a href="{% url 'editar_sucursal' sucursal.id %}" class="btn-edit" title="Editar">
@@ -61,7 +55,7 @@
         {% else %}
             <div class="no-data">
                 <i class="fas fa-building"></i>
-                <p>No hay sucursales registradas</p>
+                <p>No hay ubicaciones registradas</p>
             </div>
         {% endif %}
     </div>

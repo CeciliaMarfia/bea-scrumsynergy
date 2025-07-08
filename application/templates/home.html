@@ -312,7 +312,7 @@
 
   <div class="btn-container">
     <a href="{% url 'lista_maquinaria' %}" class="btn-home">Ver Catálogo de Maquinarias</a>
-    <a href="{% url 'lista_ubicaciones' %}" class="btn-home"><i class="fas fa-map-marker-alt"></i> Ver Sucursales</a>
+    <a href="{% url 'lista_ubicaciones' %}" class="btn-home"><i class="fas fa-map-marker-alt"></i> Ver Ubicaciones</a>
     {% if user.is_authenticated %}
       {% if not user.perfil.is_dueno and not user.perfil.is_empleado %}
         <a href="{% url 'preguntas_cliente' %}" class="btn-home"><i class="fas fa-question-circle"></i> Hacer Pregunta</a>
