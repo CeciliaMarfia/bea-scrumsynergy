@@ -507,9 +507,11 @@
 <div class="detalle-container">
     {% if messages %}
         {% for message in messages %}
-            <div class="mensaje-exito">
-                {{ message }}
-            </div>
+            {% if 'Respuesta enviada correctamente al cliente.' in message %}
+                <div class="alert alert-success-transparent" style="text-align:center; font-size:1.15rem; border-radius:16px; padding: 1.2rem 2.5rem; margin-bottom:0; min-width: 220px; min-height: 40px; display: flex; align-items: center; justify-content: center; width: 100%;">
+                    {{ message }}
+                </div>
+            {% endif %}
         {% endfor %}
     {% endif %}
 

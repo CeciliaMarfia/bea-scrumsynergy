@@ -2123,7 +2123,8 @@ def contacto(request):
     es_cliente = user and hasattr(user, 'perfil') and user.perfil.is_cliente
     es_empleado_o_dueno = user and hasattr(user, 'perfil') and (user.perfil.is_empleado or user.perfil.is_dueno)
 
-    if es_cliente:
+    # Permitir acceso a todos los usuarios al formulario de contacto
+    if not es_empleado_o_dueno:
         if request.method == 'POST':
             form = ContactForm(request.POST)
             if form.is_valid():
@@ -2133,17 +2134,15 @@ def contacto(request):
                 telefono = form.cleaned_data['telefono']
                 consulta = form.cleaned_data['consulta']
 
-                # Guardar en la base de datos
                 ConsultaContacto.objects.create(
                     nombre=nombre,
                     apellidos=apellidos,
                     correo_electronico=correo,
                     telefono=telefono,
                     consulta=consulta,
-                    usuario=user if user.is_authenticated else None
+                    usuario=user if user else None
                 )
 
-                # Enviar el correo (opcional, puedes dejarlo o quitarlo)
                 try:
                     mensaje = f"""
                     Nuevo mensaje de contacto:
@@ -2161,27 +2160,22 @@ def contacto(request):
                         fail_silently=False,
                     )
                     messages.success(
-                        request, 'Respuesta enviada correctamente al cliente.')
+                        request, 'Tu mensaje ha sido enviado correctamente.\nNos pondremos en contacto contigo pronto.')
                     return redirect('contacto')
                 except Exception as e:
                     messages.error(
                         request, 'Hubo un error al enviar el mensaje. Por favor, intenta nuevamente.')
         else:
             form = ContactForm()
-        return render(request, 'contacto.html', {'form': form, 'es_cliente': True, 'es_empleado_o_dueno': False})
+        return render(request, 'contacto.html', {'form': form, 'es_cliente': user and hasattr(user, 'perfil') and user.perfil.is_cliente, 'es_empleado_o_dueno': False})
 
     elif es_empleado_o_dueno:
-        # Mostrar solo las consultas no respondidas
         consultas = ConsultaContacto.objects.filter(respondida=False)
         return render(request, 'contacto.html', {
             'consultas': consultas,
             'es_empleado_o_dueno': True,
             'es_cliente': False,
         })
-    else:
-        # Usuario anónimo o sin perfil válido
-        messages.error(request, 'Debes iniciar sesión para acceder a esta sección.')
-        return redirect('login')
 
 
 @login_required
@@ -2728,10 +2722,10 @@ def responder_consulta_contacto(request, consulta_id):
     from django.template.loader import render_to_string
     from django.utils.html import strip_tags
     respuesta = request.POST.get('respuesta', '').strip()
-    consulta = get_object_or_404(ConsultaContacto, id=consulta_id)
     if not respuesta:
         messages.error(request, 'La respuesta no puede estar vacía.')
         return redirect('contacto')
+    consulta = get_object_or_404(ConsultaContacto, id=consulta_id)
     consulta.respuesta = respuesta
     consulta.respondida = True
     consulta.save()

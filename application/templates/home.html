@@ -248,10 +248,6 @@
             <i class="fas fa-map-marker-alt"></i>
             <span>Gestionar Ubicaciones</span>
           </a>
-          <a href="{% url 'gestionar_preguntas' %}" class="admin-btn">
-            <i class="fas fa-question-circle"></i>
-            <span>Gestionar Preguntas</span>
-          </a>
           <a href="{% url 'registrar_devolucion' %}" class="admin-btn">
             <i class="fas fa-undo"></i>
             <span>Registrar Devolución</span>
@@ -282,10 +278,6 @@
             <i class="fas fa-truck"></i>
             <span>Alquileres Activos</span>
           </a>
-          <a href="{% url 'gestionar_preguntas' %}" class="admin-btn">
-            <i class="fas fa-question-circle"></i>
-            <span>Gestionar Preguntas</span>
-          </a>
           <a href="{% url 'registrar_devolucion' %}" class="admin-btn">
             <i class="fas fa-undo"></i>
             <span>Registrar Devolución</span>
@@ -315,7 +307,6 @@
     <a href="{% url 'lista_ubicaciones' %}" class="btn-home"><i class="fas fa-map-marker-alt"></i> Ver Ubicaciones</a>
     {% if user.is_authenticated %}
       {% if not user.perfil.is_dueno and not user.perfil.is_empleado %}
-        <a href="{% url 'preguntas_cliente' %}" class="btn-home"><i class="fas fa-question-circle"></i> Hacer Pregunta</a>
       {% endif %}
       <a href="{% url 'mis_reservas' %}" class="btn-home"><i class="fas fa-calendar-check"></i> Mis Reservas</a>
       <a href="{% url 'mis_alquileres' %}" class="btn-home"><i class="fas fa-clipboard-list"></i> Mis Alquileres</a>

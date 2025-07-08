@@ -261,11 +261,11 @@
     <a href="javascript:history.back()" class="btn-volver">
         <i class="fas fa-arrow-left"></i> Volver a la página anterior
     </a>
-    <div class="contact-form-container {% if es_cliente %}contact-form-container-form{% else %}contact-form-container-consultas{% endif %}">
+    <div class="contact-form-container contact-form-container-form">
         <h2 class="contact-title">Contactarme con Bob el Alquilador</h2>
         <p class="contact-subtitle">Contactanos y te asesoramos</p>
 
-        {% if es_cliente %}
+        {% if not es_empleado_o_dueno %}
             {% if messages %}
                 <div class="messages" style="width:100%; max-width: 420px; margin: 0 auto 18px auto;">
                     {% for message in messages %}
@@ -276,7 +276,7 @@
                     {% endfor %}
                 </div>
             {% endif %}
-            <form method="post" style="max-width: 350px; margin: 0 auto 0 auto; width: 100%;">
+            <form method="post" style="width: 100%;">
                 {% csrf_token %}
                 <div style="color:white;">{{ form.nombre.label_tag }}</div>
                 {{ form.nombre }}
@@ -288,7 +288,7 @@
                 {{ form.telefono }}
                 <div style="color:white; margin-top: 1rem;">{{ form.consulta.label_tag }}</div>
                 {{ form.consulta }}
-                <button type="submit" class="btn-enviar" style="margin-top: 0.3rem; display: block; margin-left: auto; margin-right: auto; width: auto; margin-bottom: 0;">
+                <button type="submit" class="btn-enviar" style="margin-top: 0.3rem; display: block; margin-left: auto; margin-right: auto; width: 100%; margin-bottom: 0;">
                     <i class="fas fa-paper-plane"></i> Enviar
                 </button>
             </form>
