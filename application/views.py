@@ -481,10 +481,15 @@ def perfil(request):
     user = request.user
     # Asegurarse de que el perfil existe
     perfil, created = Perfil.objects.get_or_create(usuario=user)
+    valoraciones = None
+    if hasattr(perfil, 'role') and (perfil.is_empleado or perfil.is_dueno):
+        from application.models import ValoracionEmpleado
+        valoraciones = ValoracionEmpleado.objects.filter(empleado=user).order_by('-fecha_creacion')
     return render(request, 'perfil.html', {
         'permisos': permisos,
         'user': user,
-        'perfil': perfil
+        'perfil': perfil,
+        'valoraciones': valoraciones
     })
 
 
@@ -1119,9 +1124,12 @@ def ver_perfil_empleado(request, empleado_id):
         User, id=empleado_id, perfil__role__name=Role.EMPLEADO)
     # Obtener todas las reservas gestionadas por el empleado
     reservas_gestionadas = empleado.reservas_gestionadas.all().order_by('-fecha_reserva')
+    from application.models import ValoracionEmpleado
+    valoraciones = ValoracionEmpleado.objects.filter(empleado=empleado).order_by('-fecha_creacion')
     return render(request, 'registration/perfil_empleado.html', {
         'empleado': empleado,
-        'reservas_gestionadas': reservas_gestionadas
+        'reservas_gestionadas': reservas_gestionadas,
+        'valoraciones': valoraciones
     })
 
 

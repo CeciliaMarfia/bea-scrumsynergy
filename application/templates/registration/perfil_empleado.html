@@ -299,6 +299,37 @@
         </div>
     </div>
 
+    <!-- Sección de Valoraciones Recibidas -->
+    <div class="permisos-section" style="margin-top:2rem;">
+        <h2>Valoraciones recibidas</h2>
+        {% if valoraciones and valoraciones.count > 0 %}
+            <div style="display: flex; flex-direction: column; gap: 1.2rem;">
+                {% for val in valoraciones %}
+                    <div style="background:rgba(84,100,105,0.07); border-radius:1rem; padding:1.2rem 1.5rem; border:1px solid #eee;">
+                        <div style="display:flex; align-items:center; gap:1rem; margin-bottom:0.5rem;">
+                            <span style="font-weight:600; color:#546469;">{{ val.cliente.get_full_name|default:val.cliente.username }}</span>
+                            <span style="color:#888; font-size:0.95rem;">{{ val.fecha_creacion|date:"d/m/Y H:i" }}</span>
+                            <span style="margin-left:auto; color:#d16c44; font-size:1.2rem;">
+                                {% for i in "12345"|make_list %}
+                                    {% if forloop.counter <= val.estrellas %}<i class="fas fa-star"></i>{% endif %}
+                                {% endfor %}
+                            </span>
+                        </div>
+                        {% if val.comentario %}
+                        <div style="color:#333; font-size:1.05rem; margin-top:0.3rem;">"{{ val.comentario }}"</div>
+                        {% else %}
+                        <div style="color:#aaa; font-size:0.98rem; font-style:italic;">Sin comentario</div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="alert-info" style="background-color: rgba(84, 100, 105, 0.1); border: 1px solid rgba(84, 100, 105, 0.2); color: #546469; padding: 1rem; border-radius: 0.6rem; text-align: center;">
+                <i class="fas fa-info-circle"></i> Este empleado aún no ha recibido valoraciones.
+            </div>
+        {% endif %}
+    </div>
+
     <!-- Sección de Reservas Gestionadas -->
     <div class="profile-header" style="margin-top: 2rem;">
         <h2 style="color: #546469; margin-bottom: 1.5rem;">Historial de Reservas</h2>
