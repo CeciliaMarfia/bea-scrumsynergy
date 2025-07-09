@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 {% block title %}Listado de Maquinaria - Bob el Alquilador{% endblock %}
 
@@ -214,9 +215,12 @@
           <td>{{ maquina.marca }}</td>
           <td>{{ maquina.modelo }}</td>
           <td>
-            <select class="form-control estado-select" data-maquina-id="{{ maquina.id }}" onchange="actualizarEstado(this)">
+            <select class="form-control estado-select" data-maquina-id="{{ maquina.id }}" onchange="actualizarEstado(this)" data-choices='{{ maquina.ESTADO_CHOICES|dict_to_json }}' data-estado-original="{{ maquina.estado }}">
+              <option value="{{ maquina.estado }}" selected disabled>{{ maquina.get_estado_display }}</option>
               {% for value, label in maquina.ESTADO_CHOICES %}
-                <option value="{{ value }}" {% if maquina.estado == value %}selected{% endif %}>{{ label }}</option>
+                {% if value != maquina.estado %}
+                  <option value="{{ value }}">{{ label }}</option>
+                {% endif %}
               {% endfor %}
             </select>
           </td>
@@ -276,6 +280,15 @@ function actualizarEstado(selectElement) {
   .then(data => {
     // Mostrar mensaje de éxito
     alert('Estado actualizado correctamente');
+    // Reconstruir el select para que solo el nuevo estado quede deshabilitado y seleccionado
+    const estadoChoices = JSON.parse(selectElement.getAttribute('data-choices'));
+    let optionsHtml = `<option value="${nuevoEstado}" selected disabled>${estadoChoices[nuevoEstado]}</option>`;
+    for (const [value, label] of Object.entries(estadoChoices)) {
+      if (value !== nuevoEstado) {
+        optionsHtml += `<option value="${value}">${label}</option>`;
+      }
+    }
+    selectElement.innerHTML = optionsHtml;
   })
   .catch(error => {
     console.error('Error:', error);
