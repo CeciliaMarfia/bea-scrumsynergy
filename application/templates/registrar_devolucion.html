@@ -54,21 +54,14 @@
         {% endif %}
       </div>
 
-      <div class="form-group {% if form.fecha_devolucion.errors %}has-error{% endif %}">
-        {{ form.fecha_devolucion.label_tag }}
-        {{ form.fecha_devolucion }}
-        {% if form.fecha_devolucion.help_text %}
-          <small class="form-text text-muted">{{ form.fecha_devolucion.help_text }}</small>
-        {% endif %}
-        {% if form.fecha_devolucion.errors %}
-          <div class="invalid-feedback d-block">
-            {% for error in form.fecha_devolucion.errors %}
-              <div class="error-message">
-                <i class="fas fa-exclamation-circle"></i> {{ error }}
-              </div>
-            {% endfor %}
-          </div>
-        {% endif %}
+      <div class="form-group">
+        <label>Fecha de devolución</label>
+        {% with fecha=form.fecha_devolucion.initial|default:form.fecha_devolucion.value %}
+        <div style="font-weight:600; color:#546469; font-size:1.1rem; margin-bottom:0.5rem;">
+          {{ fecha|date:'d/m/Y' }}
+        </div>
+        <input type="hidden" name="fecha_devolucion" value="{{ fecha|date:'Y-m-d' }}">
+        {% endwith %}
       </div>
 
       <button type="submit" class="submit-btn">

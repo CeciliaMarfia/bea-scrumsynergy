@@ -5,7 +5,8 @@ from application.models import Maquina, ImagenMaquina
 import imghdr
 from django.db import transaction
 from django.core.exceptions import ValidationError
-from datetime import datetime
+from datetime import datetime, date
+from django.utils import timezone
 
 
 class MultipleImagesField(forms.FileField):
@@ -278,4 +279,18 @@ class AltaMaquinariaForm(forms.ModelForm):
 
 class RegistrarDevolucionForm(forms.Form):
     codigo = forms.CharField(label='Código de la máquina', max_length=100)
-    fecha_devolucion = forms.DateField(label='Fecha de devolución', widget=forms.DateInput(attrs={'type': 'date'}))
+    fecha_devolucion = forms.DateField(
+        label='Fecha de devolución',
+        widget=forms.DateInput(attrs={'type': 'date', 'readonly': 'readonly', 'style': 'background:#eee; cursor:not-allowed;'}),
+        initial=timezone.localdate,
+        disabled=True
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['fecha_devolucion'].initial = timezone.localdate()
+        self.fields['fecha_devolucion'].disabled = True
+
+    def clean_fecha_devolucion(self):
+        # Siempre devolver la fecha actual en la zona horaria de Django
+        return timezone.localdate()

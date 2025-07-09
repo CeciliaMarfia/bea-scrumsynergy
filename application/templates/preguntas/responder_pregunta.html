@@ -30,6 +30,7 @@
       <div class="form-group {% if form.respuesta.errors %}has-error{% endif %}">
         {{ form.respuesta.label_tag }}
         {{ form.respuesta }}
+        <div class="error-respuesta" style="display:none; color:#dc3545; font-size:0.95rem; margin-top:0.25rem;"></div>
         {% if form.respuesta.errors %}
           <div class="invalid-feedback d-block">
             {% for error in form.respuesta.errors %}
@@ -259,4 +260,27 @@ body {
     color: #fff !important;
 }
 </style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var form = document.getElementById('respuestaForm');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            var textarea = form.querySelector('textarea');
+            var errorDiv = form.querySelector('.error-respuesta');
+            if (!textarea.value.trim()) {
+                e.preventDefault();
+                errorDiv.textContent = 'La respuesta no puede estar vacía.';
+                errorDiv.style.display = 'block';
+                textarea.focus();
+            } else {
+                errorDiv.textContent = '';
+                errorDiv.style.display = 'none';
+            }
+        });
+    }
+});
+</script>
 {% endblock %} 

@@ -300,6 +300,10 @@
                             <div class="alert alert-success-transparent" style="text-align:center; font-size:1.15rem; border-radius:16px; padding: 1.2rem 2.5rem; margin-bottom:0; min-width: 220px; min-height: 40px; display: flex; align-items: center; justify-content: center; width: 100%;">
                                 {{ message }}
                             </div>
+                        {% elif 'no puede estar vacía' in message %}
+                            <div class="alert alert-danger" style="text-align:center; font-size:1.1rem; border-radius:12px; padding: 1rem 2rem; margin-bottom:0; min-width: 180px; min-height: 30px; display: flex; align-items: center; justify-content: center; width: 100%; background:rgba(255,0,0,0.12); color:#b22222; border:1px solid #b22222;">
+                                {{ message }}
+                            </div>
                         {% endif %}
                     {% endfor %}
                 </div>
@@ -310,9 +314,10 @@
                     <div style="background:rgba(255,255,255,0.08);border-radius:10px;padding:1.2rem 1.5rem;margin-bottom:1rem;border:1px solid #ccc; min-width:300px; max-width:900px; width:100%; box-sizing:border-box;">
                         <div style="color:white;font-weight:bold; font-size:1.1rem; margin-bottom:0.5rem;">{{ consulta.nombre }} {{ consulta.apellidos }} &lt;{{ consulta.correo_electronico }}&gt; - {{ consulta.fecha_envio|date:'d/m/Y H:i' }}</div>
                         <div style="color:white;margin-bottom:0.7rem; font-size:1.1rem; word-break:break-word;">{{ consulta.consulta }}</div>
-                        <form method="post" action="{% url 'responder_consulta_contacto' consulta.id %}" style="margin-top:0.2rem;">
+                        <form method="post" action="{% url 'responder_consulta_contacto' consulta.id %}" style="margin-top:0.2rem;" class="respuesta-form">
                             {% csrf_token %}
                             <textarea name="respuesta" class="form-control" rows="3" style="min-width:200px; max-width:100%; font-size:1rem; margin-bottom:0.5rem;" placeholder="Escribe tu respuesta aquí..." required></textarea>
+                            <div class="error-respuesta" style="display:none; color:#b22222; font-size:0.98rem; margin-bottom:0.5rem;"></div>
                             <button type="submit" class="btn-enviar" style="margin-top:0.2rem;">Responder</button>
                         </form>
                     </div>
@@ -361,6 +366,25 @@
                 
                 input.addEventListener('blur', function() {
                     this.parentElement.style.transform = 'scale(1)';
+                });
+            });
+        });
+
+        // Validación para evitar respuestas vacías
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.respuesta-form').forEach(function(form) {
+                form.addEventListener('submit', function(e) {
+                    var textarea = form.querySelector('textarea[name="respuesta"]');
+                    var errorDiv = form.querySelector('.error-respuesta');
+                    if (!textarea.value.trim()) {
+                        e.preventDefault();
+                        errorDiv.textContent = 'La respuesta no puede estar vacía.';
+                        errorDiv.style.display = 'block';
+                        textarea.focus();
+                    } else {
+                        errorDiv.textContent = '';
+                        errorDiv.style.display = 'none';
+                    }
                 });
             });
         });
