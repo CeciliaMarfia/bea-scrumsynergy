@@ -2282,7 +2282,7 @@ def alquiler_presencial_detalle(request, id_maquina):
             duracion = (fecha_fin - fecha_inicio).days + 1
             if duracion > 7:
                 form.add_error(
-                    'fecha_fin', 'La reserva no puede exceder los 7 días.')
+                    'fecha_fin', 'El alquiler no puede exceder los 7 días.')
                 return render(request, 'reservas/alquiler_presencial_detalle.html', {
                     'maquina': maquina,
                     'proxima_disponibilidad': proxima_disponibilidad,

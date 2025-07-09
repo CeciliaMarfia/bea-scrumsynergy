@@ -821,27 +821,15 @@ class AlquilerPresencialForm(forms.ModelForm):
                     'No existe un cliente registrado con ese email. El cliente debe estar registrado en el sistema.')
 
         if fecha_inicio and fecha_fin and maquina:
-            # Forzar comparación de fechas como strings YYYY-MM-DD para evitar problemas de huso horario
-            hoy_str = datetime.date.today().strftime('%Y-%m-%d')
-            if isinstance(fecha_inicio, str):
-                fecha_inicio_str = fecha_inicio
-            else:
-                fecha_inicio_str = fecha_inicio.strftime('%Y-%m-%d')
-            # Validar que la fecha de inicio no sea anterior a hoy
-            if fecha_inicio_str < hoy_str:
-                raise forms.ValidationError(
-                    'La fecha de inicio debe ser igual o posterior a la fecha actual.')
-
-            # Validar que la fecha de fin no sea anterior a la fecha de inicio
+            hoy = datetime.date.today()
+            if fecha_inicio < hoy:
+                self.add_error('fecha_inicio', 'La fecha de inicio debe ser igual o posterior a la fecha actual.')
+                return cleaned_data  # No seguir validando si la fecha de inicio es inválida
             if fecha_fin < fecha_inicio:
-                raise forms.ValidationError(
-                    'La fecha de fin no puede ser anterior a la fecha de inicio.')
-
-            # Validar que la reserva no exceda los 7 días
+                self.add_error('fecha_fin', 'La fecha de fin no puede ser anterior a la fecha de inicio.')
             duracion = (fecha_fin - fecha_inicio).days + 1
             if duracion > 7:
-                raise forms.ValidationError(
-                    'El alquiler no puede exceder los 7 días.')
+                self.add_error('fecha_fin', 'El alquiler no puede exceder los 7 días.')
 
             # Obtener todas las reservas activas que podrían solaparse
             reservas_existentes = Reserva.objects.filter(
@@ -860,7 +848,7 @@ class AlquilerPresencialForm(forms.ModelForm):
                     fecha_reserva_fin = reserva.fecha_fin.strftime("%d/%m/%Y")
                     fecha_mantenimiento = (reserva.fecha_fin + datetime.timedelta(days=2)).strftime("%d/%m/%Y")
                     raise forms.ValidationError(
-                        f'La máquina está alquilada del {fecha_reserva_inicio} al {fecha_reserva_fin} y estará en mantenimiento hasta el {fecha_mantenimiento}.')
+                        f'La máquina está reservada del {fecha_reserva_inicio} al {fecha_reserva_fin} y estará en mantenimiento hasta el {fecha_mantenimiento}.')
 
                 # Verificar período de mantenimiento (2 días después de cada reserva)
                 # La nueva reserva debe comenzar el mismo día o después de fecha_disponible

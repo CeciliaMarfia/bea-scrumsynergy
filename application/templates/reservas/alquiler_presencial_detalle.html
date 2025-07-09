@@ -466,7 +466,6 @@
                                    id="fecha_inicio" 
                                    name="fecha_inicio"
                                    value="{{ form.fecha_inicio.value|default_if_none:'' }}"
-                                   min="{{ proxima_disponibilidad|date:'Y-m-d' }}"
                                    required>
                             {% if form.fecha_inicio.errors %}
                                 <div class="invalid-feedback d-block">
@@ -486,8 +485,6 @@
                                    name="fecha_fin"
                                    value="{{ form.fecha_fin.value|default_if_none:'' }}"
                                    required>
-                            
-                            </div>
                             {% if form.fecha_fin.errors %}
                                 <div class="invalid-feedback d-block">
                                     {% for error in form.fecha_fin.errors %}{{ error }}<br>{% endfor %}

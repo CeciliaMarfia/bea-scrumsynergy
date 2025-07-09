@@ -360,13 +360,6 @@ class Reserva(models.Model):
                     'fecha_fin': 'La fecha de fin no puede ser anterior a la fecha de inicio.'
                 })
 
-            # Validar que la reserva no exceda los 7 días
-            duracion = (self.fecha_fin - self.fecha_inicio).days + 1
-            if duracion > 7:
-                raise ValidationError({
-                    'fecha_fin': 'La reserva no puede exceder los 7 días.'
-                })
-
             # Verificar si hay otras reservas que se solapan y el período de mantenimiento
             reservas_previas = Reserva.objects.filter(
                 maquina=self.maquina,
