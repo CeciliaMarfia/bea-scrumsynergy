@@ -425,14 +425,14 @@
                 </div>
             {% endif %}
 
-            <form method="post" class="needs-validation" novalidate>
+            <form method="post" class="needs-validation">
                 {% csrf_token %}
                 <!-- Campo oculto para la máquina -->
                 <input type="hidden" name="maquina" value="{{ maquina.id }}">
                 <!-- Email del cliente -->
                 <div class="mb-3">
                     <label for="email_cliente" class="form-label">
-                        <i class="fas fa-envelope"></i> Email del Cliente *
+                        <i class="fas fa-envelope"></i> Email del Cliente
                     </label>
                     <input type="email" 
                            class="form-control{% if form.email_cliente.errors %} is-invalid{% endif %}" 
@@ -444,11 +444,6 @@
                     <div class="form-text">
                         Ingrese el email del cliente para registrar el alquiler en su historial
                     </div>
-                    {% if form.email_cliente.errors %}
-                        <div class="invalid-feedback d-block">
-                            {% for error in form.email_cliente.errors %}{{ error }}<br>{% endfor %}
-                        </div>
-                    {% endif %}
                 </div>
 
                 <!-- Cartel informativo de próxima disponibilidad -->
@@ -464,13 +459,13 @@
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label for="fecha_inicio" class="form-label">
-                                <i class="fas fa-calendar-plus"></i> Fecha de Inicio *
+                                <i class="fas fa-calendar-plus"></i> Fecha de Inicio
                             </label>
                             <input type="date" 
                                    class="form-control{% if form.fecha_inicio.errors %} is-invalid{% endif %}" 
                                    id="fecha_inicio" 
                                    name="fecha_inicio"
-                                   value="{{ form.fecha_inicio.value|default_if_none:proxima_disponibilidad|date:'Y-m-d' }}"
+                                   value="{{ form.fecha_inicio.value|default_if_none:'' }}"
                                    min="{{ proxima_disponibilidad|date:'Y-m-d' }}"
                                    required>
                             {% if form.fecha_inicio.errors %}
@@ -483,7 +478,7 @@
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label for="fecha_fin" class="form-label">
-                                <i class="fas fa-calendar-minus"></i> Fecha de Fin *
+                                <i class="fas fa-calendar-minus"></i> Fecha de Fin
                             </label>
                             <input type="date" 
                                    class="form-control{% if form.fecha_fin.errors %} is-invalid{% endif %}" 
@@ -491,8 +486,7 @@
                                    name="fecha_fin"
                                    value="{{ form.fecha_fin.value|default_if_none:'' }}"
                                    required>
-                            <div class="form-text">
-                                La fecha de fin debe ser igual o posterior a la fecha de inicio
+                            
                             </div>
                             {% if form.fecha_fin.errors %}
                                 <div class="invalid-feedback d-block">
@@ -545,11 +539,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (fechaInicio.value && fechaFin.value) {
             const inicio = new Date(fechaInicio.value);
             const fin = new Date(fechaFin.value);
-            
             if (fin >= inicio) {
                 const dias = Math.floor((fin - inicio) / (1000 * 60 * 60 * 24)) + 1;
                 const total = dias * precioPorDia;
-                
                 diasAlquiler.textContent = dias;
                 totalEstimado.textContent = `$${total.toFixed(2)}`;
             } else {
@@ -560,56 +552,16 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     fechaInicio.addEventListener('change', function() {
-        // Actualizar la fecha mínima de fin
         fechaFin.min = fechaInicio.value;
-        
-        // Si la fecha de fin es anterior a la nueva fecha de inicio, limpiarla
         if (fechaFin.value && fechaFin.value < fechaInicio.value) {
             fechaFin.value = '';
         }
-        
         calcularResumen();
     });
+
     fechaFin.addEventListener('change', calcularResumen);
 
     // Validación del formulario
-    const form = document.querySelector('.needs-validation');
-    form.addEventListener('submit', function(event) {
-        event.preventDefault();
-        
-        let isValid = true;
-        let errores = [];
-        const fechaInicioInput = document.getElementById('fecha_inicio');
-        const fechaFinInput = document.getElementById('fecha_fin');
-        const hoy = new Date();
-        hoy.setHours(0, 0, 0, 0);
-        const fechaInicioStr = fechaInicioInput.value;
-
-        // Validar fecha de inicio
-        if (fechaInicioStr < hoy.toISOString().split('T')[0]) {
-            errores.push('La fecha de inicio debe ser igual o posterior a la fecha actual.');
-            isValid = false;
-        }
-        // Validar fecha de fin
-        if (fechaFinInput.value && fechaFinInput.value < fechaInicioInput.value) {
-            errores.push('La fecha de fin no puede ser anterior a la fecha de inicio.');
-            isValid = false;
-        }
-        // Validar duración máxima
-        const dias = Math.floor((new Date(fechaFinInput.value) - new Date(fechaInicioInput.value)) / (1000 * 60 * 60 * 24)) + 1;
-        if (dias > 7) {
-            errores.push('El alquiler no puede exceder los 7 días.');
-            isValid = false;
-        }
-        // Mostrar errores en el div
-        const erroresDiv = document.getElementById('errores-fechas');
-        if (!isValid) {
-            erroresDiv.innerHTML = '<div class="alert alert-danger" style="margin-top:0.5rem;"><ul style="margin-bottom:0;">' + errores.map(e => `<li>${e}</li>`).join('') + '</ul></div>';
-        } else {
-            erroresDiv.innerHTML = '';
-            form.submit();
-        }
-    });
 });
 </script>
 {% endblock %} 
