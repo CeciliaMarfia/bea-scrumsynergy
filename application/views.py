@@ -1629,7 +1629,7 @@ def editar_pregunta(request, pregunta_id):
     if pregunta.respuesta:
         messages.error(
             request, 'No puedes editar una pregunta que ya tiene respuesta.')
-        return redirect('preguntas_cliente')
+        return redirect('detalle_maquinaria', maquina_id=pregunta.maquina.id)
     if request.method == 'POST':
         texto = request.POST.get('texto', '').strip()
         if not texto:
@@ -1639,7 +1639,7 @@ def editar_pregunta(request, pregunta_id):
             pregunta.texto = texto
             pregunta.save()
             messages.success(request, 'Pregunta actualizada correctamente.')
-            return redirect('preguntas_cliente')
+            return redirect('detalle_maquinaria', maquina_id=pregunta.maquina.id)
     return render(request, 'preguntas/editar_pregunta.html', {'pregunta': pregunta})
 
 
@@ -1653,13 +1653,12 @@ def eliminar_pregunta(request, pregunta_id):
     if not puede_eliminar:
         messages.error(
             request, 'No tienes permiso para eliminar esta consulta.')
-        return redirect('preguntas_cliente')
+        return redirect('detalle_maquinaria', maquina_id=pregunta.maquina.id)
     if request.method == 'POST':
+        maquina_id = pregunta.maquina.id
         pregunta.delete()
-        params = urlencode({'msg': 'Pregunta eliminada correctamente.'})
-        if request.user.perfil.is_empleado or request.user.perfil.is_dueno:
-            return redirect(f"{reverse('gestionar_preguntas')}?{params}")
-        return redirect(f"{reverse('preguntas_cliente')}?{params}")
+        messages.success(request, 'Pregunta eliminada correctamente.')
+        return redirect('detalle_maquinaria', maquina_id=maquina_id)
     return render(request, 'preguntas/eliminar_pregunta.html', {'pregunta': pregunta})
 
 

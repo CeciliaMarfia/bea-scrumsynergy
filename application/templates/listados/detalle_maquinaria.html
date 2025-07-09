@@ -505,15 +505,7 @@
 
 {% block content %}
 <div class="detalle-container">
-    {% if messages %}
-        {% for message in messages %}
-            {% if 'Respuesta enviada correctamente al cliente.' in message %}
-                <div class="alert alert-success-transparent" style="text-align:center; font-size:1.15rem; border-radius:16px; padding: 1.2rem 2.5rem; margin-bottom:0; min-width: 220px; min-height: 40px; display: flex; align-items: center; justify-content: center; width: 100%;">
-                    {{ message }}
-                </div>
-            {% endif %}
-        {% endfor %}
-    {% endif %}
+    
 
     <div class="header">
         <a href="{% url 'lista_maquinaria' %}" class="btn-volver">
@@ -738,33 +730,59 @@
       {% elif not user.is_authenticated %}
       <div class="alert alert-info">Iniciá sesión para realizar una pregunta sobre esta máquina.</div>
       {% endif %}
+
+      {% if messages %}
+        {% for message in messages %}
+          {% if message.tags == 'success' %}
+            <div class="alert alert-success-transparent" style="background:rgba(46,204,113,0.18); color:#2ecc71; border:2px solid #2ecc71; text-align:center; font-size:1.15rem; border-radius:16px; padding: 1.2rem 2.5rem; margin-bottom:0; min-width: 220px; min-height: 40px; display: flex; align-items: center; justify-content: center; width: 100%;">
+              {{ message }}
+            </div>
+          {% elif message.tags == 'error' %}
+            <div class="alert alert-danger-transparent" style="background:rgba(231,76,60,0.18); color:#e74c3c; border:2px solid #e74c3c; text-align:center; font-size:1.15rem; border-radius:16px; padding: 1.2rem 2.5rem; margin-bottom:0; min-width: 220px; min-height: 40px; display: flex; align-items: center; justify-content: center; width: 100%;">
+              {{ message }}
+            </div>
+          {% endif %}
+        {% endfor %}
+      {% endif %}
       <h4 style="margin-top:2rem;">Preguntas realizadas</h4>
       <ul class="list-group mt-3">
         {% for pregunta in preguntas %}
           <li class="list-group-item">
-            <div class="pregunta-info">
-              <strong>{{ pregunta.texto }}</strong><br>
-              <small>Enviada por {{ pregunta.usuario.get_full_name|default:pregunta.usuario.username }} el {{ pregunta.fecha_creacion|date:"d/m/Y H:i" }}</small>
-              {% if pregunta.respuesta %}
-                <div class="mt-2" style="color:#fff;"><strong>Respuesta:</strong> {{ pregunta.respuesta }}</div>
-              {% endif %}
-              {% if user.is_authenticated and user.perfil.is_dueno %}
-                {% if not pregunta.respuesta %}
-                  <a href="{% url 'responder_pregunta' pregunta.id %}" class="btn btn-sm btn-success ms-2">Responder</a>
+            <div class="pregunta-info" style="display: flex; align-items: center; justify-content: space-between;">
+              <div>
+                <strong>{{ pregunta.texto }}</strong><br>
+                <small>Enviada por {{ pregunta.usuario.get_full_name|default:pregunta.usuario.username }} el {{ pregunta.fecha_creacion|date:"d/m/Y H:i" }}</small>
+                {% if pregunta.respuesta %}
+                  <div class="mt-2" style="color:#fff;"><strong>Respuesta:</strong> {{ pregunta.respuesta }}</div>
                 {% endif %}
-                <form action="{% url 'eliminar_pregunta' pregunta.id %}" method="post" style="display:inline;">
-                  {% csrf_token %}
-                  <button type="submit" class="btn btn-sm btn-danger ms-2" onclick="return confirm('¿Seguro que deseas eliminar esta pregunta?');">Eliminar</button>
-                </form>
-              {% elif user.is_authenticated and user.perfil.is_empleado %}
-                {% if not pregunta.respuesta %}
-                  <a href="{% url 'responder_pregunta' pregunta.id %}" class="btn btn-sm btn-success ms-2">Responder</a>
+              </div>
+              <div style="margin-left: 40px; display: flex; gap: 10px;">
+                {% if user.is_authenticated and user.id == pregunta.usuario.id %}
+                  <a href="{% url 'editar_pregunta' pregunta.id %}" class="btn btn-sm btn-success">Editar</a>
+                  <form action="{% url 'eliminar_pregunta' pregunta.id %}" method="post" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Seguro que deseas eliminar esta pregunta?');">Eliminar</button>
+                  </form>
                 {% endif %}
-                <form action="{% url 'eliminar_pregunta' pregunta.id %}" method="post" style="display:inline;">
-                  {% csrf_token %}
-                  <button type="submit" class="btn btn-sm btn-danger ms-2" onclick="return confirm('¿Seguro que deseas eliminar esta pregunta?');">Eliminar</button>
-                </form>
-              {% endif %}
+                {% if user.is_authenticated and user.perfil.is_dueno %}
+                  {% if not pregunta.respuesta %}
+                    <a href="{% url 'responder_pregunta' pregunta.id %}" class="btn btn-sm btn-success ms-2">Responder</a>
+                  {% endif %}
+                  <form action="{% url 'eliminar_pregunta' pregunta.id %}" method="post" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-danger ms-2" onclick="return confirm('¿Seguro que deseas eliminar esta pregunta?');">Eliminar</button>
+                  </form>
+                {% endif %}
+                {% if user.is_authenticated and user.perfil.is_empleado %}
+                  {% if not pregunta.respuesta %}
+                    <a href="{% url 'responder_pregunta' pregunta.id %}" class="btn btn-sm btn-success ms-2">Responder</a>
+                  {% endif %}
+                  <form action="{% url 'eliminar_pregunta' pregunta.id %}" method="post" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-danger ms-2" onclick="return confirm('¿Seguro que deseas eliminar esta pregunta?');">Eliminar</button>
+                  </form>
+                {% endif %}
+              </div>
             </div>
           </li>
         {% empty %}
