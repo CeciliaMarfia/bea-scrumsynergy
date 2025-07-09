@@ -945,12 +945,25 @@ def eliminar_perfil(request):
     from application.models import Reserva
     if request.method == 'POST':
         user = request.user
-        # Verificar reservas pendientes o activas
-        reservas_pendientes = Reserva.objects.filter(
-            cliente=user, estado__in=['pendiente_pago', 'pagada'])
-        if reservas_pendientes.exists():
-            messages.error(
-                request, 'No puedes eliminar tu perfil porque tienes reservas o alquileres pendientes.')
+        # Alquileres pendientes de devolución
+        alquileres_pendientes = Reserva.objects.filter(
+            cliente=user,
+            numero_reserva__startswith='ALQ',
+            estado__in=['pendiente_pago', 'pagada']
+        )
+        # Reservas activas
+        reservas_activas = Reserva.objects.filter(
+            cliente=user,
+            estado__in=['pendiente_pago', 'pagada']
+        ).exclude(numero_reserva__startswith='ALQ')
+        any_block = False
+        if alquileres_pendientes.exists():
+            messages.error(request, 'No se puede eliminar la cuenta porque tiene alquileres pendientes de devolución.')
+            any_block = True
+        if reservas_activas.exists():
+            messages.error(request, 'No se puede eliminar la cuenta porque tiene una reserva pendiente.')
+            any_block = True
+        if any_block:
             return redirect('perfil')
         auth_logout(request)
         user.delete()

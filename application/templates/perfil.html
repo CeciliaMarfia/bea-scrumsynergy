@@ -407,6 +407,7 @@
         {% endfor %}
       </div>
     </div>
+    {% if user.perfil.is_dueno or user.perfil.is_empleado %}
     <div class="permisos-section" style="min-width: 420px; max-width: 600px; margin: 0 auto 0 0;">
       <h2>Valoraciones recibidas</h2>
       {% if valoraciones and valoraciones.count > 0 %}
@@ -436,6 +437,7 @@
         </div>
       {% endif %}
     </div>
+    {% endif %}
   </div>
 
 </div>
