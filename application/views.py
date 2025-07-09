@@ -2718,14 +2718,41 @@ def actualizar_estado_maquina(request, maquina_id):
         nuevo_estado = data.get('estado')
 
         maquina = Maquina.objects.get(id=maquina_id)
+        # No permitir cambiar a 'alquilada' o 'reservada' manualmente
+        if nuevo_estado in ['alquilada', 'reservada']:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'error': 'No se puede cambiar el estado a "alquilada" o "reservada" manualmente.'}, status=400)
+            else:
+                messages.error(request, 'No se puede cambiar el estado a "alquilada" o "reservada" manualmente.')
+                return redirect('lista_maquinaria_admin')
+        # No permitir cambiar el estado de una máquina que ya está en 'alquilada' o 'reservada'
+        if maquina.estado in ['alquilada', 'reservada']:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'error': 'No se puede cambiar el estado de una máquina que está alquilada o reservada.'}, status=400)
+            else:
+                messages.error(request, 'No se puede cambiar el estado de una máquina que está alquilada o reservada.')
+                return redirect('lista_maquinaria_admin')
         maquina.estado = nuevo_estado
         maquina.save()
 
-        return JsonResponse({'status': 'success'})
+        # Si la petición es AJAX, devolver JSON, si no, redirigir y mostrar mensaje
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'status': 'success'})
+        else:
+            messages.success(request, 'Estado de la maquinaria cambiado exitosamente')
+            return redirect('lista_maquinaria_admin')
     except Maquina.DoesNotExist:
-        return JsonResponse({'error': 'Máquina no encontrada'}, status=404)
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'error': 'Máquina no encontrada'}, status=404)
+        else:
+            messages.error(request, 'Máquina no encontrada')
+            return redirect('lista_maquinaria_admin')
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'error': str(e)}, status=500)
+        else:
+            messages.error(request, 'Error al cambiar el estado de la maquinaria')
+            return redirect('lista_maquinaria_admin')
 
 
 @login_required

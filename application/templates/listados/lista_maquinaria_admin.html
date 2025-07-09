@@ -130,6 +130,23 @@
   border: 1px solid #f5c6cb;
 }
 
+.alert-success {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.messages {
+  margin-bottom: 1rem;
+}
+
+.messages .alert {
+  padding: 0.8rem;
+  margin-bottom: 0.5rem;
+  border-radius: 0.6rem;
+  text-align: center;
+}
+
 @media (max-width: 768px) {
   .container {
     padding: 1rem;
@@ -215,13 +232,18 @@
           <td>{{ maquina.marca }}</td>
           <td>{{ maquina.modelo }}</td>
           <td>
-            <select class="form-control estado-select" data-maquina-id="{{ maquina.id }}" onchange="actualizarEstado(this)" data-choices='{{ maquina.ESTADO_CHOICES|dict_to_json }}' data-estado-original="{{ maquina.estado }}">
+            <select class="form-control estado-select" data-maquina-id="{{ maquina.id }}" onchange="actualizarEstado(this)" data-choices='{{ maquina.ESTADO_CHOICES|dict_to_json }}' data-estado-original="{{ maquina.estado }}" {% if maquina.estado == 'alquilada' or maquina.estado == 'reservada' %}disabled{% endif %}>
               <option value="{{ maquina.estado }}" selected disabled>{{ maquina.get_estado_display }}</option>
-              {% for value, label in maquina.ESTADO_CHOICES %}
-                {% if value != maquina.estado %}
-                  <option value="{{ value }}">{{ label }}</option>
-                {% endif %}
-              {% endfor %}
+              {% if maquina.estado == 'disponible' %}
+                <option value="suspendida">Suspendida</option>
+                <option value="mantenimiento">En mantenimiento</option>
+              {% elif maquina.estado == 'suspendida' %}
+                <option value="disponible">Disponible</option>
+                <option value="mantenimiento">En mantenimiento</option>
+              {% elif maquina.estado == 'mantenimiento' %}
+                <option value="disponible">Disponible</option>
+                <option value="suspendida">Suspendida</option>
+              {% endif %}
             </select>
           </td>
           {% if user.perfil.is_dueno %}
@@ -265,7 +287,8 @@ function actualizarEstado(selectElement) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-CSRFToken': getCookie('csrftoken')
+      'X-CSRFToken': getCookie('csrftoken'),
+      'X-Requested-With': 'XMLHttpRequest'
     },
     body: JSON.stringify({
       estado: nuevoEstado
@@ -273,28 +296,20 @@ function actualizarEstado(selectElement) {
   })
   .then(response => {
     if (!response.ok) {
-      throw new Error('Error al actualizar el estado');
+      return response.json().then(data => {
+        throw new Error(data.error || 'Error al actualizar el estado');
+      });
     }
     return response.json();
   })
   .then(data => {
-    // Mostrar mensaje de éxito
-    alert('Estado actualizado correctamente');
-    // Reconstruir el select para que solo el nuevo estado quede deshabilitado y seleccionado
-    const estadoChoices = JSON.parse(selectElement.getAttribute('data-choices'));
-    let optionsHtml = `<option value="${nuevoEstado}" selected disabled>${estadoChoices[nuevoEstado]}</option>`;
-    for (const [value, label] of Object.entries(estadoChoices)) {
-      if (value !== nuevoEstado) {
-        optionsHtml += `<option value="${value}">${label}</option>`;
-      }
-    }
-    selectElement.innerHTML = optionsHtml;
+    mostrarMensaje('success', 'Estado de la maquinaria cambiado exitosamente');
   })
   .catch(error => {
     console.error('Error:', error);
-    alert('Error al actualizar el estado');
-    // Revertir el cambio en el select
-    selectElement.value = selectElement.getAttribute('data-estado-original');
+    mostrarMensaje('error', error.message || 'Error al cambiar el estado de la maquinaria');
+    // Restaurar el valor original del select
+    selectElement.value = selectElement.dataset.estadoOriginal;
   });
 }
 
@@ -312,6 +327,20 @@ function getCookie(name) {
     }
   }
   return cookieValue;
+}
+
+function mostrarMensaje(tipo, texto) {
+    let cont = document.querySelector('.messages');
+    if (!cont) {
+        cont = document.createElement('div');
+        cont.className = 'messages';
+        document.querySelector('.container').insertBefore(cont, document.querySelector('.table-container'));
+    }
+    const div = document.createElement('div');
+    div.className = `alert alert-${tipo === 'success' ? 'success' : 'danger'}`;
+    div.textContent = texto;
+    cont.appendChild(div);
+    setTimeout(() => { div.remove(); }, 4000);
 }
 </script>
 {% endblock %} 
