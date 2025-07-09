@@ -119,32 +119,157 @@
 }
 
 .alert-success {
-  background-color: #d4edda;
+  background-color: rgba(212, 237, 218, 0.6);
   color: #155724;
-  border: 1px solid #c3e6cb;
+  border: 1px solid rgba(195, 230, 203, 0.6);
+  backdrop-filter: blur(10px);
 }
 
 .alert-danger {
-  background-color: #f8d7da;
+  background-color: rgba(248, 215, 218, 0.6);
   color: #721c24;
-  border: 1px solid #f5c6cb;
-}
-
-.alert-success {
-  background-color: #d4edda;
-  color: #155724;
-  border: 1px solid #c3e6cb;
+  border: 1px solid rgba(245, 198, 203, 0.6);
+  backdrop-filter: blur(10px);
 }
 
 .messages {
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
+  position: sticky;
+  top: 1rem;
+  z-index: 1000;
 }
 
 .messages .alert {
-  padding: 0.8rem;
+  padding: 1rem;
   margin-bottom: 0.5rem;
-  border-radius: 0.6rem;
+  border-radius: 0.8rem;
   text-align: center;
+  font-weight: 500;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Modal de confirmación */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.modal-overlay.show {
+  opacity: 1;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 1rem;
+  padding: 0;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  transform: scale(0.9);
+  transition: transform 0.3s ease;
+}
+
+.modal-overlay.show .modal-content {
+  transform: scale(1);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 1.5rem 1rem;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.modal-header h3 {
+  margin: 0;
+  color: #546469;
+  font-weight: 600;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #6c757d;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.3s ease;
+}
+
+.modal-close:hover {
+  background-color: #f8f9fa;
+  color: #495057;
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.modal-body p {
+  margin: 0 0 1rem 0;
+  color: #495057;
+  line-height: 1.5;
+}
+
+.modal-warning {
+  color: #856404 !important;
+  background-color: #fff3cd;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid #ffeaa7;
+  font-size: 0.9rem;
+}
+
+.modal-footer {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  padding: 1rem 1.5rem 1.5rem;
+  border-top: 1px solid #e9ecef;
+}
+
+.btn-cancelar, .btn-confirmar {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-cancelar {
+  background-color: #6c757d;
+  color: white;
+}
+
+.btn-cancelar:hover {
+  background-color: #5a6268;
+}
+
+.btn-confirmar {
+  background-color: #dc3545;
+  color: white;
+}
+
+.btn-confirmar:hover {
+  background-color: #c82333;
 }
 
 @media (max-width: 768px) {
@@ -255,7 +380,7 @@
               <a href="{% url 'historial_maquinaria' maquina.id %}" class="btn btn-info btn-hover-effect" style="background-color:#17a2b8; color:white; display: inline-flex; align-items: center; gap: 0.5rem;">
                 <i class="fas fa-history"></i> Historial
               </a>
-              <a href="#" class="btn-eliminar" onclick="confirmarEliminacion({{ maquina.id }})">
+              <a href="#" class="btn-eliminar" data-maquina-id="{{ maquina.id }}" onclick="confirmarEliminacion(this.dataset.maquinaId)">
                 <i class="fas fa-trash"></i> Eliminar
               </a>
             </div>
@@ -274,9 +399,7 @@
 
 <script>
 function confirmarEliminacion(maquinaId) {
-  if (confirm('¿Está seguro que desea eliminar esta maquinaria? La maquinaria dejará de aparecer en los listados pero se mantendrá su historial de reservas y alquileres.')) {
-    window.location.href = `/eliminar_maquinaria/${maquinaId}/`;
-  }
+  mostrarModalConfirmacion(maquinaId);
 }
 
 function actualizarEstado(selectElement) {
@@ -334,13 +457,49 @@ function mostrarMensaje(tipo, texto) {
     if (!cont) {
         cont = document.createElement('div');
         cont.className = 'messages';
-        document.querySelector('.container').insertBefore(cont, document.querySelector('.table-container'));
+        document.querySelector('.container').insertBefore(cont, document.querySelector('.header-container'));
     }
     const div = document.createElement('div');
     div.className = `alert alert-${tipo === 'success' ? 'success' : 'danger'}`;
     div.textContent = texto;
     cont.appendChild(div);
     setTimeout(() => { div.remove(); }, 4000);
+}
+
+function mostrarModalConfirmacion(maquinaId) {
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Confirmar eliminación</h3>
+                <button class="modal-close" onclick="cerrarModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>¿Está seguro que desea eliminar esta maquinaria?</p>
+                <p class="modal-warning">La maquinaria dejará de aparecer en los listados pero se mantendrá su historial de reservas y alquileres.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancelar" onclick="cerrarModal()">Cancelar</button>
+                <button class="btn-confirmar" onclick="eliminarMaquinaria(${maquinaId})">Eliminar</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    setTimeout(() => modal.classList.add('show'), 10);
+}
+
+function cerrarModal() {
+    const modal = document.querySelector('.modal-overlay');
+    if (modal) {
+        modal.classList.remove('show');
+        setTimeout(() => modal.remove(), 300);
+    }
+}
+
+function eliminarMaquinaria(maquinaId) {
+    cerrarModal();
+    window.location.href = `/eliminar_maquinaria/${maquinaId}/`;
 }
 </script>
 {% endblock %} 
