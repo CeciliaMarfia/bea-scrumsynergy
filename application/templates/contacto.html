@@ -237,7 +237,7 @@
             max-width: 420px;
             min-width: 320px;
             width: 95vw;
-            min-height: 560px;
+            min-height: 200px;
             max-height: 600px;
             padding: 30px 20px;
         }
@@ -267,31 +267,35 @@
 
         {% if not es_empleado_o_dueno %}
             {% if messages %}
-                <div class="messages" style="width:100%; max-width: 420px; margin: 0 auto 18px auto;">
+                <div class="messages" style="width:100%; margin: 0 auto 18px auto;">
                     {% for message in messages %}
-                        <div class="alert alert-success-transparent" style="text-align:left; font-size:1.15rem; border-radius:16px; padding: 1.2rem 2.5rem; margin-bottom:0;">
+                        <div class="alert alert-success-transparent" style="text-align:left; font-size:1rem; border-radius:16px; padding: 1.2rem 2.5rem; margin-bottom:0;">
                             Tu mensaje ha sido enviado correctamente.<br>
                             Nos pondremos en contacto contigo pronto.
                         </div>
                     {% endfor %}
                 </div>
+                <div style="width:100%; display:flex; justify-content:center; margin-top:1.5rem;">
+                    <button onclick="window.location.reload();" class="btn-enviar" style="width:auto; max-width:250px; background:#546469; color:white; text-transform:none; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">hacer otra consulta</button>
+                </div>
+            {% else %}
+                <form method="post" style="width: 100%;">
+                    {% csrf_token %}
+                    <div style="color:white;">{{ form.nombre.label_tag }}</div>
+                    {{ form.nombre }}
+                    <div style="color:white; margin-top: 1rem;">{{ form.apellidos.label_tag }}</div>
+                    {{ form.apellidos }}
+                    <div style="color:white; margin-top: 1rem;">{{ form.correo_electronico.label_tag }}</div>
+                    {{ form.correo_electronico }}
+                    <div style="color:white; margin-top: 1rem;">{{ form.telefono.label_tag }}</div>
+                    {{ form.telefono }}
+                    <div style="color:white; margin-top: 1rem;">{{ form.consulta.label_tag }}</div>
+                    {{ form.consulta }}
+                    <button type="submit" class="btn-enviar" style="margin-top: 0.3rem; display: block; margin-left: auto; margin-right: auto; width: 100%; margin-bottom: 0;">
+                        <i class="fas fa-paper-plane"></i> Enviar
+                    </button>
+                </form>
             {% endif %}
-            <form method="post" style="width: 100%;">
-                {% csrf_token %}
-                <div style="color:white;">{{ form.nombre.label_tag }}</div>
-                {{ form.nombre }}
-                <div style="color:white; margin-top: 1rem;">{{ form.apellidos.label_tag }}</div>
-                {{ form.apellidos }}
-                <div style="color:white; margin-top: 1rem;">{{ form.correo_electronico.label_tag }}</div>
-                {{ form.correo_electronico }}
-                <div style="color:white; margin-top: 1rem;">{{ form.telefono.label_tag }}</div>
-                {{ form.telefono }}
-                <div style="color:white; margin-top: 1rem;">{{ form.consulta.label_tag }}</div>
-                {{ form.consulta }}
-                <button type="submit" class="btn-enviar" style="margin-top: 0.3rem; display: block; margin-left: auto; margin-right: auto; width: 100%; margin-bottom: 0;">
-                    <i class="fas fa-paper-plane"></i> Enviar
-                </button>
-            </form>
         {% elif es_empleado_o_dueno %}
             {% if messages %}
                 <div class="messages" style="width:100%; max-width: 420px; margin: 0 auto 18px auto; display: flex; align-items: center; justify-content: center;">
