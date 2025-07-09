@@ -1666,13 +1666,18 @@ def eliminar_pregunta(request, pregunta_id):
     if not puede_eliminar:
         messages.error(
             request, 'No tienes permiso para eliminar esta consulta.')
+        next_url = request.GET.get('next') or request.POST.get('next') or request.META.get('HTTP_REFERER')
+        if next_url:
+            return redirect(next_url)
         return redirect('detalle_maquinaria', maquina_id=pregunta.maquina.id)
+    next_url = request.GET.get('next') or request.POST.get('next') or request.META.get('HTTP_REFERER')
     if request.method == 'POST':
-        maquina_id = pregunta.maquina.id
         pregunta.delete()
         messages.success(request, 'Pregunta eliminada correctamente.')
-        return redirect('detalle_maquinaria', maquina_id=maquina_id)
-    return render(request, 'preguntas/eliminar_pregunta.html', {'pregunta': pregunta})
+        if next_url:
+            return redirect(next_url)
+        return redirect('detalle_maquinaria', maquina_id=pregunta.maquina.id)
+    return render(request, 'preguntas/eliminar_pregunta.html', {'pregunta': pregunta, 'next': next_url})
 
 
 @login_required
@@ -1685,7 +1690,7 @@ def gestionar_preguntas(request):
     msg = request.GET.get('msg')
     if msg:
         messages.success(request, msg)
-    preguntas = Pregunta.objects.all().order_by('-fecha_creacion')
+    preguntas = Pregunta.objects.filter(maquina__isnull=False).select_related('maquina', 'usuario').order_by('-fecha_creacion')
     return render(request, 'preguntas/gestionar_preguntas.html', {'preguntas': preguntas})
 
 
@@ -1757,18 +1762,21 @@ def responder_pregunta(request, pregunta_id):
             return redirect('detalle_maquinaria', maquina_id=pregunta.maquina.id)
         else:
             return redirect('gestionar_preguntas')
+    next_url = request.GET.get('next') or request.POST.get('next') or request.META.get('HTTP_REFERER')
     if request.method == 'POST':
         form = ResponderPreguntaForm(request.POST, instance=pregunta)
         if form.is_valid():
             form.save()
             messages.success(request, 'Respuesta registrada con éxito.')
-            if pregunta.maquina:
+            if next_url:
+                return redirect(next_url)
+            elif pregunta.maquina:
                 return redirect(f"{reverse('detalle_maquinaria', args=[pregunta.maquina.id])}#preguntas")
             else:
                 return redirect('gestionar_preguntas')
     else:
         form = ResponderPreguntaForm(instance=pregunta)
-    return render(request, 'preguntas/responder_pregunta.html', {'form': form, 'pregunta': pregunta})
+    return render(request, 'preguntas/responder_pregunta.html', {'form': form, 'pregunta': pregunta, 'next': next_url})
 
 
 @login_required

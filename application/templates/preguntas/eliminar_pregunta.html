@@ -20,6 +20,7 @@
     </div>
     <form method="post">
         {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}">
         <button type="submit" class="btn btn-danger">Eliminar</button>
         <a href="{% url 'preguntas_cliente' %}" class="btn btn-secondary">Cancelar</a>
     </form>

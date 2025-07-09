@@ -218,6 +218,11 @@
     <a href="{% url 'registrar_empleado' %}" class="btn-registrar">
       <i class="fas fa-user-plus"></i> Registrar Nuevo Empleado
     </a>
+    {% if user.perfil.is_empleado or user.perfil.is_dueno %}
+    <a href="{% url 'gestionar_preguntas' %}" class="btn-registrar" style="background-color:#546469; margin-left:1rem;">
+      <i class="fas fa-question-circle"></i> Gestionar Preguntas
+    </a>
+    {% endif %}
 
     {% if empleados %}
     <div class="table-responsive">

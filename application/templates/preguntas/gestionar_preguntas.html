@@ -213,10 +213,10 @@
     <h2>Gestionar Preguntas</h2>
     <ul class="list-group mt-3">
       {% for pregunta in preguntas %}
-        <li class="list-group-item pregunta-flex">
+        <li class="list-group-item pregunta-flex pregunta-fondo-blanco">
           <div class="pregunta-info">
-          <strong>{{ pregunta.texto }}</strong><br>
-          <small>Cliente: {{ pregunta.usuario.email }} | Enviada el {{ pregunta.fecha_creacion|date:"d/m/Y H:i" }}</small>
+          <strong class="pregunta-blanca">{{ pregunta.texto }}</strong><br>
+          <small>Cliente: {{ pregunta.usuario.email }} | Máquina: {{ pregunta.maquina.nombre }} ({{ pregunta.maquina.codigo }}) | Enviada el {{ pregunta.fecha_creacion|date:"d/m/Y H:i" }}</small>
           {% if pregunta.respuesta %}
               <div class="respuesta-hilo">
                 <div class="respuesta-texto">
@@ -287,5 +287,30 @@
   margin-bottom: 0.5rem;
   text-align: center;
   box-shadow: 0 2px 8px #4fd37e22;
+}
+.pregunta-sin-respuesta strong.texto-blanco {
+  background: #fff;
+  color: #222;
+  padding: 0.2em 0.5em;
+  border-radius: 0.3em;
+}
+.pregunta-fondo-blanco {
+  background: #fff !important;
+  color: #222 !important;
+}
+.pregunta-fondo-blanco strong.texto-blanco {
+  background: #fff !important;
+  color: #222 !important;
+  padding: 0.2em 0.5em;
+  border-radius: 0.3em;
+  font-weight: 600;
+}
+.pregunta-fondo-blanco small {
+  color: #444 !important;
+}
+.pregunta-blanca {
+  color: #fff !important;
+  background: none !important;
+  font-weight: 600;
 }
 </style> 

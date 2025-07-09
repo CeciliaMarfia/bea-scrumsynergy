@@ -6,8 +6,8 @@
 {% block content %}
 <div class="container">
   <div class="top-links">
-    <a href="{% url 'gestionar_preguntas' %}" class="back-link">
-      <i class="fas fa-arrow-left"></i> Volver a la gestión
+    <a href="{% if next %}{{ next }}{% else %}{% url 'gestionar_preguntas' %}{% endif %}" class="back-link">
+      <i class="fas fa-arrow-left"></i> Volver
     </a>
   </div>
   <div class="form-card">
@@ -41,6 +41,7 @@
           </div>
         {% endif %}
       </div>
+      <input type="hidden" name="next" value="{{ next }}">
       <button type="submit" class="submit-btn">
         <i class="fas fa-paper-plane"></i> Enviar Respuesta
       </button>
