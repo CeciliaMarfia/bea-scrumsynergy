@@ -721,17 +721,15 @@
       {% endif %}
 
       {% if messages %}
-        {% for message in messages %}
-          {% if message.tags == 'success' %}
-            <div class="alert alert-success-transparent" style="background:rgba(46,204,113,0.18); color:#2ecc71; border:2px solid #2ecc71; text-align:center; font-size:1.15rem; border-radius:16px; padding: 1.2rem 2.5rem; margin-bottom:0; min-width: 220px; min-height: 40px; display: flex; align-items: center; justify-content: center; width: 100%;">
-              {{ message }}
-            </div>
-          {% elif message.tags == 'error' %}
-            <div class="alert alert-danger-transparent" style="background:rgba(231,76,60,0.18); color:#e74c3c; border:2px solid #e74c3c; text-align:center; font-size:1.15rem; border-radius:16px; padding: 1.2rem 2.5rem; margin-bottom:0; min-width: 220px; min-height: 40px; display: flex; align-items: center; justify-content: center; width: 100%;">
-              {{ message }}
-            </div>
-          {% endif %}
-        {% endfor %}
+        <div style="display: flex; justify-content: center;">
+          <div class="alert alert-success-transparent" style="background-color:rgba(212,237,218,0.7); color:#155724; border:1px solid #c3e6cb; margin: 1.5rem auto 2rem auto; text-align: center; min-width:220px; min-height:40px; display:flex; align-items:center; justify-content:center; width:100%;">
+            {% for message in messages %}
+              {% if message.tags == 'success' %}
+                {{ message }}
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
       {% endif %}
       <h4 style="margin-top:2rem;">Preguntas realizadas</h4>
       <ul class="list-group mt-3">
@@ -746,7 +744,7 @@
                 {% endif %}
               </div>
               <div style="margin-left: 40px; display: flex; gap: 10px;">
-                {% if user.is_authenticated and user.id == pregunta.usuario.id %}
+                {% if user.is_authenticated and user.id == pregunta.usuario.id and not pregunta.respuesta %}
                   <a href="{% url 'editar_pregunta' pregunta.id %}" class="btn btn-sm btn-success">Editar</a>
                   <form action="{% url 'eliminar_pregunta' pregunta.id %}" method="post" style="display:inline;">
                     {% csrf_token %}
