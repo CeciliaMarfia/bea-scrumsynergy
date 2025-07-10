@@ -28,6 +28,8 @@
     text-decoration: none;
     transition: all 0.3s ease;
     font-size: 1.1rem;
+    border: none;
+    cursor: pointer;
 }
 
 .btn-volver:hover {
@@ -455,9 +457,9 @@
 {% block content %}
 <div class="pago-container">
     <div class="header">
-        <a href="{% url 'mis_reservas' %}" class="btn-volver">
-            Volver a Mis Reservas
-        </a>
+        <button onclick="history.back()" class="btn-volver">
+            ← Volver
+        </button>
     </div>
 
     {% if messages %}

@@ -1205,7 +1205,7 @@ def payment_success(request):
                 )
 
                 messages.success(
-                    request, '¡Pago realizado con éxito! Tu reserva ha sido confirmada.')
+                    request, 'Pago realizado con éxito')
             else:
                 messages.warning(
                     request, 'No se encontró la reserva asociada al pago.')
