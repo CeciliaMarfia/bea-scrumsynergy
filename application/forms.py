@@ -360,7 +360,7 @@ class ReservaMaquinariaForm(forms.ModelForm):
                 fecha_inicio_str = fecha_inicio
             else:
                 fecha_inicio_str = fecha_inicio.strftime('%Y-%m-%d')
-            # Validar que la fecha de inicio no sea anterior a hoy
+            # Validar que la fecha de inicio no sea anterior a hoy (permitir mismo día)
             if fecha_inicio_str < hoy_str:
                 raise forms.ValidationError(
                     'La fecha de inicio debe ser igual o posterior a la fecha actual.')

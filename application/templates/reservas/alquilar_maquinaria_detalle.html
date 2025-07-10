@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block styles %}
-.reserva-container {
+.alquiler-container {
     background-color: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
     border-radius: 1rem;
@@ -70,7 +70,7 @@
     justify-content: center;
     margin-top: 2rem;
 }
-.btn-reservar {
+.btn-alquilar {
     background-color: #d16c44;
     color: white;
     border: none;
@@ -79,7 +79,7 @@
     font-weight: bold;
     transition: all 0.3s ease;
 }
-.btn-reservar:hover {
+.btn-alquilar:hover {
     background-color: #b95a33;
     transform: translateY(-2px);
 }
@@ -132,6 +132,15 @@
     color: #ebb600;
 }
 
+/* Ocultar mensajes nativos de validación de fechas pero mantener los de campos requeridos */
+input[type="date"]::-webkit-validation-bubble-message {
+    display: none;
+}
+
+input[type="date"]::-webkit-validation-bubble-arrow {
+    display: none;
+}
+
 {% endblock %}
 
 {% block content %}
@@ -142,7 +151,7 @@
         </a>
     </div>
     <h1 class="page-title">Alquilar Maquinaria</h1>
-    <div class="reserva-container">
+    <div class="alquiler-container">
         <div class="row" style="display: flex; gap: 2rem;">
             <div class="col-md-6" style="flex: 1;">
                 <div class="maquina-info">
@@ -191,8 +200,14 @@
                     <input type="date" id="fecha_fin" name="fecha_fin" class="form-control" required>
                 </div>
             </div>
+            
+            <!-- Contenedor para mensajes de error de JavaScript -->
+            <div id="errores-js" class="alert alert-danger" style="display: none; margin: 1rem 0; background: rgba(220,53,69,0.15); color: #dc3545; border: 1px solid #dc3545;">
+                <ul id="lista-errores-js" style="margin-bottom: 0;"></ul>
+            </div>
+            
             <div class="button-container">
-                <button type="submit" class="btn-reservar"><i class="fas fa-clipboard-list"></i> Confirmar Alquiler</button>
+                <button type="submit" class="btn-alquilar"><i class="fas fa-clipboard-list"></i> Confirmar Alquiler</button>
                 <a href="{% url 'detalle_maquinaria' maquina.id %}" class="btn-cancelar">Cancelar</a>
             </div>
         </form>
@@ -201,6 +216,9 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.querySelector('form');
+    const erroresContainer = document.getElementById('errores-js');
+    const listaErrores = document.getElementById('lista-errores-js');
+    
     form.addEventListener('submit', function(event) {
         let isValid = true;
         let errores = [];
@@ -210,7 +228,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const fechaFinStr = fechaFinInput.value;
         const hoyStr = new Date().toISOString().split('T')[0];
 
-        // Validar fecha de inicio (comparar strings YYYY-MM-DD)
+        // Validar fecha de inicio (comparar strings YYYY-MM-DD) - permitir mismo día
         if (fechaInicioStr < hoyStr) {
             errores.push('La fecha de inicio debe ser igual o posterior a la fecha actual.');
             isValid = false;
@@ -226,14 +244,36 @@ document.addEventListener('DOMContentLoaded', function() {
             const fin = new Date(fechaFinStr);
             const dias = Math.floor((fin - inicio) / (1000 * 60 * 60 * 24)) + 1;
             if (dias > 7) {
-                errores.push('La reserva no puede exceder los 7 días.');
+                errores.push('El alquiler no puede exceder los 7 días.');
                 isValid = false;
             }
         }
+        
         if (!isValid) {
             event.preventDefault();
-            alert(errores.join('\n'));
+            // Mostrar errores en HTML en lugar de popup
+            listaErrores.innerHTML = '';
+            errores.forEach(function(error) {
+                const li = document.createElement('li');
+                li.textContent = error;
+                listaErrores.appendChild(li);
+            });
+            erroresContainer.style.display = 'block';
+            
+            // Hacer scroll hacia los errores
+            erroresContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+            // Ocultar errores si la validación es exitosa
+            erroresContainer.style.display = 'none';
         }
+    });
+    
+    // Limpiar errores cuando el usuario cambie las fechas
+    const fechaInputs = [fechaInicioInput, fechaFinInput];
+    fechaInputs.forEach(function(input) {
+        input.addEventListener('change', function() {
+            erroresContainer.style.display = 'none';
+        });
     });
 });
 </script>

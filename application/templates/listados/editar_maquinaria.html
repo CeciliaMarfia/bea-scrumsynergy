@@ -395,7 +395,23 @@ function eliminarImagen(imagenId) {
     })
     .catch(error => {
       console.error('Error:', error);
-      alert('Error al eliminar la imagen');
+      const errorMessage = 'Error al eliminar la imagen';
+      const alertDiv = document.createElement('div');
+      alertDiv.className = 'alert alert-danger';
+      alertDiv.role = 'alert';
+      alertDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${errorMessage}`;
+      
+      // Insertar el mensaje al principio del formulario
+      const form = document.querySelector('form');
+      form.insertBefore(alertDiv, form.firstChild);
+      
+      // Hacer scroll hacia el mensaje
+      alertDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      
+      // Eliminar el mensaje después de 5 segundos
+      setTimeout(() => {
+        alertDiv.remove();
+      }, 5000);
     });
   }
 }

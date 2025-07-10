@@ -41,6 +41,16 @@
 .btn-alquilar:hover {
     background-color: #b95a33;
 }
+
+/* Ocultar mensajes nativos de validación de fechas pero mantener los de campos requeridos */
+input[type="date"]::-webkit-validation-bubble-message {
+    display: none;
+}
+
+input[type="date"]::-webkit-validation-bubble-arrow {
+    display: none;
+}
+
 {% endblock %}
 
 {% block content %}
@@ -62,6 +72,12 @@
         </div>
         <button type="submit" class="btn-alquilar">Alquilar maquinaria</button>
     </form>
+    
+    <!-- Contenedor para mensajes de error de JavaScript -->
+    <div id="errores-js" class="alert alert-danger" style="display: none; margin: 1rem 0; background: rgba(220,53,69,0.15); color: #dc3545; border: 1px solid #dc3545;">
+        <ul id="lista-errores-js" style="margin-bottom: 0;"></ul>
+    </div>
+    
     {% if messages %}
     <ul class="messages">
         {% for message in messages %}
@@ -70,4 +86,69 @@
     </ul>
     {% endif %}
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const erroresContainer = document.getElementById('errores-js');
+    const listaErrores = document.getElementById('lista-errores-js');
+    
+    form.addEventListener('submit', function(event) {
+        let isValid = true;
+        let errores = [];
+        const fechaInicioInput = document.getElementById('fecha_inicio');
+        const fechaFinInput = document.getElementById('fecha_fin');
+        const fechaInicioStr = fechaInicioInput.value;
+        const fechaFinStr = fechaFinInput.value;
+        const hoyStr = new Date().toISOString().split('T')[0];
+
+        // Validar fecha de inicio (comparar strings YYYY-MM-DD) - permitir mismo día
+        if (fechaInicioStr < hoyStr) {
+            errores.push('La fecha de inicio debe ser igual o posterior a la fecha actual.');
+            isValid = false;
+        }
+        // Validar fecha de fin
+        if (fechaFinStr < fechaInicioStr) {
+            errores.push('La fecha de fin no puede ser anterior a la fecha de inicio.');
+            isValid = false;
+        }
+        // Validar duración máxima
+        if (fechaInicioStr && fechaFinStr) {
+            const inicio = new Date(fechaInicioStr);
+            const fin = new Date(fechaFinStr);
+            const dias = Math.floor((fin - inicio) / (1000 * 60 * 60 * 24)) + 1;
+            if (dias > 7) {
+                errores.push('El alquiler no puede exceder los 7 días.');
+                isValid = false;
+            }
+        }
+        
+        if (!isValid) {
+            event.preventDefault();
+            // Mostrar errores en HTML en lugar de popup
+            listaErrores.innerHTML = '';
+            errores.forEach(function(error) {
+                const li = document.createElement('li');
+                li.textContent = error;
+                listaErrores.appendChild(li);
+            });
+            erroresContainer.style.display = 'block';
+            
+            // Hacer scroll hacia los errores
+            erroresContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+            // Ocultar errores si la validación es exitosa
+            erroresContainer.style.display = 'none';
+        }
+    });
+    
+    // Limpiar errores cuando el usuario cambie las fechas
+    const fechaInputs = [fechaInicioInput, fechaFinInput];
+    fechaInputs.forEach(function(input) {
+        input.addEventListener('change', function() {
+            erroresContainer.style.display = 'none';
+        });
+    });
+});
+</script>
 {% endblock %} 

@@ -368,7 +368,7 @@
               {% elif maquina.estado == 'mantenimiento' %}
                 <option value="disponible">Disponible</option>
                 <option value="suspendida">Suspendida</option>
-              {% endif %}
+                {% endif %}
             </select>
           </td>
           {% if user.perfil.is_dueno %}
