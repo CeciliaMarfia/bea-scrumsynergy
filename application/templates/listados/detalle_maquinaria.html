@@ -750,6 +750,7 @@
                   <a href="{% url 'editar_pregunta' pregunta.id %}" class="btn btn-sm btn-success">Editar</a>
                   <form action="{% url 'eliminar_pregunta' pregunta.id %}" method="post" style="display:inline;">
                     {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.path }}#preguntas">
                     <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Seguro que deseas eliminar esta pregunta?');">Eliminar</button>
                   </form>
                 {% endif %}
@@ -759,6 +760,7 @@
                   {% endif %}
                   <form action="{% url 'eliminar_pregunta' pregunta.id %}" method="post" style="display:inline;">
                     {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.path }}#preguntas">
                     <button type="submit" class="btn btn-sm btn-danger ms-2" onclick="return confirm('¿Seguro que deseas eliminar esta pregunta?');">Eliminar</button>
                   </form>
                 {% endif %}
@@ -768,6 +770,7 @@
                   {% endif %}
                   <form action="{% url 'eliminar_pregunta' pregunta.id %}" method="post" style="display:inline;">
                     {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.path }}#preguntas">
                     <button type="submit" class="btn btn-sm btn-danger ms-2" onclick="return confirm('¿Seguro que deseas eliminar esta pregunta?');">Eliminar</button>
                   </form>
                 {% endif %}

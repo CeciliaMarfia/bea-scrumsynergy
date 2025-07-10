@@ -296,6 +296,36 @@ h2 {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+.messages {
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+.alert {
+    width: 100%;
+    max-width: 600px;
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    font-size: 1.1rem;
+    padding: 1.1rem 1.8rem;
+    border-radius: 1.2rem;
+    margin: 0 auto 1.5rem auto;
+    box-sizing: border-box;
+    justify-content: center;
+}
+.alert-info, .alert-success {
+    background-color: #d4ede4 !important;
+    color: #155724 !important;
+    border: none;
+}
+.alert .fas {
+    font-size: 1.6rem;
+    margin-right: 1rem;
+}
+
 @media (max-width: 768px) {
     .container {
         padding: 1rem;

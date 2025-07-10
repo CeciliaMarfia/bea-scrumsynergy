@@ -18,9 +18,6 @@
             <div class="location-card">
                 <div class="location-info">
                     <h3>{{ sucursal.get_direccion_completa }}</h3>
-                    <p class="status {% if sucursal.activa %}active{% else %}inactive{% endif %}">
-                        {{ sucursal.activa|yesno:"Activa,Inactiva" }}
-                    </p>
                 </div>
             </div>
             {% empty %}

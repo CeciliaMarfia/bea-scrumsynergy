@@ -318,12 +318,6 @@
 
 {% block content %}
 <div class="container">
-  <div class="header-container">
-    <a href="{% url 'home' %}" class="btn-volver">
-      <i class="fas fa-arrow-left"></i> Volver al inicio
-    </a>
-  </div>
-
   {% if messages %}
   <div class="messages">
     {% for message in messages %}
@@ -333,6 +327,12 @@
     {% endfor %}
   </div>
   {% endif %}
+
+  <div class="header-container">
+    <a href="{% url 'home' %}" class="btn-volver">
+      <i class="fas fa-arrow-left"></i> Volver al inicio
+    </a>
+  </div>
 
   <div class="table-container">
     <h2 style="color: #546469;">Listado de Maquinaria</h2>

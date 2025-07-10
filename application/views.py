@@ -1288,23 +1288,20 @@ def lista_ubicaciones(request):
             # Añadir las coordenadas a la lista
             locations.append([sucursal.latitud, sucursal.longitud])
 
-            # Crear el popup con la información de la sucursal
+            # Crear el popup solo con la dirección
             popup_html = f"""
                 <div style='width: 200px;'>
                     <h4 style='margin-bottom: 10px;'>{sucursal.get_direccion_completa()}</h4>
-                    <p style='margin: 5px 0;'>
-                        <strong>Estado:</strong> {'Activa' if sucursal.activa else 'Inactiva'}
-                    </p>
                 </div>
             """
 
-            # Agregar el marcador al mapa
+            # Agregar el marcador al mapa (siempre naranja)
             folium.Marker(
                 location=[sucursal.latitud, sucursal.longitud],
                 popup=folium.Popup(popup_html, max_width=300),
                 tooltip=sucursal.get_direccion_completa(),
                 icon=folium.Icon(
-                    color='green' if sucursal.activa else 'red',
+                    color='orange',
                     icon='info-sign'
                 )
             ).add_to(m)
@@ -1460,7 +1457,7 @@ def agregar_sucursal(request):
                 activa=True
             )
 
-            messages.success(request, 'Sucursal agregada correctamente.')
+            messages.success(request, 'Ubicación agregada correctamente.')
             return redirect('administrar_sucursales')
 
         except (GeocoderTimedOut, GeocoderUnavailable, requests.exceptions.ReadTimeout):
@@ -1553,7 +1550,7 @@ def editar_sucursal(request, sucursal_id):
             sucursal.activa = activa
             sucursal.save()
 
-            messages.success(request, 'Sucursal actualizada exitosamente.')
+            messages.success(request, 'Ubicación actualizada exitosamente.')
             return redirect('administrar_sucursales')
 
         except (GeocoderTimedOut, GeocoderUnavailable, requests.exceptions.ReadTimeout):
