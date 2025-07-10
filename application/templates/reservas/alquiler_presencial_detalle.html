@@ -335,6 +335,15 @@
     display: inline-block;
 }
 
+/* Ocultar mensajes nativos de validación de fechas pero mantener los de campos requeridos */
+input[type="date"]::-webkit-validation-bubble-message {
+    display: none;
+}
+
+input[type="date"]::-webkit-validation-bubble-arrow {
+    display: none;
+}
+
 {% endblock %}
 
 {% block content %}
@@ -495,6 +504,11 @@
                 </div>
                 <!-- Contenedor de errores de fechas -->
                 <div id="errores-fechas" class="mt-2"></div>
+                
+                <!-- Contenedor para mensajes de error de JavaScript -->
+                <div id="errores-js" class="alert alert-danger" style="display: none; margin: 1rem 0; background: rgba(220,53,69,0.15); color: #dc3545; border: 1px solid #dc3545;">
+                    <ul id="lista-errores-js" style="margin-bottom: 0;"></ul>
+                </div>
 
                 <!-- Cálculo del monto -->
                 <div class="resumen-card">
@@ -526,11 +540,14 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
     const fechaInicio = document.getElementById('fecha_inicio');
     const fechaFin = document.getElementById('fecha_fin');
     const diasAlquiler = document.getElementById('dias-alquiler');
     const totalEstimado = document.getElementById('total-estimado');
     const precioPorDia = parseFloat('{{ maquina.precio_por_dia }}');
+    const erroresContainer = document.getElementById('errores-js');
+    const listaErrores = document.getElementById('lista-errores-js');
 
     function calcularResumen() {
         if (fechaInicio.value && fechaFin.value) {
@@ -554,11 +571,63 @@ document.addEventListener('DOMContentLoaded', function() {
             fechaFin.value = '';
         }
         calcularResumen();
+        // Limpiar errores cuando el usuario cambie las fechas
+        erroresContainer.style.display = 'none';
     });
 
-    fechaFin.addEventListener('change', calcularResumen);
+    fechaFin.addEventListener('change', function() {
+        calcularResumen();
+        // Limpiar errores cuando el usuario cambie las fechas
+        erroresContainer.style.display = 'none';
+    });
 
     // Validación del formulario
+    form.addEventListener('submit', function(event) {
+        let isValid = true;
+        let errores = [];
+        const fechaInicioStr = fechaInicio.value;
+        const fechaFinStr = fechaFin.value;
+        const hoyStr = new Date().toISOString().split('T')[0];
+
+        // Validar fecha de inicio (comparar strings YYYY-MM-DD) - permitir mismo día
+        if (fechaInicioStr < hoyStr) {
+            errores.push('La fecha de inicio debe ser igual o posterior a la fecha actual.');
+            isValid = false;
+        }
+        // Validar fecha de fin
+        if (fechaFinStr < fechaInicioStr) {
+            errores.push('La fecha de fin no puede ser anterior a la fecha de inicio.');
+            isValid = false;
+        }
+        // Validar duración máxima
+        if (fechaInicioStr && fechaFinStr) {
+            const inicio = new Date(fechaInicioStr);
+            const fin = new Date(fechaFinStr);
+            const dias = Math.floor((fin - inicio) / (1000 * 60 * 60 * 24)) + 1;
+            if (dias > 7) {
+                errores.push('El alquiler no puede exceder los 7 días.');
+                isValid = false;
+            }
+        }
+        
+        if (!isValid) {
+            event.preventDefault();
+            // Mostrar errores en HTML en lugar de popup
+            listaErrores.innerHTML = '';
+            errores.forEach(function(error) {
+                const li = document.createElement('li');
+                li.textContent = error;
+                listaErrores.appendChild(li);
+            });
+            erroresContainer.style.display = 'block';
+            
+            // Hacer scroll hacia los errores
+            erroresContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+            // Ocultar errores si la validación es exitosa
+            erroresContainer.style.display = 'none';
+        }
+    });
 });
 </script>
 {% endblock %} 

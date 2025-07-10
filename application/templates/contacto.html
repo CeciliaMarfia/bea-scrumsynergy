@@ -279,22 +279,22 @@
                     <button onclick="window.location.reload();" class="btn-enviar" style="width:auto; max-width:250px; background:#546469; color:white; text-transform:none; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">hacer otra consulta</button>
                 </div>
             {% else %}
-                <form method="post" style="width: 100%;">
-                    {% csrf_token %}
-                    <div style="color:white;">{{ form.nombre.label_tag }}</div>
-                    {{ form.nombre }}
-                    <div style="color:white; margin-top: 1rem;">{{ form.apellidos.label_tag }}</div>
-                    {{ form.apellidos }}
-                    <div style="color:white; margin-top: 1rem;">{{ form.correo_electronico.label_tag }}</div>
-                    {{ form.correo_electronico }}
-                    <div style="color:white; margin-top: 1rem;">{{ form.telefono.label_tag }}</div>
-                    {{ form.telefono }}
-                    <div style="color:white; margin-top: 1rem;">{{ form.consulta.label_tag }}</div>
-                    {{ form.consulta }}
-                    <button type="submit" class="btn-enviar" style="margin-top: 0.3rem; display: block; margin-left: auto; margin-right: auto; width: 100%; margin-bottom: 0;">
-                        <i class="fas fa-paper-plane"></i> Enviar
-                    </button>
-                </form>
+            <form method="post" style="width: 100%;">
+                {% csrf_token %}
+                <div style="color:white;">{{ form.nombre.label_tag }}</div>
+                {{ form.nombre }}
+                <div style="color:white; margin-top: 1rem;">{{ form.apellidos.label_tag }}</div>
+                {{ form.apellidos }}
+                <div style="color:white; margin-top: 1rem;">{{ form.correo_electronico.label_tag }}</div>
+                {{ form.correo_electronico }}
+                <div style="color:white; margin-top: 1rem;">{{ form.telefono.label_tag }}</div>
+                {{ form.telefono }}
+                <div style="color:white; margin-top: 1rem;">{{ form.consulta.label_tag }}</div>
+                {{ form.consulta }}
+                <button type="submit" class="btn-enviar" style="margin-top: 0.3rem; display: block; margin-left: auto; margin-right: auto; width: 100%; margin-bottom: 0;">
+                    <i class="fas fa-paper-plane"></i> Enviar
+                </button>
+            </form>
             {% endif %}
         {% elif es_empleado_o_dueno %}
             {% if messages %}

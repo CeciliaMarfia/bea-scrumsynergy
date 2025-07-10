@@ -225,7 +225,7 @@
                                     {% if reserva.estado != 'cancelada' and reserva.estado != 'finalizada' %}
                                         <form method="post" action="{% url 'cancelar_reserva' reserva.numero_reserva %}" style="display: inline;">
                                             {% csrf_token %}
-                                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('¿Estás seguro de que deseas cancelar esta reserva?')">
+                                            <button type="button" class="btn btn-danger btn-sm" onclick="mostrarModalCancelacion('{{ reserva.numero_reserva }}')">
                                                 <i class="fas fa-times-circle"></i> Cancelar
                                             </button>
                                         </form>
@@ -245,4 +245,57 @@
         {% endif %}
     </div>
 </div>
+
+<!-- Modal de confirmación de cancelación -->
+<div id="modalCancelacion" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
+    <div class="modal-content" style="background-color: white; margin: 15% auto; padding: 2rem; border-radius: 0.8rem; width: 90%; max-width: 500px; text-align: center;">
+        <h3 style="color: #dc3545; margin-bottom: 1rem;">
+            <i class="fas fa-exclamation-triangle"></i> Confirmar Cancelación
+        </h3>
+        <p style="margin-bottom: 2rem; color: #546469;">
+            ¿Estás seguro de que deseas cancelar esta reserva?
+        </p>
+        <div style="display: flex; gap: 1rem; justify-content: center;">
+            <button onclick="cerrarModalCancelacion()" style="background-color: #6c757d; color: white; border: none; padding: 0.8rem 1.5rem; border-radius: 0.5rem; cursor: pointer;">
+                Cancelar
+            </button>
+            <button onclick="confirmarCancelacion()" style="background-color: #dc3545; color: white; border: none; padding: 0.8rem 1.5rem; border-radius: 0.5rem; cursor: pointer;">
+                Sí, Cancelar Reserva
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+let reservaACancelar = null;
+
+function mostrarModalCancelacion(numeroReserva) {
+    reservaACancelar = numeroReserva;
+    document.getElementById('modalCancelacion').style.display = 'block';
+}
+
+function cerrarModalCancelacion() {
+    document.getElementById('modalCancelacion').style.display = 'none';
+    reservaACancelar = null;
+}
+
+function confirmarCancelacion() {
+    if (reservaACancelar) {
+        // Encontrar el formulario correspondiente y enviarlo
+        const form = document.querySelector(`form[action*="${reservaACancelar}"]`);
+        if (form) {
+            form.submit();
+        }
+    }
+    cerrarModalCancelacion();
+}
+
+// Cerrar modal al hacer clic fuera de él
+window.onclick = function(event) {
+    const modal = document.getElementById('modalCancelacion');
+    if (event.target === modal) {
+        cerrarModalCancelacion();
+    }
+}
+</script>
 {% endblock %} 
