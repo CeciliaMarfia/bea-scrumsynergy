@@ -1764,7 +1764,7 @@ def responder_pregunta(request, pregunta_id):
         form = ResponderPreguntaForm(request.POST, instance=pregunta)
         if form.is_valid():
             form.save()
-            messages.success(request, 'Respuesta registrada con éxito.')
+            messages.success(request, 'Respuesta enviada correctamente al cliente.')
             if next_url:
                 return redirect(next_url)
             elif pregunta.maquina:
