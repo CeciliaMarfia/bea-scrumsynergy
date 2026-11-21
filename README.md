@@ -26,6 +26,7 @@ Python 3.12, Django 5.2, SQLite, Mercado Pago, Stripe, Folium y Geopy.
 python3 -m venv venv
 source venv/bin/activate        # en Windows: venv\Scripts\activate
 pip install -r requirements.txt
+cp .env.example .env          # completar las credenciales
 python manage.py migrate
 python manage.py createsuperuser
 python manage.py runserver
