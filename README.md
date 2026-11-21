@@ -34,6 +34,14 @@ python manage.py runserver
 
 La aplicación queda en http://127.0.0.1:8000.
 
+Para probarla con datos de ejemplo (usuarios, maquinaria, una reserva lista para retirar y un alquiler en curso):
+
+```bash
+python manage.py cargar_datos_demo
+```
+
+El comando muestra los usuarios y los códigos de retiro. Si no se configuran credenciales de correo en el `.env`, los mails (incluido el código de verificación del inicio de sesión) se muestran en la consola.
+
 ## Estructura
 
 - `system/`: configuración del proyecto Django.

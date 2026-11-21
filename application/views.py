@@ -51,7 +51,7 @@ MP_ACCESS_TOKEN = os.getenv('MP_ACCESS_TOKEN')
 
 # SDK de Mercado Pago
 # Agrega credenciales
-sdk = mercadopago.SDK(MP_ACCESS_TOKEN)
+sdk = mercadopago.SDK(MP_ACCESS_TOKEN) if MP_ACCESS_TOKEN else None
 
 
 def home(request):
@@ -1113,7 +1113,6 @@ def pagar_reserva(request, reserva_id):
                 return redirect('pagar_reserva', reserva_id=reserva.id)
 
     preference = generar_preference_mercadopago(request, reserva_id)
-    print(preference)
     context = {
         'reserva': reserva,
         'tarjetas': tarjetas,
@@ -1169,16 +1168,22 @@ def crear_preference(request, reserva_id):
         "auto_return": "approved",
     }
 
-    preference_response = sdk.preference().create(preference_data)
-    return preference_response["response"]
+    # Sin credenciales de Mercado Pago (por ejemplo, en desarrollo) solo se ofrece el pago con tarjeta
+    if sdk is None:
+        return {"id": ""}
+    try:
+        preference_response = sdk.preference().create(preference_data)
+        respuesta = preference_response.get("response", {})
+    except Exception as e:
+        print(f"Error al crear la preferencia de Mercado Pago: {str(e)}")
+        return {"id": ""}
+    if "id" not in respuesta:
+        return {"id": ""}
+    return respuesta
 
 
 def generar_preference_mercadopago(request, reserva_id):
-    # Tu función que crea la preferencia
-    preference = crear_preference(request, reserva_id)
-    print(preference)
-    print("hola")
-    return preference
+    return crear_preference(request, reserva_id)
 
 
 @login_required
