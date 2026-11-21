@@ -1,21 +1,40 @@
-# bea-scrumsynergy ⚙
+# Bob el Alquilador
 
-## Proyecto: Bob el Alquilador 🚜
+Sistema web de alquiler de maquinaria desarrollado con Django en Ingeniería de Software II (Facultad de Informática, UNLP). El equipo, ScrumSynergy, trabajó con Scrum. La documentación del proceso (entrevistas, épicas, demos y minutas de sprint) está en [ingenieria-de-software-2](https://github.com/CeciliaMarfia/ingenieria-de-software-2).
 
-### 👥 Participantes del proyecto
+## Equipo
 
-- Arias Sanchez, Morena
-- Arroyo Tabari, Sol Justina
-- Rodriguez, Lola
-- Cecilia, Marfia
+- Morena Arias Sánchez
+- Sol Justina Arroyo Tabari
+- Cecilia Marfia
+- Lola Rodríguez
 
-#### 🖥 Requisitos previos:
-##### ▪  ***Tener instalada la versión de Python 3.12.9 en el entorno.*** 
+## Funcionalidades
 
-#### 📌 Instalación de dependencias:
+- Catálogo de maquinaria por sucursal, con imágenes.
+- Reservas, devoluciones y pagos online (Mercado Pago y Stripe).
+- Roles de cliente, empleado y dueño.
+- Mapa de sucursales con Folium.
+
+## Tecnologías
+
+Python 3.12, Django 5.2, SQLite, Mercado Pago, Stripe, Folium y Geopy.
+
+## Instalación
 
 ```bash
+python3 -m venv venv
+source venv/bin/activate        # en Windows: venv\Scripts\activate
 pip install -r requirements.txt
+python manage.py migrate
+python manage.py createsuperuser
+python manage.py runserver
 ```
-#### 📌 Entorno virtual:
-##### ***Para trabajar en este proyecto, es recomendable usar un entorno virtual para gestionar las dependencias.***
+
+La aplicación queda en http://127.0.0.1:8000.
+
+## Estructura
+
+- `system/`: configuración del proyecto Django.
+- `application/`: modelos, vistas, formularios, templates y comandos de gestión.
+- `media/`: imágenes de maquinaria y documentos.
