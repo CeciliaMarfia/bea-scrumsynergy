@@ -34,7 +34,7 @@ python manage.py runserver
 
 La aplicación queda en http://127.0.0.1:8000.
 
-Para probarla con datos de ejemplo (usuarios, maquinaria, una reserva lista para retirar y un alquiler en curso):
+Para probar el sistema con datos de ejemplo, ver la [guía de pruebas](PRUEBAS.md). En resumen:
 
 ```bash
 python manage.py cargar_datos_demo
