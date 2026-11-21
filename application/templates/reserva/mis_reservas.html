@@ -90,6 +90,12 @@
     font-size: 1.1rem;
 }
 
+.nota-retiro {
+    margin: 0 0 1rem;
+    font-size: 0.95rem;
+    opacity: 0.85;
+}
+
 .no-reservas {
     background-color: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.2);
@@ -305,7 +311,19 @@
                     <span class="info-label">Total</span>
                     <span class="info-value">${{ reserva.monto_total }}</span>
                 </div>
+                {% if reserva.estado == 'pagada' and reserva.codigo_retiro %}
+                <div class="info-item">
+                    <span class="info-label">Código de retiro</span>
+                    <span class="info-value">{{ reserva.codigo_retiro }}</span>
+                </div>
+                {% endif %}
             </div>
+            {% if reserva.estado == 'pagada' %}
+            <p class="nota-retiro">
+                <i class="fas fa-info-circle"></i>
+                Presentá el código de retiro en la sucursal a partir del {{ reserva.fecha_inicio|date:"d/m/Y" }}.
+            </p>
+            {% endif %}
             <div class="reserva-actions">
                 {% if reserva.estado == 'pendiente_pago' %}
                     <a href="{% url 'pagar_reserva' reserva.id %}?next={{ request.get_full_path }}" class="btn-pagar-reserva">
@@ -328,7 +346,7 @@
     <div class="no-reservas">
         <i class="fas fa-calendar-times"></i>
         <h3>No tienes reservas activas</h3>
-        <p>¡Comienza alquilando una máquina!</p>
+        <p>¡Comienza reservando una máquina!</p>
     </div>
     {% endif %}
 </div>

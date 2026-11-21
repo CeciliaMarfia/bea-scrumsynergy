@@ -185,6 +185,29 @@ class Maquina(models.Model):
 
         return not reservas_activas
 
+    def actualizar_estado(self):
+        """
+        Recalcula el estado de la máquina a partir de sus reservas y alquileres.
+        Los estados que asigna el dueño o el empleado (suspendida, mantenimiento)
+        no se modifican automáticamente.
+        """
+        if self.pk:
+            self.refresh_from_db(fields=['estado'])
+        if self.estado in ('suspendida', 'mantenimiento'):
+            return
+
+        activas = self.reservas.filter(estado__in=['pendiente_pago', 'pagada'])
+        if activas.filter(tipo=Reserva.TIPO_ALQUILER).exists():
+            nuevo_estado = 'alquilada'
+        elif activas.filter(tipo=Reserva.TIPO_RESERVA, fecha_fin__gte=timezone.now().date()).exists():
+            nuevo_estado = 'reservada'
+        else:
+            nuevo_estado = 'disponible'
+
+        if self.estado != nuevo_estado:
+            self.estado = nuevo_estado
+            self.save(update_fields=['estado'])
+
     def get_proxima_disponibilidad(self):
         """
         Obtiene la fecha más próxima en que la máquina estará disponible para reservar.
@@ -303,6 +326,13 @@ class PermisoEspecial(models.Model):
 
 
 class Reserva(models.Model):
+    TIPO_RESERVA = 'reserva'
+    TIPO_ALQUILER = 'alquiler'
+    TIPO_CHOICES = [
+        (TIPO_RESERVA, 'Reserva'),
+        (TIPO_ALQUILER, 'Alquiler'),
+    ]
+
     ESTADO_CHOICES = [
         ('pendiente_pago', 'Pendiente de pago'),
         ('pagada', 'Pagada'),
@@ -330,9 +360,25 @@ class Reserva(models.Model):
         max_length=20, choices=ESTADO_CHOICES, default='pendiente_pago')
     monto_total = models.DecimalField(max_digits=10, decimal_places=2)
     codigo_retiro = models.CharField(max_length=8, unique=True, blank=True, null=True)
+    # Una reserva online pasa a ser alquiler cuando el cliente retira la máquina
+    # en la sucursal. Los alquileres presenciales se crean directamente como alquiler.
+    tipo = models.CharField(
+        max_length=10, choices=TIPO_CHOICES, default=TIPO_RESERVA)
+    fecha_retiro = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
-        return f'Reserva #{self.numero_reserva} - {self.maquina.nombre}'
+        return f'{self.get_tipo_display()} #{self.numero_reserva} - {self.maquina.nombre}'
+
+    @property
+    def es_alquiler(self):
+        return self.tipo == self.TIPO_ALQUILER
+
+    @property
+    def estado_para_mostrar(self):
+        """Un alquiler pagado es un alquiler en curso, no una reserva pagada."""
+        if self.es_alquiler and self.estado == 'pagada':
+            return 'En curso'
+        return self.get_estado_display()
 
     @property
     def dias(self):
@@ -421,27 +467,8 @@ class Reserva(models.Model):
                     self.codigo_retiro = codigo
                     break
 
-        # Actualizar el estado de la máquina solo si es una nueva reserva o se está cancelando
-        if self.pk is None:  # Nueva reserva
-            self.maquina.estado = 'reservada'
-            self.maquina.save()
-        elif self.estado == 'cancelada':  # Cancelación
-            # Verificar si hay otras reservas activas para esta máquina
-            otras_reservas_activas = Reserva.objects.filter(
-                maquina=self.maquina,
-                estado__in=['pendiente_pago', 'pagada'],
-                fecha_fin__gte=timezone.now().date()
-            ).exclude(
-                pk=self.pk
-            ).exclude(
-                estado='cancelada'
-            ).exists()
-
-            if not otras_reservas_activas:
-                self.maquina.estado = 'disponible'
-            self.maquina.save()
-
         super().save(*args, **kwargs)
+        self.maquina.actualizar_estado()
 
 
 class Pago(models.Model):

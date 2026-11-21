@@ -634,15 +634,14 @@
     <a href="{% url 'reservar_maquinaria' maquina.id %}" class="btn-reservar-nuevo">
         <i class="fas fa-calendar-plus"></i> Reservar
     </a>
-    <a href="{% url 'alquilar_maquinaria_detalle' maquina.id %}" class="btn-alquilar-nuevo">
-        <i class="fas fa-handshake"></i> Alquilar
+    {% if user.perfil.is_empleado or user.perfil.is_dueno %}
+    <a href="{% url 'alquiler_presencial_detalle' maquina.id %}" class="btn-alquilar-nuevo">
+        <i class="fas fa-store"></i> Registrar Alquiler Presencial
     </a>
+    {% endif %}
 {% else %}
     <a href="{% url 'login' %}?next={% url 'reservar_maquinaria' maquina.id %}" class="btn-reservar-nuevo">
         <i class="fas fa-sign-in-alt"></i> Iniciar sesión para reservar
-    </a>
-    <a href="{% url 'login' %}?next={% url 'alquilar_maquinaria_detalle' maquina.id %}" class="btn-alquilar-nuevo">
-        <i class="fas fa-sign-in-alt"></i> Iniciar sesión para alquilar
     </a>
 {% endif %}
     </div>

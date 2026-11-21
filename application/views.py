@@ -5,7 +5,7 @@ from django.contrib import messages
 from django.contrib.auth.forms import UserCreationForm
 import os
 from django.conf import settings
-from .machinery.forms import AltaMaquinariaForm, RegistrarDevolucionForm
+from .machinery.forms import AltaMaquinariaForm, RegistrarDevolucionForm, RegistrarRetiroForm
 from .models import Maquina, HomeVideo, PermisoEspecial, Perfil, Reserva, ImagenMaquina, Pago, TarjetaCredito, Role, Sucursal, Pregunta, Calificacion, ValoracionEmpleado, ConsultaContacto
 from django.core.mail import send_mail, EmailMultiAlternatives
 from django.template.loader import render_to_string
@@ -390,7 +390,7 @@ def registrar_maquinaria(request):
 @user_passes_test(is_owner_or_employee)
 def historial_reservas(request):
     reservas = Reserva.objects.filter(
-        maquina__estado='reservada',
+        tipo=Reserva.TIPO_RESERVA,
         estado__in=['pendiente_pago', 'pagada']
     ).order_by('fecha_inicio')
     return render(request, 'reservas/historial.html', {'reservas': reservas})
@@ -685,6 +685,7 @@ def reservar_maquinaria(request, maquina_id):
             reserva.cliente = request.user
             reserva.maquina = maquina
             reserva.estado = 'pendiente_pago'  # Estado de la reserva
+            reserva.tipo = Reserva.TIPO_RESERVA
             if request.user.perfil.is_empleado:
                 reserva.empleado_gestor = request.user
             dias = (form.cleaned_data['fecha_fin'] -
@@ -693,8 +694,6 @@ def reservar_maquinaria(request, maquina_id):
             try:
                 with transaction.atomic():
                     reserva.save()
-                    maquina.estado = 'reservada'
-                    maquina.save()
                     messages.success(
                         request, f'Reserva creada exitosamente. Número de reserva: {reserva.numero_reserva}')
                     return redirect('mis_reservas')
@@ -813,13 +812,13 @@ def lista_maquinaria(request):
 def mis_reservas(request):
     reservas = Reserva.objects.filter(
         cliente=request.user,
-        maquina__estado='reservada',
+        tipo=Reserva.TIPO_RESERVA,
         estado__in=['pendiente_pago', 'pagada']
     ).order_by('-fecha_inicio')
     reservas_canceladas = Reserva.objects.filter(
         cliente=request.user,
-        estado='cancelada',
-        maquina__estado='reservada'
+        tipo=Reserva.TIPO_RESERVA,
+        estado='cancelada'
     ).order_by('-fecha_inicio')
     return render(request, 'reserva/mis_reservas.html', {
         'reservas': reservas,
@@ -882,20 +881,15 @@ def cancelar_reserva(request, numero_reserva):
             Reserva, numero_reserva=numero_reserva, cliente=request.user)
 
     if request.method == 'POST':
-        if reserva.estado not in ['cancelada', 'finalizada']:
+        if reserva.tipo == Reserva.TIPO_RESERVA and reserva.estado in ['pendiente_pago', 'pagada']:
             try:
                 with transaction.atomic():
                     # Guardar el estado anterior para saber si estaba pagada
                     estaba_pagada = reserva.estado == 'pagada'
 
-                    # Actualizar el estado de la reserva
+                    # Al guardar, la máquina recalcula su estado según las reservas que le quedan
                     reserva.estado = 'cancelada'
                     reserva.save()
-
-                    # Actualizar el estado de la máquina
-                    maquina = reserva.maquina
-                    maquina.estado = 'disponible'
-                    maquina.save()
 
                     # Preparar y enviar el correo electrónico
                     subject = 'Cancelación de Reserva - Bob el Alquilador'
@@ -906,12 +900,13 @@ def cancelar_reserva(request, numero_reserva):
                         cancelador = "un representante de Bob el Alquilador"
 
                     context = {
+                        'reserva': reserva,
                         'cliente': reserva.cliente,
-                        'numero_reserva': reserva.numero_reserva,
-                        'maquina': reserva.maquina.nombre,
+                        'maquina': reserva.maquina,
+                        'monto': reserva.monto_total,
                         'fecha_inicio': reserva.fecha_inicio,
                         'fecha_fin': reserva.fecha_fin,
-                        'estaba_pagada': estaba_pagada,
+                        'reembolso': estaba_pagada,
                         'cancelador': cancelador
                     }
 
@@ -919,6 +914,8 @@ def cancelar_reserva(request, numero_reserva):
                         'emails/cancelacion_reserva.html', context)
                     plain_message = strip_tags(html_message)
 
+                # Si el correo falla, la cancelación ya quedó registrada
+                try:
                     send_mail(
                         subject,
                         plain_message,
@@ -927,9 +924,11 @@ def cancelar_reserva(request, numero_reserva):
                         html_message=html_message,
                         fail_silently=False,
                     )
+                except Exception as e:
+                    print(f"Error al enviar email de cancelación: {str(e)}")
 
-                    messages.error(
-                        request, f'La reserva con código {numero_reserva} ha sido cancelada.')
+                messages.error(
+                    request, f'La reserva con código {numero_reserva} ha sido cancelada.')
             except Exception as e:
                 messages.error(
                     request, 'Hubo un error al cancelar la reserva. Por favor, intente nuevamente.')
@@ -948,14 +947,15 @@ def eliminar_perfil(request):
         # Alquileres pendientes de devolución
         alquileres_pendientes = Reserva.objects.filter(
             cliente=user,
-            numero_reserva__startswith='ALQ',
+            tipo=Reserva.TIPO_ALQUILER,
             estado__in=['pendiente_pago', 'pagada']
         )
         # Reservas activas
         reservas_activas = Reserva.objects.filter(
             cliente=user,
+            tipo=Reserva.TIPO_RESERVA,
             estado__in=['pendiente_pago', 'pagada']
-        ).exclude(numero_reserva__startswith='ALQ')
+        )
         any_block = False
         if alquileres_pendientes.exists():
             messages.error(request, 'No se puede eliminar la cuenta porque tiene alquileres pendientes de devolución.')
@@ -972,9 +972,10 @@ def eliminar_perfil(request):
     return redirect('perfil')
 
 
+@login_required
 @require_POST
 def procesar_pago(request, reserva_id):
-    reserva = get_object_or_404(Reserva, id=reserva_id)
+    reserva = get_object_or_404(Reserva, id=reserva_id, cliente=request.user)
     numero_tarjeta = request.POST.get('numero_tarjeta')
 
     # Crear registro de pago inicial
@@ -1013,7 +1014,7 @@ def procesar_pago(request, reserva_id):
 
 @login_required
 def pagar_reserva(request, reserva_id):
-    reserva = get_object_or_404(Reserva, id=reserva_id)
+    reserva = get_object_or_404(Reserva, id=reserva_id, cliente=request.user)
     # Guardar la URL previa si viene como parámetro next
     next_url = request.GET.get('next')
     if next_url:
@@ -1079,7 +1080,7 @@ def pagar_reserva(request, reserva_id):
                         reserva.save()
                         messages.success(
                             request, f'Pago realizado con éxito')
-                        if reserva.maquina.estado == 'alquilada':
+                        if reserva.es_alquiler:
                             return redirect('mis_alquileres')
                         else:
                             return redirect('mis_reservas')
@@ -1089,7 +1090,7 @@ def pagar_reserva(request, reserva_id):
                         reserva.save()
                         messages.success(
                             request, f'Pago realizado exitosamente para el cliente {reserva.cliente.get_full_name()}')
-                        if reserva.maquina.estado == 'alquilada':
+                        if reserva.es_alquiler:
                             return redirect('mis_alquileres')
                         else:
                             return redirect('mis_reservas')
@@ -1714,9 +1715,12 @@ def registrar_devolucion(request):
                     request, 'La máquina no se encuentra en estado "alquilada".')
                 return render(request, 'registrar_devolucion.html', {'form': form})
 
-            # Buscar la reserva activa
+            # Buscar el alquiler en curso (las reservas futuras de otros clientes no cuentan)
             reserva = Reserva.objects.filter(
-                maquina=maquina, estado='pagada').order_by('-fecha_fin').first()
+                maquina=maquina,
+                tipo=Reserva.TIPO_ALQUILER,
+                estado='pagada'
+            ).order_by('fecha_inicio').first()
             if not reserva:
                 messages.error(
                     request, 'No se encontró un alquiler activo para esta máquina.')
@@ -1746,6 +1750,55 @@ def registrar_devolucion(request):
     else:
         form = RegistrarDevolucionForm()
     return render(request, 'registrar_devolucion.html', {'form': form})
+
+
+@login_required
+@user_passes_test(is_owner_or_employee)
+def registrar_retiro(request):
+    """
+    Efectiviza una reserva online: cuando el cliente retira la máquina en la sucursal
+    y presenta su código de retiro, la reserva pasa a ser un alquiler en curso.
+    """
+    if request.method == 'POST':
+        form = RegistrarRetiroForm(request.POST)
+        if form.is_valid():
+            codigo = form.cleaned_data['codigo_retiro']
+            hoy = timezone.localdate()
+            reserva = Reserva.objects.filter(
+                codigo_retiro=codigo, tipo=Reserva.TIPO_RESERVA).select_related('maquina').first()
+
+            if not reserva:
+                messages.error(
+                    request, 'El código de retiro no corresponde a ninguna reserva pendiente de retiro.')
+            elif reserva.estado == 'pendiente_pago':
+                messages.error(
+                    request, f'La reserva {reserva.numero_reserva} todavía no fue pagada. El cliente debe abonarla antes de retirar la máquina.')
+            elif reserva.estado != 'pagada':
+                messages.error(
+                    request, f'La reserva {reserva.numero_reserva} está {reserva.get_estado_display().lower()} y no puede retirarse.')
+            elif hoy < reserva.fecha_inicio:
+                messages.error(
+                    request, f'La reserva {reserva.numero_reserva} comienza el {reserva.fecha_inicio.strftime("%d/%m/%Y")}. La máquina no puede retirarse antes de esa fecha.')
+            elif hoy > reserva.fecha_fin:
+                messages.error(
+                    request, f'La reserva {reserva.numero_reserva} venció el {reserva.fecha_fin.strftime("%d/%m/%Y")}.')
+            elif reserva.maquina.reservas.filter(tipo=Reserva.TIPO_ALQUILER, estado='pagada').exists():
+                messages.error(
+                    request, f'La máquina {reserva.maquina.nombre} todavía no fue devuelta por el alquiler anterior.')
+            elif reserva.maquina.estado in ('suspendida', 'mantenimiento'):
+                messages.error(
+                    request, f'La máquina {reserva.maquina.nombre} figura como "{reserva.maquina.get_estado_display()}". Actualizá su estado antes de entregarla.')
+            else:
+                reserva.tipo = Reserva.TIPO_ALQUILER
+                reserva.fecha_retiro = timezone.now()
+                reserva.empleado_gestor = request.user
+                reserva.save()
+                messages.success(
+                    request, f'Retiro registrado. La reserva {reserva.numero_reserva} pasa a ser un alquiler en curso hasta el {reserva.fecha_fin.strftime("%d/%m/%Y")}.')
+                return redirect('registrar_retiro')
+    else:
+        form = RegistrarRetiroForm()
+    return render(request, 'registrar_retiro.html', {'form': form})
 
 
 @login_required
@@ -1987,20 +2040,20 @@ def eliminar_imagen(request, imagen_id):
 def mis_alquileres(request):
     alquileres = Reserva.objects.filter(
         cliente=request.user,
-        maquina__estado='alquilada',
+        tipo=Reserva.TIPO_ALQUILER,
         estado__in=['pendiente_pago', 'pagada']
     ).order_by('-fecha_inicio')
 
     alquileres_devueltos = Reserva.objects.filter(
         cliente=request.user,
-        estado='devuelta',
-        numero_reserva__startswith='ALQ'  # Solo alquileres, no reservas
+        tipo=Reserva.TIPO_ALQUILER,
+        estado='devuelta'
     ).order_by('-fecha_inicio')
 
     alquileres_cancelados = Reserva.objects.filter(
         cliente=request.user,
-        estado='cancelada',
-        maquina__estado='alquilada'
+        tipo=Reserva.TIPO_ALQUILER,
+        estado='cancelada'
     ).order_by('-fecha_inicio')
 
     # --- NUEVO: calcular qué reservas pueden ser valoradas ---
@@ -2008,7 +2061,6 @@ def mis_alquileres(request):
     reservas_valorables = set()
     for reserva in alquileres:
         if (
-            reserva.numero_reserva.startswith('ALQ') and
             reserva.estado == 'pagada' and
             reserva.empleado_gestor is not None and
             not ValoracionEmpleado.objects.filter(
@@ -2040,66 +2092,15 @@ def alquilar_maquinaria(request):
 
 @login_required
 def alquilar_maquinaria_detalle(request, id_maquina):
-    from .forms import ReservaMaquinariaForm
-    maquina = get_object_or_404(Maquina, id=id_maquina)
-    proxima_disponibilidad = maquina.get_proxima_disponibilidad()
-
-    if maquina.estado == 'en_revision' or maquina.estado == 'mantenimiento':
-        messages.error(
-            request, 'La máquina está suspendida temporalmente y no puede ser alquilada.')
-        return redirect('detalle_maquinaria', maquina_id=maquina.id)
-
-    if request.method == 'POST':
-        fecha_inicio = request.POST.get('fecha_inicio')
-        fecha_fin = request.POST.get('fecha_fin')
-        data = {
-            'maquina': maquina.id,
-            'fecha_inicio': fecha_inicio,
-            'fecha_fin': fecha_fin
-        }
-        form = ReservaMaquinariaForm(data)
-        if form.is_valid():
-            reserva = form.save(commit=False)
-            reserva.cliente = request.user
-            reserva.maquina = maquina
-            reserva.estado = 'pendiente_pago'  # Estado inicial
-            if request.user.perfil.is_empleado:
-                reserva.empleado_gestor = request.user
-            dias = (form.cleaned_data['fecha_fin'] -
-                    form.cleaned_data['fecha_inicio']).days + 1
-            reserva.monto_total = maquina.precio_por_dia * dias
-            # Generar número de alquiler con prefijo ALQ
-            from django.utils import timezone
-            now = timezone.now()
-            reserva.numero_reserva = f"ALQ{now.strftime('%Y%m%d%H%M%S')}{request.user.id}"
-            try:
-                with transaction.atomic():
-                    reserva.save()
-                    maquina.estado = 'alquilada'
-                    maquina.save()
-                    messages.success(
-                        request, f'Alquiler creado exitosamente. Número de alquiler: {reserva.numero_reserva}')
-                    return redirect('mis_alquileres')
-            except Exception as e:
-                messages.error(
-                    request, 'Error al crear el alquiler. Por favor, intente nuevamente.')
-                return redirect('detalle_maquinaria', maquina_id=maquina.id)
-        else:
-            for error in form.non_field_errors():
-                messages.error(request, error)
-    else:
-        initial_data = {
-            'maquina': maquina.id,
-            'fecha_inicio': proxima_disponibilidad
-        }
-        form = ReservaMaquinariaForm(initial=initial_data)
-
-    return render(request, 'reservas/alquilar_maquinaria_detalle.html', {
-        'maquina': maquina,
-        'proxima_disponibilidad': proxima_disponibilidad,
-        'form': form,
-        'today': datetime.date.today(),
-    })
+    """
+    El alquiler se concreta en la sucursal: el empleado lo registra en forma presencial
+    o efectiviza una reserva online con el código de retiro. Desde la web el cliente reserva.
+    """
+    if is_owner_or_employee(request.user):
+        return redirect('alquiler_presencial_detalle', id_maquina=id_maquina)
+    messages.info(
+        request, 'Reservá la máquina online. El alquiler se concreta al retirarla en la sucursal con tu código de retiro.')
+    return redirect('reservar_maquinaria', maquina_id=id_maquina)
 
 
 def preguntas_frecuentes(request):
@@ -2276,10 +2277,10 @@ def alquiler_presencial_detalle(request, id_maquina):
             fecha_fin = form.cleaned_data['fecha_fin']
             hoy = datetime.date.today()
 
-            # Validar que la fecha de inicio no sea anterior a hoy
-            if fecha_inicio < hoy:
+            # El alquiler presencial comienza en el momento en que se retira la máquina
+            if fecha_inicio != hoy:
                 form.add_error(
-                    'fecha_inicio', 'La fecha de inicio debe ser igual o posterior a la fecha actual.')
+                    'fecha_inicio', 'El alquiler presencial debe comenzar hoy. Para fechas futuras, registrá una reserva.')
                 return render(request, 'reservas/alquiler_presencial_detalle.html', {
                     'maquina': maquina,
                     'proxima_disponibilidad': proxima_disponibilidad,
@@ -2356,6 +2357,8 @@ def alquiler_presencial_detalle(request, id_maquina):
             reserva = form.save(commit=False)
             reserva.cliente = cliente
             reserva.maquina = maquina
+            reserva.tipo = Reserva.TIPO_ALQUILER
+            reserva.fecha_retiro = timezone.now()
             reserva.empleado_gestor = request.user  # Registrar el empleado que gestiona
 
             # Asignar número de reserva presencial (ALQ...)
@@ -2369,13 +2372,9 @@ def alquiler_presencial_detalle(request, id_maquina):
 
             try:
                 with transaction.atomic():
-                    reserva.save()
-                    # Marcar la reserva como pagada directamente (pago presencial)
+                    # Pago presencial: el alquiler queda pagado y en curso
                     reserva.estado = 'pagada'
                     reserva.save()
-                    # Cambiar el estado de la máquina a 'alquilada'
-                    reserva.maquina.estado = 'alquilada'
-                    reserva.maquina.save()
                     # Enviar email de confirmación al cliente
                     subject = f'Confirmación de Alquiler Presencial - {reserva.numero_reserva}'
 
@@ -2604,8 +2603,13 @@ def seleccionar_maquinaria_alquiler_presencial(request):
 
 
 @login_required
+@require_POST
 def cancelar_alquiler(request, reserva_id):
-    reserva = get_object_or_404(Reserva, id=reserva_id, cliente=request.user)
+    reserva = get_object_or_404(
+        Reserva, id=reserva_id, cliente=request.user, tipo=Reserva.TIPO_ALQUILER)
+    if reserva.estado not in ['pendiente_pago', 'pagada']:
+        messages.error(request, 'Este alquiler no puede ser cancelado.')
+        return redirect('mis_alquileres')
     estado_original = reserva.estado
     reserva.estado = 'cancelada'
     reserva.save()
@@ -2620,13 +2624,16 @@ def cancelar_alquiler(request, reserva_id):
         'fecha_inicio': reserva.fecha_inicio,
         'fecha_fin': reserva.fecha_fin,
     })
-    send_mail(
-        asunto,
-        '',
-        settings.DEFAULT_FROM_EMAIL,
-        [reserva.cliente.email],
-        html_message=mensaje
-    )
+    try:
+        send_mail(
+            asunto,
+            strip_tags(mensaje),
+            settings.DEFAULT_FROM_EMAIL,
+            [reserva.cliente.email],
+            html_message=mensaje
+        )
+    except Exception as e:
+        print(f"Error al enviar email de cancelación: {str(e)}")
     messages.success(
         request, f'Se canceló el alquiler {reserva.numero_reserva} con éxito.')
     return redirect('mis_alquileres')
@@ -2636,7 +2643,7 @@ def cancelar_alquiler(request, reserva_id):
 @user_passes_test(is_owner_or_employee)
 def historial_alquileres(request):
     alquileres = Reserva.objects.filter(
-        maquina__estado='alquilada',
+        tipo=Reserva.TIPO_ALQUILER,
         estado__in=['pendiente_pago', 'pagada']
     ).order_by('fecha_inicio')
     return render(request, 'reservas/historial_alquileres.html', {'alquileres': alquileres})
@@ -2731,6 +2738,8 @@ def actualizar_estado_maquina(request, maquina_id):
                 return redirect('lista_maquinaria_admin')
         maquina.estado = nuevo_estado
         maquina.save()
+        if nuevo_estado == 'disponible':
+            maquina.actualizar_estado()
 
         # Si la petición es AJAX, devolver JSON, si no, redirigir y mostrar mensaje
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
@@ -2758,7 +2767,7 @@ def historial_maquinaria(request, maquina_id):
     from .models import Maquina, Reserva
     maquina = get_object_or_404(Maquina, id=maquina_id)
     alquileres = Reserva.objects.filter(
-        maquina=maquina).order_by('-fecha_inicio')
+        maquina=maquina, tipo=Reserva.TIPO_ALQUILER).order_by('-fecha_inicio')
     return render(request, 'reservas/historial_maquinaria.html', {
         'alquileres': alquileres,
         'maquina': maquina

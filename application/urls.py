@@ -90,6 +90,7 @@ urlpatterns = [
     path('reset/done/', CustomPasswordResetCompleteView.as_view(), name='password_reset_complete'),
     path('gestionar-preguntas/', views.gestionar_preguntas, name='gestionar_preguntas'),
     path('registrar-devolucion/', registrar_devolucion, name='registrar_devolucion'),
+    path('registrar-retiro/', views.registrar_retiro, name='registrar_retiro'),
     path('mis-alquileres/', views.mis_alquileres, name='mis_alquileres'),
     path('alquilar/', views.alquilar_maquinaria, name='alquilar_maquinaria'),
     path('alquilar/<int:id_maquina>/', views.alquilar_maquinaria_detalle, name='alquilar_maquinaria_detalle'),

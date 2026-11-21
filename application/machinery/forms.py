@@ -294,3 +294,14 @@ class RegistrarDevolucionForm(forms.Form):
     def clean_fecha_devolucion(self):
         # Siempre devolver la fecha actual en la zona horaria de Django
         return timezone.localdate()
+
+
+class RegistrarRetiroForm(forms.Form):
+    codigo_retiro = forms.CharField(
+        label='Código de retiro',
+        max_length=8,
+        help_text='Código de 8 caracteres que recibió el cliente al pagar la reserva.'
+    )
+
+    def clean_codigo_retiro(self):
+        return self.cleaned_data['codigo_retiro'].strip().upper()

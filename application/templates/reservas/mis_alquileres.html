@@ -227,7 +227,7 @@
                 <div class="maquina-nombre">{{ reserva.maquina.nombre }}</div>
                 <div class="estado-reserva {% if reserva.estado == 'pagada' %}estado-pagada{% elif reserva.estado == 'pendiente_pago' %}estado-activa{% else %}estado-activa{% endif %}">
                     {% if reserva.estado == 'pagada' %}
-                        Pagada
+                        En curso
                     {% elif reserva.estado == 'pendiente_pago' %}
                         Pendiente de pago
                     {% else %}
